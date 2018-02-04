@@ -46,6 +46,7 @@ if [ "$DEVICE_HAS_2GB_VARIANT" = true ] ; then
   cp "$RW_VENDOR/prebuilt/update-binary" "$RW_2GB/META-INF/com/google/android"
   cp -R "$RW_VENDOR/prebuilt/WolfShit" "$RW_2GB/tools"
   cp "$OUT/recovery.img" "$RW_2GB/tools"
+  sed -i -- "s/devicenamehere/${RW_DEVICE}/g" "$RW_2GB/META-INF/com/google/android/update-binary"
   echo '-- Compressing Files to ZIP'
   cd "$RW_2GB" && zip -r "$OUT/$RW_OUT_NAME-2GB_VARIANT.zip" ./* > /dev/null 2>&1 && cd - > /dev/null 2>&1
 fi
