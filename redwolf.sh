@@ -36,6 +36,7 @@ cp -R "$RW_VENDOR/prebuilt/WolfShit" "$RW_WORK/ramdisk/WolfShit"
 echo "-- Repacking and Copying Recovery"
 bash "$RW_WORK/repackimg.sh" > /dev/null 2>&1
 cp "$RW_WORK/image-new.img" "$OUT/$RW_OUT_NAME.img"
+cd "$OUT" && md5sum "$RW_OUT_NAME.img" > "$RW_OUT_NAME.img.md5" && cd - > /dev/null 2>&1
 
 if [ "$DEVICE_HAS_2GB_VARIANT" = true ] ; then
   echo '-- 2GB Variant Found'
@@ -49,6 +50,7 @@ if [ "$DEVICE_HAS_2GB_VARIANT" = true ] ; then
   sed -i -- "s/devicenamehere/${RW_DEVICE}/g" "$RW_2GB/META-INF/com/google/android/update-binary"
   echo '-- Compressing Files to ZIP'
   cd "$RW_2GB" && zip -r "$OUT/$RW_OUT_NAME-2GB_VARIANT.zip" ./* > /dev/null 2>&1 && cd - > /dev/null 2>&1
+  cd "$OUT" && md5sum "$RW_OUT_NAME-2GB_VARIANT.zip" > "$RW_OUT_NAME-2GB_VARIANT.zip.md5" && cd - > /dev/null 2>&1
 fi
 
 echo "------------Finished Making RedWolf-------------"
