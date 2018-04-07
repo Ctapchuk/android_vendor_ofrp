@@ -4,30 +4,15 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${RED}================================================================${NC}"
-echo -e "${RED}          @.                                         &@       ${NC}"
-echo -e "${RED}         @@@@@(                                   &@@@@@      ${NC}"
-echo -e "${RED}        @@@ (@@@@                               @@@@@ @@@     ${NC}"
-echo -e "${RED}       @@@     @@@@#                          @@@@@@   @@%    ${NC}"
-echo -e "${RED}      ,@@. @     @@@@#                      @@@@@@@* @  @@    ${NC}"
-echo -e "${RED}      @@@ .@@      @@@@/(#%&&@@@@@@@@@@@%.@@@@@@@@@ @@  @@&   ${NC}"
-echo -e "${RED}      @@   ,@@      &@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ @@@@  @@   ${NC}"
-echo -e "${RED}     #@@    @@@                        @@@@@@@@@@*@@@@@  @@   ${NC}"
-echo -e "${RED}     @@@    ,@@@                        %@@@@@@@@@@@@@@( @@*  ${NC}"
-echo -e "${RED}     @@@   .@@@                          @@@@@@@@@@@@@@@ @@/  ${NC}"
-echo -e "${RED}     @@@, @@@@                              @@@@@@@@@@@@%@@*  ${NC}"
-echo -e "${RED}     %@@@@@@*         @@                 &@@@@@@@@@@@@@@@@@   ${NC}"
-echo -e "${RED}     .@@@@@        @@@ #@@             @@, @@@@@@@@@@@@@@@@   ${NC}"
-echo -e "${RED}      @@@@          ,@@/.@@@@@     @@@@@.#@@@@@@@@@@@@@@@@@   ${NC}"
-echo -e "${RED}      /@@.            @@@@@@@@     @@@@@@@@@@@@@@@@@@@@@@@@   ${NC}"
-echo -e "${RED}     @@@%                              .%@@@@@@@@@@@@@@@@@@&  ${NC}"
-echo -e "${RED}    .@@@        %            @@@@@@@   @@@@@@@@@@@@@@@@@@@@@  ${NC}"
-echo -e "${RED}    @@@#        &           @#@@@@@/@  (@@@@@@@@@@@@@@@@@@@@@ ${NC}"
-echo -e "${RED}   *@@@@@%       @   %   .  @@@@@@@@@%@@@@@@@@@@@@@@@@.@@@@@@.${NC}"
-echo -e "${RED}   @@@@@@        @@ @   @@@@& %@@@@@@@@@@@@@@@@@@@@@@@ ,@@@@@@${NC}"
+echo -e "${RED}=====================================================================${NC}"
+echo -e "${RED} ,-----.                                      ,------.               ${NC}"
+echo -e "${RED}'  .-.  ',--.--. ,--,--.,--,--,  ,---.  ,---. |  .---',---.,--.  ,--.${NC}"
+echo -e "${RED}|  | |  ||  .--'' ,-.  ||      \| .-. || .-. :|  `--,| .-. |\  `'  / ${NC}"
+echo -e "${RED}'  '-'  '|  |   \ '-'  ||  ||  |' '-' '\   --.|  |`  ' '-' '/  /.  \ ${NC}"
+echo -e "${RED} `-----' `--'    `--`--'`--''--'.`-  /  `----'`--'    `---''--'  '--'${NC}"
+echo -e "${RED}                                `---'                                ${NC}"
 
-
-echo -e "${RED}-------------------------Making RedWolf-------------------------${NC}"
+echo -e "${RED}----------------------------Making OrangeFox-------------------------${NC}"
 
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 if [ -z "$TW_DEVICE_VERSION" ]; then
@@ -39,7 +24,7 @@ RW_VENDOR=vendor/redwolf
 RW_WORK=$OUT/RW_AIK
 RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
-RW_OUT_NAME=RedWolf-$RW_BUILD-$RW_DEVICE
+RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
 
 if [ -d "$RW_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
@@ -78,7 +63,7 @@ echo -e "${BLUE}-- Repacking and copying recovery${NC}"
 bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$OUT/$RW_OUT_NAME.img" > /dev/null 2>&1
 cd "$OUT" && md5sum "$RW_OUT_NAME.img" > "$RW_OUT_NAME.img.md5" && cd - > /dev/null 2>&1
 
-echo -e "${RED}--------------------Finished making RedWolf---------------------${NC}"
+echo -e "${RED}--------------------Finished making OrangeFox---------------------${NC}"
 echo -e "${GREEN}RedWolf image: \${OUT}/$RW_OUT_NAME.img"
 echo -e "          MD5: \${OUT}/$RW_OUT_NAME.img.md5${NC}"
-echo -e "${RED}================================================================${NC}"
+echo -e "${RED}==================================================================${NC}"
