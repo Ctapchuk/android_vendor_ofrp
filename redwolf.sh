@@ -68,6 +68,31 @@ fi
 echo -e "${BLUE}-- Unpacking Recovery${NC}"
 bash "$RW_VENDOR/tools/mkboot" "$OUT/recovery.img" "$RW_WORK" > /dev/null 2>&1
 
+echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
+case "$TARGET_ARCH" in
+ "arm")
+      echo -e "${GREEN}  -- ARM arch detected. Copying ARM binaries${NC}"
+      cp "$RW_VENDOR/prebuilt/arm/mkbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/arm/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      ;;
+ "arm64")
+      echo -e "${GREEN} - ARM64 arch detected. Copying ARM64 binaries${NC}"
+      cp "$RW_VENDOR/prebuilt/arm64/mkbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/arm64/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      ;;
+ "x86")
+      echo -e "${GREEN} - x86 arch detected. Copying x86 binaries${NC}"
+      cp "$RW_VENDOR/prebuilt/x86/mkbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/x86/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      ;;
+ "x86_64")
+      echo -e "${GREEN} - x86_64 arch detected. Copying x86_64 binaries${NC}"
+      cp "$RW_VENDOR/prebuilt/x86_64/mkbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/x86_64/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      ;;
+    *) echo -e "${RED} - No arch detected! or current device arch not supported. ${NC}" ;;
+esac
+
 echo -e "${BLUE}-- Repacking and Copying Recovery${NC}"
 bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$OUT/$RW_OUT_NAME.img" > /dev/null 2>&1
 cd "$OUT" && md5sum "$RW_OUT_NAME.img" > "$RW_OUT_NAME.img.md5" && cd - > /dev/null 2>&1
