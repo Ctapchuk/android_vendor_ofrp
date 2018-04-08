@@ -1,0 +1,23 @@
+assert(getprop("ro.product.device") == "mido" || getprop("ro.build.product") == "mido" || abort("E3004: This package is for device: mido; this device is " + getprop("ro.product.device") + "."););
+
+ui_print("************************************************");
+ui_print("******* OrangeFox Recovery Project *************");
+ui_print("*******            By MrYacha      *************");
+ui_print("************************************************");
+ui_print(" ");
+
+# Install recovery image
+ui_print("Installing OrangeFox recovery ...");
+package_extract_file("recovery.img", "/dev/block/bootdevice/by-name/recovery");
+
+# Install /sdcard stuff
+ui_print("Installing FoxFiles on the internal SD ...");
+   run_program("/sbin/busybox", "mount", "/sdcard");
+   package_extract_dir("sdcard", "/sdcard");
+   run_program("/sbin/busybox", "umount", "/sdcard");
+
+#
+ui_print("");
+ui_print("");
+ui_print("Finished installing OrangeFox! Extra files are in /sdcard/Fox/");
+
