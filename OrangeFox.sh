@@ -69,6 +69,6 @@ bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$OUT/$RW_OUT_NAME.img" > /dev/null 2>
 cd "$OUT" && md5sum "$RW_OUT_NAME.img" > "$RW_OUT_NAME.img.md5" && cd - > /dev/null 2>&1
 
 echo -e "${RED}--------------------Finished making OrangeFox---------------------${NC}"
-echo -e "${GREEN}RedWolf image: \${OUT}/$RW_OUT_NAME.img"
+echo -e "${GREEN}Recovery image: \${OUT}/$RW_OUT_NAME.img"
 echo -e "          MD5: \${OUT}/$RW_OUT_NAME.img.md5${NC}"
 echo -e "${RED}==================================================================${NC}"
