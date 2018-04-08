@@ -31,6 +31,38 @@ RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
 RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
 
+RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
+
+# create an update zip for deployment
+do_create_update_zip() {
+  FOX_DIR=$OUT/../../../../vendor/redwolf
+  FILES_DIR=$FOX_DIR/FoxFiles
+  INST_DIR=$FOX_DIR/installer
+  WORK_DIR=$FOX_DIR/tmp
+  ZIP_FILE=$FOX_DIR/$RW_OUT_NAME.zip
+  
+  echo "- Creating $ZIP_FILE for deployment ..."
+  
+  # clean any existing files
+  rm -rf $WORK_DIR
+
+  # recreate dir
+  mkdir -p $WORK_DIR
+  cd $WORK_DIR
+
+  # copy recovery image
+  cp -a $RECOVERY_IMAGE ./recovery.img
+   
+  # copy installer bins and script and sdcard/
+  cp -ar $INST_DIR/* .
+  
+  # copy foxfiles
+  cp -a $FILES_DIR/ sdcard/Fox
+  
+  # create zip
+  zip -r9 $ZIP_FILE .
+}
+
 if [ -d "$RW_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
   rm -rf "$RW_WORK"
@@ -65,10 +97,13 @@ case "$TARGET_ARCH" in
 esac
 
 echo -e "${BLUE}-- Repacking and copying recovery${NC}"
-bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$OUT/$RW_OUT_NAME.img" > /dev/null 2>&1
-cd "$OUT" && md5sum "$RW_OUT_NAME.img" > "$RW_OUT_NAME.img.md5" && cd - > /dev/null 2>&1
+bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
+cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 
 echo -e "${RED}--------------------Finished making OrangeFox---------------------${NC}"
-echo -e "${GREEN}Recovery image: \${OUT}/$RW_OUT_NAME.img"
-echo -e "          MD5: \${OUT}/$RW_OUT_NAME.img.md5${NC}"
+echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
+echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
 echo -e "${RED}==================================================================${NC}"
+
+# create update zip
+do_create_update_zip
