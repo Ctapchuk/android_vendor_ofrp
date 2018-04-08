@@ -1,8 +1,8 @@
 assert(getprop("ro.product.device") == "mido" || getprop("ro.build.product") == "mido" || abort("E3004: This package is for device: mido; this device is " + getprop("ro.product.device") + "."););
 
 ui_print("************************************************");
-ui_print("******* OrangeFox Recovery Project *************");
-ui_print("*******            By MrYacha      *************");
+ui_print("*******   |OrangeFox Recovery Project|   *******");
+ui_print("*******     |By MrYacha, DarthJabba9|    *******");
 ui_print("************************************************");
 ui_print(" ");
 
