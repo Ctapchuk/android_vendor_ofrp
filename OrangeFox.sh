@@ -60,8 +60,8 @@ do_create_update_zip() {
   # copy foxfiles
   cp -a $FILES_DIR/ sdcard/Fox
   
-  # create zip
-  ZIP_CMD="zip -r9 $ZIP_FILE . -x .gitkeep"
+  # create update zip
+  ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
   $ZIP_CMD
   echo "- Finished: $(/bin/ls -laFt $ZIP_FILE)"
