@@ -5,6 +5,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${RED}=====================================================================${NC}"
+echo -e ""
 echo -e "${RED} .d88888b.                                             8888888888                ${NC}"
 echo -e "${RED}d88P\" \"Y88b                                            888                       ${NC}"
 echo -e "${RED}888     888                                            888                       ${NC}"
@@ -16,7 +17,7 @@ echo -e "${RED} \"Y88888P\"  888    \"Y888888 888  888  \"Y88888  \"Y8888  888  
 echo -e "${RED}                                          888                                    ${NC}"
 echo -e "${RED}                                     Y8b d88P                                    ${NC}"
 echo -e "${RED}                                      \"Y88P\"                                     ${NC}"
-
+echo -e ""
 echo -e "${RED}----------------------------Making OrangeFox-------------------------${NC}"
 
 echo -e "${BLUE}-- Setting up environment variables${NC}"
@@ -39,7 +40,7 @@ do_create_update_zip() {
   FILES_DIR=$FOX_DIR/FoxFiles
   INST_DIR=$FOX_DIR/installer
   WORK_DIR=$FOX_DIR/tmp
-  ZIP_FILE=$FOX_DIR/$RW_OUT_NAME.zip
+  ZIP_FILE=$OUT/$RW_OUT_NAME.zip
   
   echo "- Creating $ZIP_FILE for deployment ..."
   
@@ -103,6 +104,9 @@ cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/nul
 echo -e "${RED}--------------------Finished making OrangeFox---------------------${NC}"
 echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
+echo -e ""
+echo -e "${GREEN}Recovery zip: $OUT/$RW_OUT_NAME.zip"
+
 echo -e "${RED}==================================================================${NC}"
 
 # create update zip
