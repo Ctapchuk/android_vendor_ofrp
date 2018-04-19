@@ -118,3 +118,4 @@ echo -e "${RED}=================================================================
 
 # create update zip
 do_create_update_zip
+
