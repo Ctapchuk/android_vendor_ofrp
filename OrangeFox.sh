@@ -65,6 +65,10 @@ do_create_update_zip() {
   echo "- Running ZIP command: $ZIP_CMD"
   $ZIP_CMD
   echo "- Finished: $(/bin/ls -laFt $ZIP_FILE)"
+
+  # export the filenames
+  echo "ZIP_FILE=$ZIP_FILE">/tmp/oFox00.tmp
+  echo "RECOVERY_IMAGE=$RECOVERY_IMAGE">>/tmp/oFox00.tmp
 }
 
 if [ -d "$RW_WORK" ]; then
@@ -114,3 +118,4 @@ echo -e "${RED}=================================================================
 
 # create update zip
 do_create_update_zip
+

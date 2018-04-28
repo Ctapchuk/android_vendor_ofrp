@@ -1,0 +1,40 @@
+assert(getprop("ro.product.device") == "mido" || getprop("ro.build.product") == "mido" || abort("E3004: This package is for device: mido; this device is " + getprop("ro.product.device") + "."););
+
+ui_print("************************************************");
+ui_print("*******   |OrangeFox Recovery Project|   *******");
+ui_print("*******     |By MrYacha, DarthJabba9|    *******");
+ui_print("************************************************");
+ui_print(" ");
+
+# Install recovery image
+ui_print("Installing OrangeFox recovery ...");
+package_extract_file("recovery.img", "/dev/block/bootdevice/by-name/recovery");
+
+# Install /sdcard stuff
+ui_print("Installing FoxFiles on the internal SD ...");
+   run_program("/sbin/busybox", "mount", "/sdcard");
+   package_extract_dir("sdcard", "/sdcard");
+   run_program("/sbin/busybox", "umount", "/sdcard");
+
+#
+ui_print("");
+ui_print("");
+ui_print("Finished installing OrangeFox! Extra files are in /sdcard/Fox/");
+ui_print("");
+ui_print("");
+ui_print(" >> Reboot to Recovery in 5 seconds ...");
+run_program("/sbin/sleep", "1");
+ui_print("-5s....");
+run_program("/sbin/sleep", "1");
+ui_print("-4s....");
+run_program("/sbin/sleep", "1");
+ui_print("-3s...");
+run_program("/sbin/sleep", "1");
+ui_print("-2s..");
+run_program("/sbin/sleep", "1");
+ui_print("-1s.");
+run_program("/sbin/sleep", "1");
+ui_print("-Rebooting to Recovery ...");
+run_program("/sbin/sleep", "1");
+run_program("/sbin/reboot", "recovery");
+
