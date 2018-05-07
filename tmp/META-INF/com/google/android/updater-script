@@ -1,10 +1,19 @@
-assert(getprop("ro.product.device") == "mido" || getprop("ro.build.product") == "mido" || abort("E3004: This package is for device: mido; this device is " + getprop("ro.product.device") + "."););
-
 ui_print("************************************************");
 ui_print("*******   |OrangeFox Recovery Project|   *******");
-ui_print("*******     |By MrYacha, DarthJabba9|    *******");
+ui_print("*** |By MrYacha, DarthJabba9 and ManoloRey|  ***");
 ui_print("************************************************");
 ui_print(" ");
+
+# check for mido/vince
+ifelse(
+      getprop("ro.product.device") == "mido" || getprop("ro.product.device") == "vince",
+        (  
+            ui_print("Installing OrangeFox Recovery for " + getprop("ro.product.device") + " ...");
+        ),  
+        (  
+            abort("E3004: This package is for mido/vince. This device (" + getprop("ro.product.device") + ") is not supported.");
+        )  
+    );
 
 # Install recovery image
 ui_print("Installing OrangeFox recovery ...");
@@ -16,7 +25,7 @@ ui_print("Installing FoxFiles on the internal SD ...");
    package_extract_dir("sdcard", "/sdcard");
    run_program("/sbin/busybox", "umount", "/sdcard");
 
-#
+# finish
 ui_print("");
 ui_print("");
 ui_print("Finished installing OrangeFox! Extra files are in /sdcard/Fox/");
