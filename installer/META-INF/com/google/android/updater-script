@@ -22,6 +22,7 @@ package_extract_file("recovery.img", "/dev/block/bootdevice/by-name/recovery");
 # Install /sdcard stuff
 ui_print("Installing FoxFiles on the internal SD ...");
    run_program("/sbin/busybox", "mount", "/sdcard");
+   delete_recursive("/sdcard/Fox/FoxFiles");
    package_extract_dir("sdcard", "/sdcard");
    run_program("/sbin/busybox", "umount", "/sdcard");
 
