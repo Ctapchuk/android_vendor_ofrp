@@ -26,7 +26,7 @@ RW_BUILD=Unofficial
 else
 RW_BUILD=$TW_DEVICE_VERSION
 fi
-RW_VENDOR=vendor/redwolf
+RW_VENDOR=vendor/recovery
 RW_WORK=$OUT/RW_AIK
 RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
@@ -36,7 +36,7 @@ RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
 
 # create an update zip for deployment
 do_create_update_zip() {
-  FOX_DIR=$OUT/../../../../vendor/redwolf
+  FOX_DIR=$OUT/../../../../vendor/recovery
   FILES_DIR=$FOX_DIR/FoxFiles
   INST_DIR=$FOX_DIR/installer
   WORK_DIR=$FOX_DIR/tmp
