@@ -33,6 +33,7 @@ RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
 
 RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
+RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
 
 # create an update zip for deployment
 do_create_update_zip() {
@@ -41,11 +42,13 @@ do_create_update_zip() {
   INST_DIR=$FOX_DIR/installer
   WORK_DIR=$FOX_DIR/tmp
   ZIP_FILE=$OUT/$RW_OUT_NAME.zip
+  ZIP_FILE_GO=$OUT/$RW_OUT_NAME"_GO.zip"
   
   echo "- Creating $ZIP_FILE for deployment ..."
   
   # clean any existing files
   rm -rf $WORK_DIR
+  rm -f $ZIP_FILE_GO $ZIP_FILE
 
   # recreate dir
   mkdir -p $WORK_DIR
@@ -64,15 +67,31 @@ do_create_update_zip() {
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
   $ZIP_CMD
-  echo "- Finished: $(/bin/ls -laFt $ZIP_FILE)"
-
+  
+  # create update zip for "GO" version
+  rm -f ./recovery.img
+  cp -a $RECOVERY_IMAGE_2GB ./recovery.img
+  ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE_GO ."
+  echo "- Running ZIP command: $ZIP_CMD"
+  $ZIP_CMD
+  
+  # list files
+  echo "- Finished:"
+  echo "---------------------------------"
+  echo " $(/bin/ls -laFt $ZIP_FILE)"
+  echo " $(/bin/ls -laFt $ZIP_FILE_GO)"
+  echo "---------------------------------"
+  
   # export the filenames
   echo "ZIP_FILE=$ZIP_FILE">/tmp/oFox00.tmp
   echo "RECOVERY_IMAGE=$RECOVERY_IMAGE">>/tmp/oFox00.tmp
+  echo "ZIP_FILE_GO=$ZIP_FILE_GO">>/tmp/oFox00.tmp
+  echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
 }
 
 if [ -d "$RW_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
+ # echo "Removing working folder: \"$RW_WORK\""
   rm -rf "$RW_WORK"
 fi
 
@@ -104,10 +123,24 @@ case "$TARGET_ARCH" in
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
 esac
 
+# build standard (3GB) version
 echo -e "${BLUE}-- Repacking and copying recovery${NC}"
+#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE ***"
 bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
 cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 
+# build GO (2GB) version
+echo -e "${BLUE}-- Repacking and copying the \"GO\" version of recovery${NC}"
+FFil="$RW_WORK/ramdisk/FFiles"
+rm -rf $FFil/Magisk
+rm -rf $FFil/SuperSU
+rm -rf $FFil/SuperSU_Config
+rm -rf $FFil/Fgo_Patch
+#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
+bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
+cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
+
+###
 echo -e "${RED}--------------------Finished making OrangeFox---------------------${NC}"
 echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
