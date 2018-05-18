@@ -22,18 +22,22 @@ echo -e "${RED}----------------------------Making OrangeFox---------------------
 
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 if [ -z "$TW_DEVICE_VERSION" ]; then
-RW_BUILD=Unofficial
+   RW_BUILD=Unofficial
 else
-RW_BUILD=$TW_DEVICE_VERSION
+   RW_BUILD=$TW_DEVICE_VERSION
 fi
+
 RW_VENDOR=vendor/recovery
 RW_WORK=$OUT/RW_AIK
 RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
 RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
-
 RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
+
+# 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
+BUILD_2GB_VERSION=0 # by default, build only the full version
+#
 
 # create an update zip for deployment
 do_create_update_zip() {
@@ -69,26 +73,35 @@ do_create_update_zip() {
   $ZIP_CMD
   
   # create update zip for "GO" version
-  rm -f ./recovery.img
-  cp -a $RECOVERY_IMAGE_2GB ./recovery.img
-  ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE_GO ."
-  echo "- Running ZIP command: $ZIP_CMD"
-  $ZIP_CMD
+  if [ "$BUILD_2GB_VERSION" = "1" ]; then
+  	rm -f ./recovery.img
+  	cp -a $RECOVERY_IMAGE_2GB ./recovery.img
+  	ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE_GO ."
+  	echo "- Running ZIP command: $ZIP_CMD"
+  	$ZIP_CMD
+  fi
   
   # list files
   echo "- Finished:"
   echo "---------------------------------"
   echo " $(/bin/ls -laFt $ZIP_FILE)"
-  echo " $(/bin/ls -laFt $ZIP_FILE_GO)"
+  if [ "$BUILD_2GB_VERSION" = "1" ]; then
+  	echo " $(/bin/ls -laFt $ZIP_FILE_GO)"
+  fi
   echo "---------------------------------"
   
   # export the filenames
   echo "ZIP_FILE=$ZIP_FILE">/tmp/oFox00.tmp
   echo "RECOVERY_IMAGE=$RECOVERY_IMAGE">>/tmp/oFox00.tmp
-  echo "ZIP_FILE_GO=$ZIP_FILE_GO">>/tmp/oFox00.tmp
-  echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
-}
+  if [ "$BUILD_2GB_VERSION" = "1" ]; then  
+	echo "ZIP_FILE_GO=$ZIP_FILE_GO">>/tmp/oFox00.tmp
+  	echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
+  fi	
+} # function
 
+#
+# ****
+#
 if [ -d "$RW_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
  # echo "Removing working folder: \"$RW_WORK\""
@@ -129,19 +142,25 @@ echo -e "${BLUE}-- Repacking and copying recovery${NC}"
 bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
 cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 
-# build GO (2GB) version
-echo -e "${BLUE}-- Repacking and copying the \"GO\" version of recovery${NC}"
-FFil="$RW_WORK/ramdisk/FFiles"
-rm -rf $FFil/Magisk
-rm -rf $FFil/SuperSU
-rm -rf $FFil/SuperSU_Config
-rm -rf $FFil/Fgo_Patch
-#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
-bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
-cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
+#: build "GO" (2GB) version
+if [ "$BUILD_2GB_VERSION" = "1" ]; then
+	echo -e "${BLUE}-- Repacking and copying the \"GO\" version of recovery${NC}"
+	FFil="$RW_WORK/ramdisk/FFiles"
+	#rm -rf $FFil/OF_initd
+	rm -rf $FFil/Magisk
+	rm -rf $FFil/SuperSU
+	rm -rf $FFil/SuperSU_Config
+	rm -rf $FFil/Fgo_Patch
+	rm -rf $FFil/Substratum_Rescue_Legacy
+	rm -rf $FFil/Substratum_Rescue
+	#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
+	bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
+	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
+fi
 
-###
-echo -e "${RED}--------------------Finished making OrangeFox---------------------${NC}"
+### end: "GO" version
+
+echo -e "${RED}--------------------Finished building OrangeFox---------------------${NC}"
 echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
 echo -e ""
