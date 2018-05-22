@@ -11,12 +11,18 @@ save_drift() {
 local now=$(date +%s)
 local epoch=$(cat /sys/class/rtc/rtc0/since_epoch)
 local drift=$(expr $now - $epoch)
-local epoch_cfg=/sdcard/Fox/epoch_drift.cfg
+#local epoch_cfg=/persist/.fox_epoch_drift.cfg
+local epoch_cfg=/sdcard/Fox/.fox_epoch_drift.cfg
 	if [ ! -d /sdcard/Fox/ ]; then 
 		mkdir -p /sdcard/Fox/ 
 	fi
-	echo "Drift ($now minus $epoch)=$drift"
-	echo "$drift" > $epoch_cfg
+	
+	# allow 5 minutes drift
+	if [ $drift -gt 600 ]; then
+	   echo -n "$drift" > $epoch_cfg
+	   echo "Drift ($now minus $epoch)=$drift"
+	   echo "Something trashed your device's RTC on $(date -ud @$drift)!"
+	fi
 }
 
 save_drift
