@@ -8,14 +8,10 @@
 # -------------------------
 
 save_drift() {
+local epoch_cfg=/persist/.fox_epoch_drift.cfg
 local now=$(date +%s)
 local epoch=$(cat /sys/class/rtc/rtc0/since_epoch)
 local drift=$(expr $now - $epoch)
-#local epoch_cfg=/persist/.fox_epoch_drift.cfg
-local epoch_cfg=/sdcard/Fox/.fox_epoch_drift.cfg
-	if [ ! -d /sdcard/Fox/ ]; then 
-		mkdir -p /sdcard/Fox/ 
-	fi
 	
 	# allow 5 minutes drift
 	if [ $drift -gt 600 ]; then
