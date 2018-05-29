@@ -97,11 +97,14 @@ do_create_update_zip() {
 	echo "ZIP_FILE_GO=$ZIP_FILE_GO">>/tmp/oFox00.tmp
   	echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
   fi	
+
+  rm -rf $WORK_DIR #Delete OF Working dir
 } # function
 
 #
 # ****
 #
+
 if [ -d "$RW_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
  # echo "Removing working folder: \"$RW_WORK\""
