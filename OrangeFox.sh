@@ -18,9 +18,10 @@ echo -e "${RED}                                          888                    
 echo -e "${RED}                                     Y8b d88P                                    ${NC}"
 echo -e "${RED}                                      \"Y88P\"                                     ${NC}"
 echo -e ""
-echo -e "${RED}----------------------------Making OrangeFox-------------------------${NC}"
+echo -e "${RED}----------------------------Building OrangeFox-----------------------${NC}"
 
 echo -e "${BLUE}-- Setting up environment variables${NC}"
+
 if [ -z "$TW_DEVICE_VERSION" ]; then
    RW_BUILD=Unofficial
 else
@@ -39,15 +40,49 @@ RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
 BUILD_2GB_VERSION=0 # by default, build only the full version
 #
 
-# create an update zip for deployment
+#** create an update zip for deployment ** #
+
+#
+# Optional (new) environment variables - to be declared before building
+# "FOX_PORTS_TMP" 
+#    - point to a custom temp directory for creating the zip installer
+#
+# "FOX_PORTS_INSTALLER" 
+#    - point to a custom directory for amended/additional installer files 
+#    - contents will simply be copied over before creating the zip installer
+#
+
+# expand a directory path
+fullpath() {
+local T1=$PWD
+  [ -z "$1" ] && return
+  [ ! -d "$1" ] && {
+    echo "$1"
+    return
+  }
+  cd "$1"
+  local T2=$PWD
+  cd $T1
+  echo "$T2"    
+}
+
+# create zip file
 do_create_update_zip() {
-  FOX_DIR=$OUT/../../../../vendor/recovery
+  FOX_DIR=$(fullpath "$OUT/../../../../vendor/recovery")
+  [ ! -d $FOX_DIR/installer ] && {
+     local T="${BASH_SOURCE%/*}"
+     T=$(fullpath $T)
+     [ -x $T/OrangeFox.sh ] && FOX_DIR=$T
+  }
   FILES_DIR=$FOX_DIR/FoxFiles
   INST_DIR=$FOX_DIR/installer
-  WORK_DIR=$FOX_DIR/tmp
+  
+  # did we export tmp directory for OrangeFox ports?
+  [ -n "$FOX_PORTS_TMP" ] && WORK_DIR="$FOX_PORTS_TMP" || WORK_DIR="$FOX_DIR/tmp"
+
+  # names of output zip file(s)
   ZIP_FILE=$OUT/$RW_OUT_NAME.zip
   ZIP_FILE_GO=$OUT/$RW_OUT_NAME"_GO.zip"
-  
   echo "- Creating $ZIP_FILE for deployment ..."
   
   # clean any existing files
@@ -61,10 +96,15 @@ do_create_update_zip() {
   # copy recovery image
   cp -a $RECOVERY_IMAGE ./recovery.img
    
-  # copy installer bins and script and sdcard/
+  # copy installer bins and script 
   cp -ar $INST_DIR/* .
   
-  # copy foxfiles
+  # any local changes to a port's installer directory? (eg, updater-script)
+  if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
+     cp -ar $FOX_PORTS_INSTALLER/* . 
+  fi
+  
+  # copy foxfiles to sdcard/
   cp -a $FILES_DIR/ sdcard/Fox
   
   # create update zip
@@ -97,14 +137,13 @@ do_create_update_zip() {
 	echo "ZIP_FILE_GO=$ZIP_FILE_GO">>/tmp/oFox00.tmp
   	echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
   fi	
-
-  rm -rf $WORK_DIR #Delete OF Working dir
+  
+  rm -rf $WORK_DIR # delete OF Working dir 
 } # function
 
 #
 # ****
 #
-
 if [ -d "$RW_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
  # echo "Removing working folder: \"$RW_WORK\""
@@ -145,22 +184,22 @@ echo -e "${BLUE}-- Repacking and copying recovery${NC}"
 bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
 cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 
-#: build "GO" (2GB) version
+#: build "GO" (2GB) version (virtually obsolete now) #
 if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	echo -e "${BLUE}-- Repacking and copying the \"GO\" version of recovery${NC}"
 	FFil="$RW_WORK/ramdisk/FFiles"
-	#rm -rf $FFil/OF_initd
-	rm -rf $FFil/Magisk
-	rm -rf $FFil/SuperSU
-	rm -rf $FFil/SuperSU_Config
-	rm -rf $FFil/Fgo_Patch
-	rm -rf $FFil/Substratum_Rescue_Legacy
-	rm -rf $FFil/Substratum_Rescue
+	rm -rf $FFil/OF_initd
+	rm -rf $FFil/AromaFM
+	#rm -rf $FFil/Magisk
+	#rm -rf $FFil/SuperSU
+	#rm -rf $FFil/SuperSU_Config
+	#rm -rf $FFil/Fgo_Patch
+	#rm -rf $FFil/Substratum_Rescue_Legacy
+	#rm -rf $FFil/Substratum_Rescue
 	#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
 	bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
 fi
-
 ### end: "GO" version
 
 echo -e "${RED}--------------------Finished building OrangeFox---------------------${NC}"

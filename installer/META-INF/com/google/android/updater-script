@@ -6,7 +6,8 @@ ui_print(" ");
 
 # check for mido/vince
 ifelse(
-      getprop("ro.product.device") == "mido" || getprop("ro.product.device") == "vince",
+      getprop("ro.product.device") == "mido" || 
+      getprop("ro.product.device") == "vince",
         (  
             ui_print("Installing OrangeFox Recovery for " + getprop("ro.product.device") + " ...");
         ),  
@@ -15,9 +16,11 @@ ifelse(
         )  
     );
 
+
 # Install recovery image
 ui_print("Installing OrangeFox recovery ...");
 package_extract_file("recovery.img", "/dev/block/bootdevice/by-name/recovery");
+
 
 # Install /sdcard stuff
 ui_print("Installing FoxFiles on the internal SD ...");
@@ -26,6 +29,7 @@ ui_print("Installing FoxFiles on the internal SD ...");
    delete("/sdcard/Fox/.wolfs");
    package_extract_dir("sdcard", "/sdcard");
    run_program("/sbin/busybox", "umount", "/sdcard");
+
 
 # finish
 ui_print("");
