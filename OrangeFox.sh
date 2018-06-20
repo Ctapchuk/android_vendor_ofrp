@@ -49,7 +49,7 @@ BUILD_2GB_VERSION=0 # by default, build only the full version
 #
 # "FOX_PORTS_INSTALLER" 
 #    - point to a custom directory for amended/additional installer files 
-#    - contents will simply be copied over before creating the zip installer
+#    - the contents will simply be copied over before creating the zip installer
 #
 
 # expand a directory path
@@ -111,7 +111,14 @@ do_create_update_zip() {
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
   $ZIP_CMD
-  
+   
+  #  sign zip installer
+  if [ -f $ZIP_FILE ]; then
+     ZIP_CMD="$FOX_DIR/signature/sign_zip.sh -z $ZIP_FILE"
+     echo "- Running ZIP command: $ZIP_CMD"
+     $ZIP_CMD    
+  fi
+
   # create update zip for "GO" version
   if [ "$BUILD_2GB_VERSION" = "1" ]; then
   	rm -f ./recovery.img
@@ -119,8 +126,14 @@ do_create_update_zip() {
   	ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE_GO ."
   	echo "- Running ZIP command: $ZIP_CMD"
   	$ZIP_CMD
+  	#  sign zip installer ("GO" version)
+  	if [ -f $ZIP_FILE_GO ]; then
+     	   ZIP_CMD="$FOX_DIR/signature/sign_zip.sh -z $ZIP_FILE_GO"
+     	   echo "- Running ZIP command: $ZIP_CMD"
+     	   $ZIP_CMD
+     	fi
   fi
-  
+ 
   # list files
   echo "- Finished:"
   echo "---------------------------------"
@@ -190,12 +203,6 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	FFil="$RW_WORK/ramdisk/FFiles"
 	rm -rf $FFil/OF_initd
 	rm -rf $FFil/AromaFM
-	#rm -rf $FFil/Magisk
-	#rm -rf $FFil/SuperSU
-	#rm -rf $FFil/SuperSU_Config
-	#rm -rf $FFil/Fgo_Patch
-	#rm -rf $FFil/Substratum_Rescue_Legacy
-	#rm -rf $FFil/Substratum_Rescue
 	#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
 	bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
