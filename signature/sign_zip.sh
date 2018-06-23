@@ -56,7 +56,8 @@ processzip() {
   [ ! -f $1 ] && abort "Error: \"$1\" file not found"
   zipbase=$(basename -s .zip $1)  # strip the .zip extension
   java -jar $j1_jar $PEM $KEY $1 "$zipbase"_tmp1
-  zipadjust "$zipbase"_tmp1 "$zipbase"_fixed
+  #echo "Adjust programe = $WORK_DIR/zipadjust "$zipbase"_tmp1 "$zipbase"_fixed"
+  $WORK_DIR/zipadjust "$zipbase"_tmp1 "$zipbase"_fixed
   java -jar $j2_jar $PEM $KEY "$zipbase"_fixed "$zipbase"-signed.zip 
   rm -f "$zipbase"_tmp1 "$zipbase"_fixed
   rm -f "$zipbase"-unsigned.zip
