@@ -98,14 +98,20 @@ do_create_update_zip() {
    
   # copy installer bins and script 
   cp -ar $INST_DIR/* .
+
+  # copy FoxFiles/ to sdcard/
+  cp -a $FILES_DIR/ sdcard/Fox
   
   # any local changes to a port's installer directory? (eg, updater-script)
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
      cp -ar $FOX_PORTS_INSTALLER/* . 
   fi
   
-  # copy foxfiles to sdcard/
-  cp -a $FILES_DIR/ sdcard/Fox
+  # patch updater-script to run only for the current device (change default to only mido)
+  if [ "$RW_DEVICE" != "mido" ]; then
+     local F="$WORK_DIR/META-INF/com/google/android/updater-script"
+     sed -i -e "s/mido/$RW_DEVICE/g" $F
+  fi
   
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."

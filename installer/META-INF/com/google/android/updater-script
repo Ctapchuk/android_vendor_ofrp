@@ -4,20 +4,18 @@ ui_print("*** |By MrYacha, DarthJabba9 and ManoloRey|  ***");
 ui_print("************************************************");
 ui_print(" ");
 
-# check for mido/vince
+# check for mido
 ifelse(
-      getprop("ro.product.device") == "mido" || 
-      getprop("ro.product.device") == "vince",
+      getprop("ro.product.device") == "mido",
         (  
             ui_print("Installing OrangeFox Recovery for " + getprop("ro.product.device") + " ...");
         ),  
         (  
-            abort("E3004: This package is for mido/vince. This device (" + getprop("ro.product.device") + ") is not supported.");
+            abort("E3004: This package is for mido. This device (" + getprop("ro.product.device") + ") is not supported.");
         )  
     );
 
-
-# Install recovery image
+# Install the recovery image
 ui_print("Installing OrangeFox recovery ...");
 package_extract_file("recovery.img", "/dev/block/bootdevice/by-name/recovery");
 
@@ -52,4 +50,12 @@ run_program("/sbin/sleep", "1");
 ui_print("-Rebooting to Recovery ...");
 run_program("/sbin/sleep", "1");
 run_program("/sbin/reboot", "recovery");
+
+# if the reboot command fails (in some TWRP versions, it will fail), try this instead
+ui_print("");
+ui_print("");
+ui_print("");
+ui_print("If this screen still displays after 10 seconds, reboot to recovery manually.");
+run_program("/sbin/sleep", "2");
+run_program("sbin/sh" , "-c", "killall recovery");
 
