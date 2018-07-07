@@ -30,10 +30,11 @@ fi
 
 RW_VENDOR=vendor/recovery
 RW_WORK=$OUT/RW_AIK
+RW_RAMDISK="$RW_WORK/ramdisk"
 RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
-
 RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
 RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
+FOX_VENDOR_PATH="$OUT/../../../../vendor/recovery"
 
 # 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
@@ -66,19 +67,24 @@ local T1=$PWD
   echo "$T2"    
 }
 
-# create zip file
-do_create_update_zip() {
-  FOX_DIR=$(fullpath "$OUT/../../../../vendor/recovery")
-  [ ! -d $FOX_DIR/installer ] && {
+# expand
+expand_vendor_path() {
+  FOX_VENDOR_PATH=$(fullpath "$OUT/../../../../vendor/recovery")
+  [ ! -d $FOX_VENDOR_PATH/installer ] && {
      local T="${BASH_SOURCE%/*}"
      T=$(fullpath $T)
-     [ -x $T/OrangeFox.sh ] && FOX_DIR=$T
+     [ -x $T/OrangeFox.sh ] && FOX_VENDOR_PATH=$T
   }
-  FILES_DIR=$FOX_DIR/FoxFiles
-  INST_DIR=$FOX_DIR/installer
+}
+
+# create zip file
+do_create_update_zip() {
+local WORK_DIDR=""
+  FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
+  INST_DIR=$FOX_VENDOR_PATH/installer
   
   # did we export tmp directory for OrangeFox ports?
-  [ -n "$FOX_PORTS_TMP" ] && WORK_DIR="$FOX_PORTS_TMP" || WORK_DIR="$FOX_DIR/tmp"
+  [ -n "$FOX_PORTS_TMP" ] && WORK_DIR="$FOX_PORTS_TMP" || WORK_DIR="$FOX_VENDOR_PATH/tmp"
 
   # names of output zip file(s)
   ZIP_FILE=$OUT/$RW_OUT_NAME.zip
@@ -120,7 +126,7 @@ do_create_update_zip() {
    
   #  sign zip installer
   if [ -f $ZIP_FILE ]; then
-     ZIP_CMD="$FOX_DIR/signature/sign_zip.sh -z $ZIP_FILE"
+     ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
      echo "- Running ZIP command: $ZIP_CMD"
      $ZIP_CMD    
   fi
@@ -134,7 +140,7 @@ do_create_update_zip() {
   	$ZIP_CMD
   	#  sign zip installer ("GO" version)
   	if [ -f $ZIP_FILE_GO ]; then
-     	   ZIP_CMD="$FOX_DIR/signature/sign_zip.sh -z $ZIP_FILE_GO"
+     	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
      	   echo "- Running ZIP command: $ZIP_CMD"
      	   $ZIP_CMD
      	fi
@@ -160,60 +166,71 @@ do_create_update_zip() {
   rm -rf $WORK_DIR # delete OF Working dir 
 } # function
 
-#
-# ****
-#
+# ****************************************************
+# *** now the real work starts!
+# ****************************************************
+
+# get the full FOX_VENDOR_PATH
+expand_vendor_path
+
+# is the working directory still there from a previous build? If so, remove it
 if [ -d "$RW_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
- # echo "Removing working folder: \"$RW_WORK\""
   rm -rf "$RW_WORK"
 fi
 
+# unpack recovery image into working directory
 echo -e "${BLUE}-- Unpacking recovery image${NC}"
 bash "$RW_VENDOR/tools/mkboot" "$OUT/recovery.img" "$RW_WORK" > /dev/null 2>&1
 
+# copy stuff to the ramdisk
 echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
 case "$TARGET_ARCH" in
  "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/arm/mkbootimg" "$RW_WORK/ramdisk/sbin"
-      cp "$RW_VENDOR/prebuilt/arm/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/arm/mkbootimg" "$RW_RAMDISK/sbin"
+      cp "$RW_VENDOR/prebuilt/arm/unpackbootimg" "$RW_RAMDISK/sbin"
       ;;
  "arm64")
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/arm64/mkbootimg" "$RW_WORK/ramdisk/sbin"
-      cp "$RW_VENDOR/prebuilt/arm64/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/arm64/mkbootimg" "$RW_RAMDISK/sbin"
+      cp "$RW_VENDOR/prebuilt/arm64/unpackbootimg" "$RW_RAMDISK/sbin"
       ;;
  "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/x86/mkbootimg" "$RW_WORK/ramdisk/sbin"
-      cp "$RW_VENDOR/prebuilt/x86/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/x86/mkbootimg" "$RW_RAMDISK/sbin"
+      cp "$RW_VENDOR/prebuilt/x86/unpackbootimg" "$RW_RAMDISK/sbin"
       ;;
  "x86_64")
       echo -e "${GREEN}-- x86_64 arch detected. Copying x86_64 binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/x86_64/mkbootimg" "$RW_WORK/ramdisk/sbin"
-      cp "$RW_VENDOR/prebuilt/x86_64/unpackbootimg" "$RW_WORK/ramdisk/sbin"
+      cp "$RW_VENDOR/prebuilt/x86_64/mkbootimg" "$RW_RAMDISK/sbin"
+      cp "$RW_VENDOR/prebuilt/x86_64/unpackbootimg" "$RW_RAMDISK/sbin"
       ;;
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
 esac
 
 # build standard (3GB) version
-echo -e "${BLUE}-- Repacking and copying recovery${NC}"
-#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE ***"
-bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
-cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
+DEBUG=0
+  # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
+  [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $RW_RAMDISK/"
+  cp -ar $FOX_VENDOR_PATH/FoxExtras/* $RW_RAMDISK/
+  echo -e "${BLUE}-- Repacking and copying recovery${NC}"
+  [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE ***"
+  bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
+  cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
+# end: standard version
 
 #: build "GO" (2GB) version (virtually obsolete now) #
 if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	echo -e "${BLUE}-- Repacking and copying the \"GO\" version of recovery${NC}"
-	FFil="$RW_WORK/ramdisk/FFiles"
+	FFil="$RW_RAMDISK/FFiles"
 	rm -rf $FFil/OF_initd
 	rm -rf $FFil/AromaFM
-	#echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
+	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
 	bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
 fi
-### end: "GO" version
+# end: "GO" version
 
 echo -e "${RED}--------------------Finished building OrangeFox---------------------${NC}"
 echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
@@ -223,6 +240,7 @@ echo -e "${GREEN}Recovery zip: $OUT/$RW_OUT_NAME.zip"
 
 echo -e "${RED}==================================================================${NC}"
 
-# create update zip
+# create update zip installer
 do_create_update_zip
+# end!
 
