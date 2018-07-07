@@ -79,7 +79,7 @@ expand_vendor_path() {
 
 # create zip file
 do_create_update_zip() {
-local WORK_DIDR=""
+local WORK_DIR=""
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
   
