@@ -54,8 +54,11 @@ MIUI_Action() {
    dir $C >> $L
    D="DEBUG: OrangeFox detects a Custom ROM."
    if [ "$M" = "1" ]; then
-      D="DEBUG: OrangeFox detects a MIUI ROM. Removing /vendor from fstab."
-      sed -i -e "s|/vendor|#/vendor|g" /etc/recovery.fstab
+      D="DEBUG: OrangeFox detects a MIUI ROM."
+      if [ ! "$T" = "1" ]; then   # this is a non-Treble miui ROM
+         D="$D Removing /vendor from fstab."
+         sed -i -e "s|/vendor|#/vendor|g" /etc/recovery.fstab
+      fi
    fi
   echo $D >> $L
 }
