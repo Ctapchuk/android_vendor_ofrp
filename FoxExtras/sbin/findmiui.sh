@@ -3,7 +3,7 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox Recovery
 # - Author: DarthJabba9
-# - Date: 4 July 2018
+# - Date: 7 July 2018
 #
 # * Detect whether the device has a MIUI ROM, and, if so, don't mount "/vendor" 
 #
@@ -13,11 +13,11 @@ C="/cust"
 L=/tmp/recovery.log
 
 isMIUI() {
-local F=0
-  if [ -d "$C""$C" ] && [ -d $C/app ] && [ -d $C/prebuilts ]; then
-     F=1
+  if [ -d "$C""$C" ] && [ -d $C/app/ ] && [ -d $C/prebuilts/ ]; then
+     echo "1"
+  else 
+     echo "0"   
   fi
-  echo $F
 }
 
 mkdir -p $C
