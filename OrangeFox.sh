@@ -114,10 +114,12 @@ local WORK_DIR=""
   fi
   
   # patch updater-script to run only for the current device (change default to only mido)
+  local F="$WORK_DIR/META-INF/com/google/android/updater-script"
   if [ "$RW_DEVICE" != "mido" ]; then
-     local F="$WORK_DIR/META-INF/com/google/android/updater-script"
-     sed -i -e "s/mido/$RW_DEVICE/g" $F
+     sed -i -e "s/mido/$RW_DEVICE/g" $F     
   fi
+  # embed the release version
+  sed -i -e "s/RELEASE_VER/$RW_BUILD/" $F
   
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
