@@ -1,27 +1,19 @@
 #!/sbin/sh
 #
 # - /sbin/findmiui.sh
-# - Custom script for OrangeFox Recovery
+# - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 9 July 2018
+# - Date: 14 July 2018
 #
-# * Detect whether the device has a MIUI ROM, and, if so, don't mount "/vendor" 
+# * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 #
 
-C="/cust"
+C="/tmp_cust"
 L=/tmp/recovery.log
 T=0
 M=0
-
-# is it miui ?
-isMIUI() {
-  if [ -d "$C""$C" ] && [ -d $C/app/ ] && [ -d $C/prebuilts/ ]; then
-     echo "1"
-  else 
-     echo "0"   
-  fi
-}
+DEBUG=0  # enable for more debug messages
 
 # is it a treble ROM ?
 isTreble() {
@@ -32,30 +24,101 @@ isTreble() {
   fi
 }
 
+# is it miui ?
+isMIUI() {
+  if [ -d $C/cust/ ] && [ -d $C/app/ ] && [ -d $C/prebuilts/ ]; then
+     echo "1"
+  else 
+     echo "0"   
+  fi
+}
+
+#  some optional debug message stuff
+DebugDirList() {
+   [ ! "$DEBUG" = "1" ] && return
+   echo "DEBUG: OrangeFox: directory list of $1" >> $L
+   ls -all $1 >> $L
+}
+
+# optional debug message
+DebugMsg() {
+   [ ! "$DEBUG" = "1" ] && return
+   echo "DEBUG: OrangeFox: $@" >> $L
+}
+
+# probe the installed ROM
 Get_Details() {
    # mount /cust
    mkdir -p $C
    mount -t ext4 /dev/block/bootdevice/by-name/cust $C
-   sleep 1
-
-   # check for MIUI
-   M=$(isMIUI)
 
    # check for Treble
    T=$(isTreble)
 
+   # check for MIUI
+   M=$(isMIUI)
+
+   DebugDirList "$C/"
+   DebugDirList "$C/app/"
+
    # unmount
    umount $C
+   rmdir $C
+   
+   # clearly not miui - return
+   [ "$M" = "0" ] && return
+
+   # further checks for miui (if it thinks we have miui)
+   local S="/tmp_system"
+   local A="$S/app"
+   local E="$S/etc"
+   M="0"
+   
+   # mount /system and check
+   if [ -d "$S" ]; then
+      DebugMsg "$S already exists"
+      umount $S
+   else
+      DebugMsg "Creating $S"
+      mkdir -p $S
+   fi
+   
+   mount -t ext4 /dev/block/bootdevice/by-name/system $S
+
+   DebugDirList "$S/"
+   DebugDirList "$S/vendor"
+
+   if [ -d $A/miui/ ] &&  [ -d $A/miuisystem/ ] &&  [ -d $A/MiuiBluetooth/ ]; then
+      DebugMsg "Second round of miui checks succeeded."
+      if [ -d $E/cust/ ] &&  [ -d $E/miui_feature/ ] &&  [ -d $E/precust_theme/ ]; then
+         DebugMsg "Third round of miui checks succeeded. Definitely MIUI!"
+         M="1"
+      fi
+   fi
+   
+   # unmount
+   umount $S
+   rmdir $S
+}
+
+# report on Treble
+Treble_Action() {
+   echo "DEBUG: OrangeFox: check for Treble." >> $L
+   if [ "$T" = "1" ]; then
+      D="DEBUG: OrangeFox: detected a Treble ROM."
+   else
+      D="DEBUG: OrangeFox: detected a Non-Treble ROM."
+   fi
+   echo $D >> $L
 }
 
 # report on MIUI and take action
 MIUI_Action() {
    echo "DEBUG: OrangeFox: check for MIUI." >> $L
-   dir $C >> $L
-   D="DEBUG: OrangeFox detects a Custom ROM."
+   D="DEBUG: OrangeFox: detected a Custom ROM."
    if [ "$M" = "1" ]; then
-      D="DEBUG: OrangeFox detects a MIUI ROM."
-      if [ ! "$T" = "1" ]; then   # this is a non-Treble miui ROM
+      D="DEBUG: OrangeFox: detected a non-Treble MIUI ROM."
+      if [ ! "$T" = "1" ]; then   # this looks like a non-Treble miui ROM
          D="$D Removing /vendor from fstab."
          sed -i -e "s|/vendor|#/vendor|g" /etc/recovery.fstab
       fi
@@ -63,21 +126,12 @@ MIUI_Action() {
   echo $D >> $L
 }
 
-# report on Treble
-Treble_Action() {
-   echo "DEBUG: OrangeFox: check for Treble." >> $L
-   dir $C >> $L
-   if [ "$T" = "1" ]; then
-      D="DEBUG: OrangeFox detects a Treble ROM."
-   else
-      D="DEBUG: OrangeFox detects a Non-Treble ROM."
-   fi
-   echo $D >> $L
-}
-
 ### main() ###
 Get_Details
-MIUI_Action
+
+# if non-treble, take action on miui
+[ "$T" = "0" ] && MIUI_Action
+
 Treble_Action
 ### end main ###
 
