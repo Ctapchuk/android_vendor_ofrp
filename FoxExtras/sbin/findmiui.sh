@@ -3,14 +3,15 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 14 July 2018
+# - Date: 23 July 2018
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 #
 
 C="/tmp_cust"
-L=/tmp/recovery.log
+L="/tmp/recovery.log"
+FS="/etc/recovery.fstab"
 T=0
 M=0
 DEBUG=0  # enable for more debug messages
@@ -101,6 +102,17 @@ Get_Details() {
    rmdir $S
 }
 
+# remove /cust or /vendor from fstab
+mod_cust_vendor() {
+  if [ "$1" = "1" ]; then # treble - remove /cust
+     D="$D Removing \"/cust\" from $FS"
+     sed -i -e 's|^/cust|##/cust|' $FS
+  else # non-treble -remove /vendor
+     D="$D  Removing \"/vendor\" from $FS"
+     sed -i -e "s|^/vendor|##/vendor|g" $FS
+  fi
+}
+
 # report on Treble
 Treble_Action() {
    echo "DEBUG: OrangeFox: check for Treble." >> $L
@@ -109,6 +121,7 @@ Treble_Action() {
    else
       D="DEBUG: OrangeFox: detected a Non-Treble ROM."
    fi
+   mod_cust_vendor "$T"
    echo $D >> $L
 }
 
@@ -118,20 +131,32 @@ MIUI_Action() {
    D="DEBUG: OrangeFox: detected a Custom ROM."
    if [ "$M" = "1" ]; then
       D="DEBUG: OrangeFox: detected a non-Treble MIUI ROM."
-      if [ ! "$T" = "1" ]; then   # this looks like a non-Treble miui ROM
-         D="$D Removing /vendor from fstab."
-         sed -i -e "s|/vendor|#/vendor|g" /etc/recovery.fstab
-      fi
+      #if [ ! "$T" = "1" ]; then   # this looks like a non-Treble miui ROM
+      #   D="$D Removing /vendor from $FS."
+      #   sed -i -e "s|/vendor|#/vendor|g" $FS
+      #fi
    fi
   echo $D >> $L
 }
 
+# backup (or restore) fstab
+backup_restore_FS() {
+   if [ ! -f "$FS.org" ]; then
+      cp -a "$FS" "$FS.org"
+   else   
+      cp -a "$FS.org" "$FS"
+   fi
+}
+
 ### main() ###
+
+backup_restore_FS
+
 Get_Details
 
-# if non-treble, take action on miui
-[ "$T" = "0" ] && MIUI_Action
-
 Treble_Action
+
+MIUI_Action
+
 ### end main ###
 
