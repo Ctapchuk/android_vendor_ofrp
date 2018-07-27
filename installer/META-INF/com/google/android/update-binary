@@ -41,8 +41,7 @@ old_package_extract_file() {
 }
 
 # package_extract_dir <dir> <destination_dir>
-old_package_extract_dir() 
-{
+old_package_extract_dir() {
   for entry in $(unzip -l "$ZIPFILE" "$1/*" 2>/dev/null | tail -n+4 | grep -o " $1.*$" | cut -c2-); do
     outfile=$(echo "$entry" | sed "s|${1}|${2}|")
     mkdir -p "$(dirname "$outfile")"
@@ -50,8 +49,7 @@ old_package_extract_dir()
   done;
 }
 
-package_extract_dir() 
-{
+package_extract_dir() {
    if [ -d $EX_DIR/$1 ]; then
       cp -a $EX_DIR/$1/* $2
    else
@@ -59,8 +57,7 @@ package_extract_dir()
    fi
 } 
 
-package_extract_file() 
-{
+package_extract_file() {
    if [ -e $EX_DIR/$1 ]; then
       dd if=$EX_DIR/$1 of=$2
    else
