@@ -33,7 +33,7 @@ RW_WORK=$OUT/RW_AIK
 RW_RAMDISK="$RW_WORK/ramdisk"
 RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
-RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
+RECOVERY_IMAGE="$OUT/recovery.img"
 FOX_VENDOR_PATH="$OUT/../../../../vendor/recovery"
 
 # 2GB version
@@ -114,8 +114,7 @@ local WORK_DIR=""
   fi
   
   # patch updater-script to run only for the current device (change default to only mido)
-#  local F="$WORK_DIR/META-INF/com/google/android/updater-script"
-  local F="$WORK_DIR/META-INF/com/google/android/update-binary"
+  local F="$WORK_DIR/META-INF/com/google/android/updater-script"
   if [ "$RW_DEVICE" != "mido" ]; then
      sed -i -e "s/mido/$RW_DEVICE/g" $F     
   fi
