@@ -28,13 +28,13 @@ else
    RW_BUILD=$TW_DEVICE_VERSION
 fi
 
-RW_VENDOR=vendor/fox
+RW_VENDOR=vendor/recovery
 RW_WORK=$OUT/RW_AIK
 RW_RAMDISK="$RW_WORK/ramdisk"
 RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
 RECOVERY_IMAGE="$OUT/recovery.img"
-FOX_VENDOR_PATH="$OUT/../../../../vendor/fox"
+FOX_VENDOR_PATH="$OUT/../../../../vendor/recovery"
 
 # 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
@@ -69,7 +69,7 @@ local T1=$PWD
 
 # expand
 expand_vendor_path() {
-  FOX_VENDOR_PATH=$(fullpath "$OUT/../../../../vendor/fox")
+  FOX_VENDOR_PATH=$(fullpath "$OUT/../../../../vendor/recovery")
   [ ! -d $FOX_VENDOR_PATH/installer ] && {
      local T="${BASH_SOURCE%/*}"
      T=$(fullpath $T)
