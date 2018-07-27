@@ -114,7 +114,8 @@ local WORK_DIR=""
   fi
   
   # patch updater-script to run only for the current device (change default to only mido)
-  local F="$WORK_DIR/META-INF/com/google/android/updater-script"
+#  local F="$WORK_DIR/META-INF/com/google/android/updater-script"
+  local F="$WORK_DIR/META-INF/com/google/android/update-binary"
   if [ "$RW_DEVICE" != "mido" ]; then
      sed -i -e "s/mido/$RW_DEVICE/g" $F     
   fi
