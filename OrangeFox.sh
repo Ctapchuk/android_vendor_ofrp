@@ -79,6 +79,7 @@ expand_vendor_path() {
 
 # create zip file
 do_create_update_zip() {
+echo -e "${BLUE}-- Making update.zip${NC}"
 local WORK_DIR=""
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
@@ -130,7 +131,7 @@ local WORK_DIR=""
   if [ -f $ZIP_FILE ]; then
      ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
      echo "- Running ZIP command: $ZIP_CMD"
-     $ZIP_CMD    
+     $ZIP_CMD
   fi
 
   # create update zip for "GO" version
@@ -234,6 +235,9 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 fi
 # end: "GO" version
 
+# create update zip installer
+do_create_update_zip
+
 echo -e "${RED}--------------------Finished building OrangeFox---------------------${NC}"
 echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
@@ -242,7 +246,5 @@ echo -e "${GREEN}Recovery zip: $OUT/$RW_OUT_NAME.zip"
 
 echo -e "${RED}==================================================================${NC}"
 
-# create update zip installer
-do_create_update_zip
 # end!
 
