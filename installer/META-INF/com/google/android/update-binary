@@ -80,7 +80,7 @@ abort() {
 CheckRequirements() {
 PRODUCT_DEVICE=$(getprop "ro.product.device")
    if [ "$PRODUCT_DEVICE" = "$TARGET_DEVICE" ]; then
-     ui_print "- OrangeFox TWRP (RELEASE_VER) for $TARGET_DEVICE ..."
+     ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE ..."
    else
      abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
    fi
