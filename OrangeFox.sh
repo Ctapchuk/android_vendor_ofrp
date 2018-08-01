@@ -38,10 +38,8 @@ FOX_VENDOR_PATH="$OUT/../../../../vendor/recovery"
 
 # 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
-BUILD_2GB_VERSION=0 # by default, build only the full version
+[ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION=0 # by default, build only the full version
 #
-
-#** create an update zip for deployment ** #
 
 #
 # Optional (new) environment variables - to be declared before building
@@ -51,6 +49,10 @@ BUILD_2GB_VERSION=0 # by default, build only the full version
 # "FOX_PORTS_INSTALLER" 
 #    - point to a custom directory for amended/additional installer files 
 #    - the contents will simply be copied over before creating the zip installer
+#
+# "FOX_LOCAL_CALLBACK_SCRIPT"
+#    - point to a custom "callback" script that will be executed just before creating the final recovery image
+#    - eg, a script to delete some files, or add some files to the ramdisk
 #
 
 # expand a directory path
@@ -81,6 +83,8 @@ expand_vendor_path() {
 do_create_update_zip() {
 echo -e "${BLUE}-- Making update.zip${NC}"
 local WORK_DIR=""
+
+  echo -e "${BLUE}-- Creating update.zip${NC}"
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
   
@@ -138,7 +142,7 @@ local WORK_DIR=""
   if [ "$BUILD_2GB_VERSION" = "1" ]; then
   	rm -f ./recovery.img
   	cp -a $RECOVERY_IMAGE_2GB ./recovery.img
-  	ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE_GO ."
+  	ZIP_CMD="zip --exclude=*.git* --exclude=OrangeFox*.zip* -r9 $ZIP_FILE_GO ."
   	echo "- Running ZIP command: $ZIP_CMD"
   	$ZIP_CMD
   	#  sign zip installer ("GO" version)
@@ -217,6 +221,13 @@ DEBUG=0
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $RW_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $RW_RAMDISK/
+  
+  # if a local callback script is declared, run it, passing to it the ramdisk directory
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+     $FOX_LOCAL_CALLBACK_SCRIPT "$RW_RAMDISK"
+  fi
+  #
+  # repack
   echo -e "${BLUE}-- Repacking and copying recovery${NC}"
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE ***"
   bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
@@ -243,8 +254,6 @@ echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
 echo -e ""
 echo -e "${GREEN}Recovery zip: $OUT/$RW_OUT_NAME.zip"
-
 echo -e "${RED}==================================================================${NC}"
 
 # end!
-
