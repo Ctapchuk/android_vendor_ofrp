@@ -33,7 +33,11 @@ RW_WORK=$OUT/RW_AIK
 RW_RAMDISK="$RW_WORK/ramdisk"
 RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
-RECOVERY_IMAGE="$OUT/recovery.img"
+if [[ "$OF_MAINTAINER" = *"DarthJabba9"* ]]; then
+   RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
+else
+   RECOVERY_IMAGE="$OUT/recovery.img"
+fi
 FOX_VENDOR_PATH="$OUT/../../../../vendor/recovery"
 
 # 2GB version
@@ -83,7 +87,7 @@ expand_vendor_path() {
 do_create_update_zip() {
 echo -e "${BLUE}-- Making update.zip${NC}"
 local WORK_DIR=""
-
+local TDT=$(date "+%d %B %Y")
   echo -e "${BLUE}-- Creating update.zip${NC}"
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
@@ -113,18 +117,22 @@ local WORK_DIR=""
   # copy FoxFiles/ to sdcard/
   cp -a $FILES_DIR/ sdcard/Fox
   
-  # any local changes to a port's installer directory? (eg, updater-script)
+  # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
      cp -ar $FOX_PORTS_INSTALLER/* . 
   fi
   
-  # patch updater-script to run only for the current device (change default to only mido)
-  local F="$WORK_DIR/META-INF/com/google/android/updater-script"
+  # patch update-binary (which is a script) to run only for the current device (mido is default; change if the device is not mido)
+  local F="$WORK_DIR/META-INF/com/google/android/update-binary"
   if [ "$RW_DEVICE" != "mido" ]; then
      sed -i -e "s/mido/$RW_DEVICE/g" $F     
   fi
   # embed the release version
   sed -i -e "s/RELEASE_VER/$RW_BUILD/" $F
+
+  # embed the build date
+  sed -i -e "s/TODAY/$TDT/" $F
+  
   
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
