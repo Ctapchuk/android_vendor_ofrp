@@ -37,6 +37,9 @@ RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
 RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 
+#Copy recovery.img
+cp -r $OUT/recovery.img $RECOVERY_IMAGE
+
 # 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
 [ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION=0 # by default, build only the full version
