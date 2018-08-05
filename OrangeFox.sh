@@ -23,25 +23,26 @@ echo -e "${RED}----------------------------Building OrangeFox-------------------
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 
 if [ -z "$TW_DEVICE_VERSION" ]; then
-   RW_BUILD=Unofficial
+   FOX_BUILD=Unofficial
 else
-   RW_BUILD=$TW_DEVICE_VERSION
+   FOX_BUILD=$TW_DEVICE_VERSION
 fi
 
 RECOVERY_DIR="recovery"
-RW_VENDOR=vendor/$RECOVERY_DIR
-RW_WORK=$OUT/RW_AIK
-RW_RAMDISK="$RW_WORK/ramdisk"
-RW_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
-RW_OUT_NAME=OrangeFox-$RW_BUILD-$RW_DEVICE
-RECOVERY_IMAGE="$OUT/$RW_OUT_NAME.img"
+FOX_VENDOR=vendor/$RECOVERY_DIR
+FOX_WORK=$OUT/FOX_AIK
+FOX_RAMDISK="$FOX_WORK/ramdisk"
+FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
+FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
+RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
+
 
 #Copy recovery.img
 cp -r $OUT/recovery.img $RECOVERY_IMAGE
 
 # 2GB version
-RECOVERY_IMAGE_2GB=$OUT/$RW_OUT_NAME"_GO.img"
+RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_GO.img"
 [ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION=0 # by default, build only the full version
 #
 
@@ -97,8 +98,8 @@ local TDT=$(date "+%d %B %Y")
   [ -n "$FOX_PORTS_TMP" ] && WORK_DIR="$FOX_PORTS_TMP" || WORK_DIR="$FOX_VENDOR_PATH/tmp"
 
   # names of output zip file(s)
-  ZIP_FILE=$OUT/$RW_OUT_NAME.zip
-  ZIP_FILE_GO=$OUT/$RW_OUT_NAME"_GO.zip"
+  ZIP_FILE=$OUT/$FOX_OUT_NAME.zip
+  ZIP_FILE_GO=$OUT/$FOX_OUT_NAME"_GO.zip"
   echo "- Creating $ZIP_FILE for deployment ..."
   
   # clean any existing files
@@ -126,12 +127,12 @@ local TDT=$(date "+%d %B %Y")
   # patch update-binary (which is a script) to run only for the current device 
   # (mido is the default; it will be patched if the device is not mido)
   local F="$WORK_DIR/META-INF/com/google/android/update-binary"
-  if [ "$RW_DEVICE" != "mido" ]; then
-     sed -i -e "s/mido/$RW_DEVICE/g" $F     
+  if [ "$FOX_DEVICE" != "mido" ]; then
+     sed -i -e "s/mido/$FOX_DEVICE/g" $F     
   fi
 
   # embed the release version
-  sed -i -e "s/RELEASE_VER/$RW_BUILD/" $F
+  sed -i -e "s/RELEASE_VER/$FOX_BUILD/" $F
 
   # embed the build date
   sed -i -e "s/TODAY/$TDT/" $F
@@ -191,37 +192,37 @@ local TDT=$(date "+%d %B %Y")
 expand_vendor_path
 
 # is the working directory still there from a previous build? If so, remove it
-if [ -d "$RW_WORK" ]; then
+if [ -d "$FOX_WORK" ]; then
   echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
-  rm -rf "$RW_WORK"
+  rm -rf "$FOX_WORK"
 fi
 
 # unpack recovery image into working directory
 echo -e "${BLUE}-- Unpacking recovery image${NC}"
-bash "$RW_VENDOR/tools/mkboot" "$OUT/recovery.img" "$RW_WORK" > /dev/null 2>&1
+bash "$FOX_VENDOR/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 
 # copy stuff to the ramdisk
 echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
 case "$TARGET_ARCH" in
  "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/arm/mkbootimg" "$RW_RAMDISK/sbin"
-      cp "$RW_VENDOR/prebuilt/arm/unpackbootimg" "$RW_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
  "arm64")
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/arm64/mkbootimg" "$RW_RAMDISK/sbin"
-      cp "$RW_VENDOR/prebuilt/arm64/unpackbootimg" "$RW_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
  "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/x86/mkbootimg" "$RW_RAMDISK/sbin"
-      cp "$RW_VENDOR/prebuilt/x86/unpackbootimg" "$RW_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/x86/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/x86/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
  "x86_64")
       echo -e "${GREEN}-- x86_64 arch detected. Copying x86_64 binaries${NC}"
-      cp "$RW_VENDOR/prebuilt/x86_64/mkbootimg" "$RW_RAMDISK/sbin"
-      cp "$RW_VENDOR/prebuilt/x86_64/unpackbootimg" "$RW_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/x86_64/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR/prebuilt/x86_64/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
 esac
@@ -229,29 +230,29 @@ esac
 # build standard (3GB) version
 DEBUG=0
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
-  [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $RW_RAMDISK/"
-  cp -ar $FOX_VENDOR_PATH/FoxExtras/* $RW_RAMDISK/
+  [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
+  cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
   
   # if a local callback script is declared, run it, passing to it the ramdisk directory
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$RW_RAMDISK"
+     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK"
   fi
   #
   # repack
   echo -e "${BLUE}-- Repacking and copying recovery${NC}"
-  [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE ***"
-  bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
+  [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
+  bash "$FOX_VENDOR/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
   cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 # end: standard version
 
 #: build "GO" (2GB) version (virtually obsolete now) #
 if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	echo -e "${BLUE}-- Repacking and copying the \"GO\" version of recovery${NC}"
-	FFil="$RW_RAMDISK/FFiles"
+	FFil="$FOX_RAMDISK/FFiles"
 	rm -rf $FFil/OF_initd
 	rm -rf $FFil/AromaFM
-	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $RW_VENDOR/tools/mkboot $RW_WORK $RECOVERY_IMAGE_2GB ***"
-	bash "$RW_VENDOR/tools/mkboot" "$RW_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
+	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
+	bash "$FOX_VENDOR/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
 fi
 # end: "GO" version
@@ -263,7 +264,7 @@ echo -e "${RED}--------------------Finished building OrangeFox------------------
 echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
 echo -e ""
-echo -e "${GREEN}Recovery zip: $OUT/$RW_OUT_NAME.zip"
+echo -e "${GREEN}Recovery zip: $OUT/$FOX_OUT_NAME.zip"
 echo -e "${RED}==================================================================${NC}"
 
 # end!
