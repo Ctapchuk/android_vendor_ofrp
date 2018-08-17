@@ -149,6 +149,10 @@ local TDT=$(date "+%d %B %Y")
      $ZIP_CMD
   fi
 
+  #Creating ZIP md5
+  echo -e "${BLUE}-- Creating md5 for $ZIP_FILE${NC}"
+  cd "$OUT" && md5sum "$ZIP_FILE" > "$ZIP_FILE.md5" && cd - > /dev/null 2>&1
+
   # create update zip for "GO" version
   if [ "$BUILD_2GB_VERSION" = "1" ]; then
   	rm -f ./recovery.img
@@ -162,6 +166,9 @@ local TDT=$(date "+%d %B %Y")
      	   echo "- Running ZIP command: $ZIP_CMD"
      	   $ZIP_CMD
      	fi
+    #md5 Go zip
+    echo -e "${BLUE}-- Creating md5 for $ZIP_FILE_GO${NC}"
+    cd "$OUT" && md5sum "$ZIP_FILE_GO" > "$ZIP_FILE_GO.md5" && cd - > /dev/null 2>&1
   fi
  
   # list files
@@ -260,11 +267,26 @@ fi
 # create update zip installer
 do_create_update_zip
 
+#Info
+echo -e ""
+echo -e ""
 echo -e "${RED}--------------------Finished building OrangeFox---------------------${NC}"
 echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
 echo -e ""
 echo -e "${GREEN}Recovery zip: $OUT/$FOX_OUT_NAME.zip"
+echo -e "          MD5: $ZIP_FILE.md5${NC}"
 echo -e "${RED}==================================================================${NC}"
 
+if [ "$BUILD_2GB_VERSION" = "1" ]; then
+echo -e ""
+echo -e ""
+echo -e "${RED}---------------Finished building OrangeFox Go Edition---------------${NC}"
+echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE_2GB"
+echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5${NC}"
+echo -e ""
+echo -e "${GREEN}Recovery zip: $OUT/$ZIP_FILE_GO.zip"
+echo -e "          MD5: $ZIP_FILE_GO.md5${NC}"
+echo -e "${RED}==================================================================${NC}"
+fi
 # end!
