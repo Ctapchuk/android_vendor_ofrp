@@ -125,11 +125,9 @@ local TDT=$(date "+%d %B %Y")
   fi
   
   # patch update-binary (which is a script) to run only for the current device 
-  # (mido is the default; it will be patched if the device is not mido)
+  # (mido is the default)
   local F="$WORK_DIR/META-INF/com/google/android/update-binary"
-  if [ "$FOX_DEVICE" != "mido" ]; then
-     sed -i -e "s/mido/$FOX_DEVICE/g" $F     
-  fi
+  sed -i -e "s/mido/$FOX_DEVICE/g" $F     
 
   # embed the release version
   sed -i -e "s/RELEASE_VER/$FOX_BUILD/" $F
