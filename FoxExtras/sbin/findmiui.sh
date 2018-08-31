@@ -3,7 +3,7 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 10 August 2018
+# - Date: 31 August 2018
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -163,5 +163,6 @@ Treble_Action
 
 MIUI_Action
 
+dmesg &> /tmp/dmesg.log
 ### end main ###
 
