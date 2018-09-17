@@ -88,10 +88,23 @@ PRODUCT_DEVICE=$(getprop "ro.product.device")
 
 # mount everything we might need
 MountThemAll() {
-local F=$(is_mounted "/system")    	
-    	[ "$F" = "0" ] &&  mount /system
+local F=$(is_mounted "/system")
+    	[ "$F" = "0" ] && mount /system
 	mount -o rw,remount /system
 	mount -o rw,remount /system /system
+    	
+    	F=$(is_mounted "/vendor")
+    	if [ "$F" = "0" ]; then
+    	    mount /vendor
+    	    F=$(is_mounted "/vendor")
+    	    [ "$F" = "1" ] && {
+		mount -o rw,remount /vendor
+		mount -o rw,remount /vendor /vendor
+    	    }
+        else
+	    mount -o rw,remount /vendor
+	    mount -o rw,remount /vendor /vendor
+    	fi
 	mount -o rw,remount /
 	mount -o rw,remount / /
 } 
@@ -99,6 +112,36 @@ local F=$(is_mounted "/system")
 # unmount everything that we mounted
 UnMountThemAll() {
 	umount /system
+    	local F=$(is_mounted "/vendor")
+    	[ "$F" = "1" ] && umount /vendor
+}
+
+Process_StockRecovery() {
+local RF=$1
+   # ui_print "- File: [$RF]"
+   if [ -f $RF ]; then
+      ui_print "- Processing file: $RF"
+      cp -af $RF $RF.bak
+      rm -f $RF
+   fi
+}
+
+Disable_stock_recovery_overwrites() {
+local ToRename="/system/bin/install-recovery.sh
+/system/etc/install-recovery.sh
+/system/etc/recovery-resource.dat
+/system/vendor/bin/install-recovery.sh
+/system/vendor/etc/install-recovery.sh
+/system/vendor/etc/recovery-resource.dat
+/system/recovery-from-boot.p
+/vendor/bin/install-recovery.sh
+/vendor/etc/install-recovery.sh
+/vendor/etc/recovery-resource.dat"
+
+   for i in $ToRename
+   do
+     Process_StockRecovery "$i"
+   done
 }
 
 # unzip the installer package into /tmp
@@ -129,33 +172,32 @@ Main() {
 
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."
-	mount /sdcard
-   	rm -rf "/sdcard/Fox/FoxFiles"
-   	rm -f "/sdcard/Fox/.wolfs"
-   	package_extract_dir "sdcard" "/sdcard"
-   	umount "/sdcard"
+	local internal_SD="/sdcard"
+	local F=$(is_mounted "$internal_SD")
+	[ "$F" = "0" ] && mount $internal_SD
+	F=$(is_mounted "$internal_SD")
+	[ "$F" = "0" ] && {
+	   internal_SD="/data/media/0"
+	   mount $internal_SD
+	}	
+	#ui_print "- internal_SD=$internal_SD"
+   	rm -rf "/$internal_SD/Fox/FoxFiles"
+   	rm -f "/$internal_SD/Fox/.wolfs"
+   	package_extract_dir "sdcard" "$internal_SD"
+   	[ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
 
 # Prevent the stock recovery from replacing this recovery
 	ui_print "- Disabling stock recovery overwrites"
-	MountThemAll
-
-	RF="/system/etc/install-recovery.sh"
-	if [ -f $RF ]; then
-	   cp -af $RF /system/etc/install-recovery-sh.bak
-	   rm -f $RF
-	fi
 	
-	RF="/system/bin/install-recovery.sh"
-	if [ -f $RF ]; then
-	   cp -af $RF /system/bin/install-recovery-sh.bak
-	   rm -f $RF
-	fi
+	MountThemAll
+	
+	Disable_stock_recovery_overwrites
 	
 	UnMountThemAll
 
 # Finish and reboot
 	ui_print "- Finished installing OrangeFox!" 
-	ui_print "- Extra files are in /sdcard/Fox/"
+	ui_print "- Extra files are in $internal_SD/Fox/"
 	ui_print " "
 	ui_print " >> Rebooting to Recovery in 5 seconds ..."
 	sleep 1
