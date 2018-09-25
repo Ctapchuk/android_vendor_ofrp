@@ -134,6 +134,12 @@ local TDT=$(date "+%d %B %Y")
 
   # embed the build date
   sed -i -e "s/TODAY/$TDT/" $F
+
+  # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
+  # "--last-call" = just before creating the OrangeFox update zip file
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+     $FOX_LOCAL_CALLBACK_SCRIPT "$WORK_DIR" "--last-call"
+  fi
     
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
@@ -238,9 +244,9 @@ DEBUG=0
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
   
-  # if a local callback script is declared, run it, passing to it the ramdisk directory
+  # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK"
+     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
   fi
   #
   # repack

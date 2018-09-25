@@ -6,8 +6,9 @@
 # Date: 	TODAY
 # ******************************************************
 
-# the target device
+# the target device(s)
 TARGET_DEVICE="mido"
+TARGET_DEVICE_ALT=""
 
 # the display screen
 SCREEN=/proc/self/fd/$2
@@ -80,9 +81,13 @@ abort() {
 CheckRequirements() {
 PRODUCT_DEVICE=$(getprop "ro.product.device")
    if [ "$PRODUCT_DEVICE" = "$TARGET_DEVICE" ]; then
-     ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE ..."
+       ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE ..."
    else
-     abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
+       if [ -n "$TARGET_DEVICE_ALT" ] && [ "$PRODUCT_DEVICE" = "$TARGET_DEVICE_ALT" ]; then
+          ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE_ALT ..."
+       else
+         abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
+       fi
    fi
 }
 
