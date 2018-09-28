@@ -231,6 +231,12 @@ bash "$FOX_VENDOR/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 
 # copy stuff to the ramdisk
 echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
+
+if [ -z "$TARGET_ARCH" ]; then
+  echo "Arch not detected, use arm64"
+  TARGET_ARCH="arm64"
+fi
+
 case "$TARGET_ARCH" in
  "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
