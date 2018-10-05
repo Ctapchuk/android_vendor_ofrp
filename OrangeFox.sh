@@ -1,4 +1,21 @@
 #!/bin/bash
+
+#
+# Custom build script
+#
+# This software is licensed under the terms of the GNU General Public
+# License version 2, as published by the Free Software Foundation, and
+# may be copied, distributed, and modified under those terms.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# Please maintain this if you use this script or any part of it
+#
+# Copyright (C) 2018 OrangeFox Recovery Project
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -214,6 +231,12 @@ bash "$FOX_VENDOR/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 
 # copy stuff to the ramdisk
 echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
+
+if [ -z "$TARGET_ARCH" ]; then
+  echo "Arch not detected, use arm64"
+  TARGET_ARCH="arm64"
+fi
+
 case "$TARGET_ARCH" in
  "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
