@@ -3,10 +3,11 @@
 # - /sbin/fox_post_init.sh
 # - Custom post_init script for OrangeFox Recovery
 # - Author: DarthJabba9
-# - Date: 12 May 2018
+# - Date: 16 October 2018
 #
 # * Fix yellow flashlight issue in Mido and Vince
 #
+# Copyright (C) 2018 OrangeFox Recovery Project
 #
 
 # replicate the "write" command of init rc files

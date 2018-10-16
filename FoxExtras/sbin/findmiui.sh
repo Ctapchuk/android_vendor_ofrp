@@ -3,10 +3,12 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 31 August 2018
+# - Date: 16 October 2018
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
+#
+# Copyright (C) 2018 OrangeFox Recovery Project
 #
 
 C="/tmp_cust"
@@ -163,6 +165,19 @@ Treble_Action
 
 MIUI_Action
 
+# get kernel logs right now
 dmesg &> /tmp/dmesg.log
+
+# get display panel name
+pname=$(cat /sys/class/graphics/fb0/msm_fb_panel_info | grep panel_name)
+if [ -n "$pname" ]; then
+   echo $pname >> $CFG
+else
+   pname=$(cat /tmp/dmesg.log | grep "Panel Name")
+   if [ -n "$pname" ]; then
+      echo -n "panel_name=" >> $CFG
+      echo "${pname#*= }" >> $CFG
+   fi
+fi
 ### end main ###
 

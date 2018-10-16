@@ -9,6 +9,7 @@
 # Usage: setdate "2018-05-12-16:31"
 # 
 # date format: date +%Y%m%d%H%M -s 201805181715
+# Copyright (C) 2018 OrangeFox Recovery Project
 # -------------------------
 
 [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] && {
