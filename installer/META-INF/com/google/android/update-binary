@@ -147,6 +147,12 @@ local ToRename="/system/bin/install-recovery.sh
    do
      Process_StockRecovery "$i"
    done
+   
+   # log this install
+   mount /cache
+   mkdir -p /cache/recovery/
+   echo "FOX_NEW=1" > /cache/recovery/Fox_Installed
+   umount /cache
 }
 
 # unzip the installer package into /tmp
