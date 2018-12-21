@@ -3,10 +3,12 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 16 October 2018
+# - Date: 21 December 2018
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
+# * Identify some hardware components
+# * Do some other sundry stuff
 #
 # Copyright (C) 2018 OrangeFox Recovery Project
 #
@@ -56,7 +58,7 @@ DebugMsg() {
 Get_Details() {
    # mount /cust
    mkdir -p $C
-   mount -t ext4 /dev/block/bootdevice/by-name/cust $C
+   mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1
 
    # check for Treble
    T=$(isTreble)
@@ -68,7 +70,7 @@ Get_Details() {
    DebugDirList "$C/app/"
 
    # unmount
-   umount $C
+   umount $C > /dev/null 2>&1
    rmdir $C
    
    # clearly not miui - return
@@ -83,13 +85,13 @@ Get_Details() {
    # mount /system and check
    if [ -d "$S" ]; then
       DebugMsg "$S already exists"
-      umount $S
+      umount $S > /dev/null 2>&1
    else
       DebugMsg "Creating $S"
       mkdir -p $S
    fi
    
-   mount -t ext4 /dev/block/bootdevice/by-name/system $S
+   mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
 
    DebugDirList "$S/"
    DebugDirList "$S/vendor"
@@ -103,7 +105,7 @@ Get_Details() {
    fi
    
    # unmount
-   umount $S
+   umount $S > /dev/null 2>&1
    rmdir $S
 }
 
@@ -155,7 +157,22 @@ backup_restore_FS() {
    fi
 }
 
+# fix yellow flashlight on mido/vince
+fix_yellow_flashlight() {
+   DEV=$(getprop "ro.product.device")
+   if [ "$DEV" = "mido" ] || [ "$DEV" = "vince" ]; then
+   	echo "0" > /sys/devices/soc/qpnp-flash-led-25/leds/led:torch_1/max_brightness
+   	echo "0" > /sys/class/leds/led:torch_1/max_brightness
+   	echo "0" > /sys/class/leds/torch-light1/max_brightness 
+   	echo "0" > /sys/class/leds/led:flash_1/max_brightness
+   fi
+}
+
 ### main() ###
+
+# have we executed once before?
+DEV=$(getprop "orangefox.postinit.status")
+[ -f "$CFG" ] || [ "$DEV" = "1" ] && exit 0
 
 backup_restore_FS
 
@@ -179,5 +196,13 @@ else
       echo "${pname#*= }" >> $CFG
    fi
 fi
-### end main ###
 
+# post-init
+fix_yellow_flashlight
+
+setprop orangefox.postinit.status 1
+
+exit 0
+#/sbin/fox_post_init.sh
+
+### end main ###

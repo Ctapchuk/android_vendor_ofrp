@@ -54,7 +54,7 @@ package_extract_dir() {
    if [ -d $EX_DIR/$1 ]; then
       cp -a $EX_DIR/$1/* $2
    else
-      ui_print "Invalid directory: $1"   
+      ui_print "Invalid directory: $1"
    fi
 } 
 
@@ -195,7 +195,6 @@ Main() {
    	rm -rf "/$internal_SD/Fox/FoxFiles"
    	rm -f "/$internal_SD/Fox/.wolfs"
    	package_extract_dir "sdcard" "$internal_SD"
-   	[ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
 
 # Prevent the stock recovery from replacing this recovery
 	ui_print "- Disabling stock recovery overwrites"
@@ -205,6 +204,10 @@ Main() {
 	Disable_stock_recovery_overwrites
 	
 	UnMountThemAll
+
+# backup recovery.log -> Fox/install.log
+	cp -a /tmp/recovery.log $internal_SD/Fox/install.log
+   	[ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
 
 # Finish and reboot
 	ui_print "- Finished installing OrangeFox!" 
