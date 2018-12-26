@@ -3,7 +3,7 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 21 December 2018
+# - Date: 26 December 2018
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -134,7 +134,7 @@ Treble_Action() {
    fi
    mod_cust_vendor "$T"
    echo $D >> $L
-   echo "TREBLE=$T" > $CFG
+   echo "TREBLE=$T" >> $CFG
 }
 
 # report on MIUI and take action
@@ -168,12 +168,21 @@ fix_yellow_flashlight() {
    fi
 }
 
+# start, and mark that we have started
+start_script()
+{
+local OPS=$(getprop "orangefox.postinit.status")
+   [ -f "$CFG" ] || [ "$OPS" = "1" ] && exit 0
+   echo "# OrangeFox live cfg" > $CFG
+   setprop orangefox.postinit.status 1
+}
+
 ### main() ###
 
-# have we executed once before?
-DEV=$(getprop "orangefox.postinit.status")
-[ -f "$CFG" ] || [ "$DEV" = "1" ] && exit 0
+# have we executed once before/are we running now?
+start_script
 
+# if not, continue
 backup_restore_FS
 
 Get_Details
@@ -200,9 +209,5 @@ fi
 # post-init
 fix_yellow_flashlight
 
-setprop orangefox.postinit.status 1
-
 exit 0
-#/sbin/fox_post_init.sh
-
 ### end main ###
