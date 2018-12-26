@@ -185,14 +185,15 @@ start_script
 # if not, continue
 backup_restore_FS
 
+# get kernel logs right now
+dmesg &> /tmp/dmesg.log
+
+#
 Get_Details
 
 Treble_Action
 
 MIUI_Action
-
-# get kernel logs right now
-dmesg &> /tmp/dmesg.log
 
 # get display panel name
 pname=$(cat /sys/class/graphics/fb0/msm_fb_panel_info | grep panel_name)
