@@ -3,7 +3,7 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 26 December 2018
+# - Date: 29 December 2018
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -24,7 +24,30 @@ ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 
 # is it a treble ROM ?
+realTreble() {
+local CC=/tmp_vendor
+local V=/dev/block/bootdevice/by-name/vendor
+  [ ! -e $V ] && {
+    echo "0"
+    return
+  }
+  mkdir -p $CC
+  mount -t ext4 $V $CC > /dev/null 2>&1
+  if [ -d $CC/etc/ ] && [ -d $CC/firmware/ ] && [ -d $CC/framework/ ] && [ -d $CC/usr/ ] && [ -d $CC/lib64/ ]; then
+     echo "1"
+  else 
+     echo "0"   
+  fi
+  umount $CC > /dev/null 2>&1
+  rmdir $CC
+}
+
 isTreble() {
+  local T=$(realTreble)
+  [ "$T" = "1" ] && {
+     echo "1"
+     return
+  }  
   if [ -d $C/etc/ ] && [ -d $C/firmware/ ] && [ -d $C/framework/ ] && [ -d $C/usr/ ] && [ -d $C/lib64/ ]; then
      echo "1"
   else 
@@ -174,6 +197,8 @@ start_script()
 local OPS=$(getprop "orangefox.postinit.status")
    [ -f "$CFG" ] || [ "$OPS" = "1" ] && exit 0
    echo "# OrangeFox live cfg" > $CFG
+   OPS=$(uname -r)
+   echo "KERNEL=$OPS" >> $CFG
    setprop orangefox.postinit.status 1
 }
 
