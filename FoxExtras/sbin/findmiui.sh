@@ -3,7 +3,7 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 29 December 2018
+# - Date: 30 December 2018
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -48,62 +48,28 @@ isTreble() {
      echo "1"
      return
   }  
+  # try /cust
+  local C="/tmp_cust"
+  mkdir -p $C
+  mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
   if [ -d $C/etc/ ] && [ -d $C/firmware/ ] && [ -d $C/framework/ ] && [ -d $C/usr/ ] && [ -d $C/lib64/ ]; then
-     echo "1"
+     T="1"
   else 
-     echo "0"   
+     T="0"   
   fi
+  DebugDirList "$C/"
+  DebugDirList "$C/app/"
+  umount $C > /dev/null 2>&1
+  rmdir $C
+  echo "$T"
 }
 
 # is it miui ?
 isMIUI() {
-  if [ -d $C/cust/ ] && [ -d $C/app/ ] && [ -d $C/prebuilts/ ]; then
-     echo "1"
-  else 
-     echo "0"   
-  fi
-}
-
-#  some optional debug message stuff
-DebugDirList() {
-   [ ! "$DEBUG" = "1" ] && return
-   echo "DEBUG: OrangeFox: directory list of $1" >> $L
-   ls -all $1 >> $L
-}
-
-# optional debug message
-DebugMsg() {
-   [ ! "$DEBUG" = "1" ] && return
-   echo "DEBUG: OrangeFox: $@" >> $L
-}
-
-# probe the installed ROM
-Get_Details() {
-   # mount /cust
-   mkdir -p $C
-   mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1
-
-   # check for Treble
-   T=$(isTreble)
-
-   # check for MIUI
-   M=$(isMIUI)
-
-   DebugDirList "$C/"
-   DebugDirList "$C/app/"
-
-   # unmount
-   umount $C > /dev/null 2>&1
-   rmdir $C
-   
-   # clearly not miui - return
-   [ "$M" = "0" ] && return
-
-   # further checks for miui (if it thinks we have miui)
+   local M="0"
    local S="/tmp_system"
    local A="$S/app"
    local E="$S/etc"
-   M="0"
    
    # mount /system and check
    if [ -d "$S" ]; then
@@ -130,6 +96,30 @@ Get_Details() {
    # unmount
    umount $S > /dev/null 2>&1
    rmdir $S
+   
+   echo "$M"
+}
+
+#  some optional debug message stuff
+DebugDirList() {
+   [ ! "$DEBUG" = "1" ] && return
+   echo "DEBUG: OrangeFox: directory list of $1" >> $L
+   ls -all $1 >> $L
+}
+
+# optional debug message
+DebugMsg() {
+   [ ! "$DEBUG" = "1" ] && return
+   echo "DEBUG: OrangeFox: $@" >> $L
+}
+
+# probe the installed ROM
+Get_Details() {
+   # check for Treble
+   T=$(isTreble)
+
+   # check for MIUI
+   M=$(isMIUI)
 }
 
 # remove /cust or /vendor from fstab
