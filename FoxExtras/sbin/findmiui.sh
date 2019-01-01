@@ -3,14 +3,14 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 30 December 2018
+# - Date: 01 January 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 # * Identify some hardware components
 # * Do some other sundry stuff
 #
-# Copyright (C) 2018 OrangeFox Recovery Project
+# Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 
 C="/tmp_cust"
@@ -172,9 +172,11 @@ backup_restore_FS() {
 
 # fix yellow flashlight on mido/vince
 fix_yellow_flashlight() {
+local LED="/sys/devices/soc/qpnp-flash-led-25"
    DEV=$(getprop "ro.product.device")
+   [ "$DEV" = "vince" ] && LED="/sys/devices/soc/qpnp-flash-led-24"
    if [ "$DEV" = "mido" ] || [ "$DEV" = "vince" ]; then
-   	echo "0" > /sys/devices/soc/qpnp-flash-led-25/leds/led:torch_1/max_brightness
+   	echo "0" > /$LED/leds/led:torch_1/max_brightness
    	echo "0" > /sys/class/leds/led:torch_1/max_brightness
    	echo "0" > /sys/class/leds/torch-light1/max_brightness 
    	echo "0" > /sys/class/leds/led:flash_1/max_brightness
