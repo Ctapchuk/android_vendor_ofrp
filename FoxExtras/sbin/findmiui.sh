@@ -3,7 +3,7 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 01 January 2019
+# - Date: 04 January 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -33,7 +33,7 @@ local V=/dev/block/bootdevice/by-name/vendor
   }
   mkdir -p $CC
   mount -t ext4 $V $CC > /dev/null 2>&1
-  if [ -d $CC/etc/ ] && [ -d $CC/firmware/ ] && [ -d $CC/framework/ ] && [ -d $CC/usr/ ] && [ -d $CC/lib64/ ]; then
+  if [ -d $CC/etc/ ] && [ -d $CC/firmware/ ] && [ -d $CC/usr/ ] && [ -d $CC/lib64/ ]; then
      echo "1"
   else 
      echo "0"   
@@ -52,7 +52,7 @@ isTreble() {
   local C="/tmp_cust"
   mkdir -p $C
   mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
-  if [ -d $C/etc/ ] && [ -d $C/firmware/ ] && [ -d $C/framework/ ] && [ -d $C/usr/ ] && [ -d $C/lib64/ ]; then
+  if [ -d $C/etc/ ] && [ -d $C/firmware/ ] && [ -d $C/usr/ ] && [ -d $C/lib64/ ]; then
      T="1"
   else 
      T="0"   
@@ -170,17 +170,29 @@ backup_restore_FS() {
    fi
 }
 
-# fix yellow flashlight on mido/vince
+# fix yellow flashlight on mido/vince/kenzo
 fix_yellow_flashlight() {
-local LED="/sys/devices/soc/qpnp-flash-led-25"
-   DEV=$(getprop "ro.product.device")
-   [ "$DEV" = "vince" ] && LED="/sys/devices/soc/qpnp-flash-led-24"
-   if [ "$DEV" = "mido" ] || [ "$DEV" = "vince" ]; then
-   	echo "0" > /$LED/leds/led:torch_1/max_brightness
-   	echo "0" > /sys/class/leds/led:torch_1/max_brightness
-   	echo "0" > /sys/class/leds/torch-light1/max_brightness 
-   	echo "0" > /sys/class/leds/led:flash_1/max_brightness
-   fi
+local LED=""
+local DEV=$(getprop "ro.product.device")
+   case "$DEV" in
+       	mido)
+       		LED="/sys/devices/soc/qpnp-flash-led-25";
+       	;;
+       vince)
+       		LED="/sys/devices/soc/qpnp-flash-led-24";
+       	;;
+       kenzo | kate)
+       		LED="/sys/devices/soc.0/qpnp-flash-led-23";
+       	;;
+       *)
+       		return;
+       	;;
+   esac
+
+   echo "0" > /$LED/leds/led:torch_1/max_brightness
+   echo "0" > /sys/class/leds/led:torch_1/max_brightness
+   echo "0" > /sys/class/leds/torch-light1/max_brightness
+   echo "0" > /sys/class/leds/led:flash_1/max_brightness
 }
 
 # start, and mark that we have started
