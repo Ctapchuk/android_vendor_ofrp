@@ -264,15 +264,18 @@ esac
 
 # build standard (3GB) version
 DEBUG=0
+
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
-  #Change splash image for 18:9 phones
-  if [ $FOX_DEVICE = "whyred" ] || [ $FOX_DEVICE = "chiron" ];then
-    echo "Changing splash"
-    cp $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png
-  fi
+  # Change splash image for 18:9 phones
+  case "$FOX_DEVICE" in
+        vince | whyred | chiron)
+     	    echo -e "${GREEN}-- Changing splash${NC}";
+     	    cp -a $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
+     ;;        
+  esac
   
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
