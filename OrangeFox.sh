@@ -269,7 +269,7 @@ DEBUG=0
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
   #Change splash image for 18:9 phones
-  if [ $FOX_DEVICE = "whyred" ];then
+  if [ $FOX_DEVICE = "whyred" ] || [ $FOX_DEVICE = "chiron" ];then
     echo "Changing splash"
     cp $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png
   fi
