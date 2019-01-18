@@ -3,7 +3,7 @@
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Author: DarthJabba9
-# - Date: 04 January 2019
+# - Date: 18 January 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -23,7 +23,29 @@ DEBUG="0"  	  # enable for more debug messages
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 
+#  some optional debug message stuff
+DebugDirList() {
+   [ ! "$DEBUG" = "1" ] && return
+   echo "DEBUG: OrangeFox: directory list of $1" >> $L
+   ls -all $1 >> $L
+}
+
+# optional debug message
+DebugMsg() {
+   [ ! "$DEBUG" = "1" ] && return
+   echo "DEBUG: OrangeFox: $@" >> $L
+}
+
 # is it a treble ROM ?
+Has_Treble_Dirs() {
+local D="$1"
+  if [ -d $D/app ] && [ -d $D/bin ] && [ -d $D/etc ] && [ -d $D/firmware ] && [ -d $D/lib64 ]; then
+    echo "1"
+  else
+    echo "0"
+  fi	
+}
+
 realTreble() {
 local CC=/tmp_vendor
 local V=/dev/block/bootdevice/by-name/vendor
@@ -33,34 +55,27 @@ local V=/dev/block/bootdevice/by-name/vendor
   }
   mkdir -p $CC
   mount -t ext4 $V $CC > /dev/null 2>&1
-  if [ -d $CC/etc/ ] && [ -d $CC/firmware/ ] && [ -d $CC/usr/ ] && [ -d $CC/lib64/ ]; then
-     echo "1"
-  else 
-     echo "0"   
-  fi
+  local R=$(Has_Treble_Dirs $CC)
   umount $CC > /dev/null 2>&1
-  rmdir $CC
+  rmdir $CC > /dev/null 2>&1
+  echo $R
 }
 
 isTreble() {
-  local T=$(realTreble)
+local C="/tmp_cust"
+local T=$(realTreble)
   [ "$T" = "1" ] && {
      echo "1"
      return
   }  
   # try /cust
-  local C="/tmp_cust"
   mkdir -p $C
   mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
-  if [ -d $C/etc/ ] && [ -d $C/firmware/ ] && [ -d $C/usr/ ] && [ -d $C/lib64/ ]; then
-     T="1"
-  else 
-     T="0"   
-  fi
+  T=$(Has_Treble_Dirs $C)
   DebugDirList "$C/"
   DebugDirList "$C/app/"
   umount $C > /dev/null 2>&1
-  rmdir $C
+  rmdir $C > /dev/null 2>&1
   echo "$T"
 }
 
@@ -98,19 +113,6 @@ isMIUI() {
    rmdir $S
    
    echo "$M"
-}
-
-#  some optional debug message stuff
-DebugDirList() {
-   [ ! "$DEBUG" = "1" ] && return
-   echo "DEBUG: OrangeFox: directory list of $1" >> $L
-   ls -all $1 >> $L
-}
-
-# optional debug message
-DebugMsg() {
-   [ ! "$DEBUG" = "1" ] && return
-   echo "DEBUG: OrangeFox: $@" >> $L
 }
 
 # probe the installed ROM
