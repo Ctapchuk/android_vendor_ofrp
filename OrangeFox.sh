@@ -271,7 +271,7 @@ DEBUG=0
 
   # Change splash image for 18:9 phones
   case "$FOX_DEVICE" in
-        vince | whyred | chiron)
+        vince | whyred | chiron | polaris)
      	    echo -e "${GREEN}-- Changing splash${NC}";
      	    cp -a $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
      ;;        
