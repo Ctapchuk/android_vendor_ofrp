@@ -14,7 +14,7 @@
 #
 # Please maintain this if you use this script or any part of it
 #
-# Copyright (C) 2018 OrangeFox Recovery Project
+# Copyright (C) 2018-2019 OrangeFox Recovery Project
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -276,6 +276,16 @@ DEBUG=0
      	    cp -a $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
      ;;        
   esac
+  
+  # deal with magiskboot/mkbootimg/unpackbootimg
+   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
+        echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
+        rm -f "$FOX_RAMDISK/sbin/magiskboot"
+   else
+        echo "${GREEN}-- Using magiskboot [$FOX_RAMDISK/sbin/magiskboot] - delete mkbootimg/unpackbootimg ...${NC}"
+        rm -f "$FOX_RAMDISK/sbin/mkbootimg"
+        rm -f "$FOX_RAMDISK/sbin/unpackbootimg"
+   fi
   
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
