@@ -15,6 +15,7 @@
 # Please maintain this if you use this script or any part of it
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
+#
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -77,6 +78,10 @@ RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_GO.img"
 # "FOX_LOCAL_CALLBACK_SCRIPT"
 #    - point to a custom "callback" script that will be executed just before creating the final recovery image
 #    - eg, a script to delete some files, or add some files to the ramdisk
+#
+# "FOX_KEEP_BUSYBOX_PS"
+#    - set to 1 to keep the (stripped down) busybox version of the "ps" command
+#    - if this is not defined, the busybox "ps" command will be replaced by a fuller version
 #
 
 # expand a directory path
@@ -286,7 +291,13 @@ DEBUG=0
         rm -f "$FOX_RAMDISK/sbin/mkbootimg"
         rm -f "$FOX_RAMDISK/sbin/unpackbootimg"
    fi
-  
+
+  # replace busybox ps with our own ?
+  if [ "$FOX_KEEP_BUSYBOX_PS" != "1" ]; then
+  	rm -f $FOX_RAMDISK/sbin/ps
+  	ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
+  fi
+    
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
