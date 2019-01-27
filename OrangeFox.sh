@@ -277,6 +277,9 @@ DEBUG=0
      ;;        
   esac
   
+  # Include bash shell
+  cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
+
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
