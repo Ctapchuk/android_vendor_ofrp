@@ -55,6 +55,11 @@ FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 
+# FOX_REPLACE_BUSYBOX_PS: default to 0
+if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
+   export FOX_REPLACE_BUSYBOX_PS=0
+fi
+
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 
 #Copy recovery.img
@@ -79,10 +84,10 @@ RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_GO.img"
 #    - point to a custom "callback" script that will be executed just before creating the final recovery image
 #    - eg, a script to delete some files, or add some files to the ramdisk
 #
-# "FOX_KEEP_BUSYBOX_PS"
-#    - set to 1 to keep the (stripped down) busybox version of the "ps" command
-#    - if this is not defined, the busybox "ps" command will be replaced by a fuller version
-#
+# "FOX_REPLACE_BUSYBOX_PS"
+#    - set to 1 to replace the (stripped down) busybox version of the "ps" command
+#    - if this is defined, the busybox "ps" command will be replaced by a fuller version
+#    - default = 0
 
 # expand a directory path
 fullpath() {
@@ -293,13 +298,17 @@ DEBUG=0
    fi
 
   # replace busybox ps with our own ?
-  if [ "$FOX_KEEP_BUSYBOX_PS" != "1" ]; then
+  if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
+     if [ -f "/FFiles/ps" ]; then
+        echo "${GREEN} -- Replacing the busybox \"ps\" command with our own full version ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/ps
   	ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
+     fi
   fi
     
   # Include bash shell
   cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
+  chmod 0755 $FOX_RAMDISK/sbin/bash
 
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
@@ -319,6 +328,7 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	FFil="$FOX_RAMDISK/FFiles"
 	rm -rf $FFil/OF_initd
 	rm -rf $FFil/AromaFM
+	rm -f $FOX_RAMDISK/sbin/bash
 	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
 	bash "$FOX_VENDOR/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
