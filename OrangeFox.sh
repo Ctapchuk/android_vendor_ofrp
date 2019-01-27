@@ -14,7 +14,8 @@
 #
 # Please maintain this if you use this script or any part of it
 #
-# Copyright (C) 2018 OrangeFox Recovery Project
+# Copyright (C) 2018-2019 OrangeFox Recovery Project
+#
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -77,6 +78,10 @@ RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_GO.img"
 # "FOX_LOCAL_CALLBACK_SCRIPT"
 #    - point to a custom "callback" script that will be executed just before creating the final recovery image
 #    - eg, a script to delete some files, or add some files to the ramdisk
+#
+# "FOX_KEEP_BUSYBOX_PS"
+#    - set to 1 to keep the (stripped down) busybox version of the "ps" command
+#    - if this is not defined, the busybox "ps" command will be replaced by a fuller version
 #
 
 # expand a directory path
@@ -277,6 +282,22 @@ DEBUG=0
      ;;        
   esac
   
+  # deal with magiskboot/mkbootimg/unpackbootimg
+   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
+        echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
+        rm -f "$FOX_RAMDISK/sbin/magiskboot"
+   else
+        echo "${GREEN}-- Using magiskboot [$FOX_RAMDISK/sbin/magiskboot] - delete mkbootimg/unpackbootimg ...${NC}"
+        rm -f "$FOX_RAMDISK/sbin/mkbootimg"
+        rm -f "$FOX_RAMDISK/sbin/unpackbootimg"
+   fi
+
+  # replace busybox ps with our own ?
+  if [ "$FOX_KEEP_BUSYBOX_PS" != "1" ]; then
+  	rm -f $FOX_RAMDISK/sbin/ps
+  	ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
+  fi
+    
   # Include bash shell
   cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
 
