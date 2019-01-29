@@ -310,6 +310,10 @@ DEBUG=0
   cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
   chmod 0755 $FOX_RAMDISK/sbin/bash
 
+  # Include mmgui
+  cp -a $FOX_VENDOR/Files/mmgui $FOX_RAMDISK/sbin/mmgui
+  chmod 0755 $FOX_RAMDISK/sbin/mmgui
+
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
