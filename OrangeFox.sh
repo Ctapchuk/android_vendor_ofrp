@@ -299,7 +299,7 @@ DEBUG=0
 
   # replace busybox ps with our own ?
   if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
-     if [ -f "/FFiles/ps" ]; then
+     if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
         echo "${GREEN} -- Replacing the busybox \"ps\" command with our own full version ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/ps
   	ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
@@ -308,7 +308,17 @@ DEBUG=0
     
   # Include bash shell
   cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
+  cp -a $FOX_VENDOR/Files/fox.bashrc $FOX_RAMDISK/etc/bash.bashrc
   chmod 0755 $FOX_RAMDISK/sbin/bash
+  
+  # replace busybox "sh" with bash ?
+  if [ "$FOX_USE_BASH_SHELL" = "1" ] && [ "$BUILD_2GB_VERSION" != "1" ]; then
+     if [ -f "$FOX_RAMDISK/sbin/sh" ]; then
+        echo "${GREEN} -- Replacing the busybox \"sh\" command with bash ...${NC}"
+  	rm -f $FOX_RAMDISK/sbin/sh
+  	ln -s /sbin/bash $FOX_RAMDISK/sbin/sh
+     fi
+  fi
 
   # Include mmgui
   cp -a $FOX_VENDOR/Files/mmgui $FOX_RAMDISK/sbin/mmgui
@@ -333,6 +343,7 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	rm -rf $FFil/OF_initd
 	rm -rf $FFil/AromaFM
 	rm -f $FOX_RAMDISK/sbin/bash
+	rm -f $FOX_RAMDISK/etc/bash.bashrc
 	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
 	bash "$FOX_VENDOR/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
