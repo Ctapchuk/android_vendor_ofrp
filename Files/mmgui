@@ -1,8 +1,8 @@
 #!/sbin/sh
 # MM GUI by fordownloads for OrangeFox Recovery Project
 # Based on MM by VR25
-
-# Args: mnt, list, unmnt
+# Ver: 1.2
+# Args: mnt, status, unmnt
 
 # Default permissions
 umask 022
@@ -45,7 +45,10 @@ mount_image() {
 
 mnt() {
   echo "Mounting Magisk to $mountPath...";
-  mount | grep -qi /magisk && echo "Already mounted! Exiting w/o errors." & exit 0;
+  if mount | grep -qi /magisk; then
+	echo "Already mounted! Exiting w/o errors.";
+	exit 0;
+  fi;
   
   mount /data 2>/dev/null
   mount /cache 2>/dev/null
@@ -61,15 +64,12 @@ mnt() {
   [ -d /data/adb/magisk ] && IMG=/data/adb/magisk.img || IMG=/data/magisk.img
   mount_image $IMG $mountPath
   
-  for mod in $(ls_mount_path); do
-  	touch "$tmp/$mod"
-  done
-}
-
-upd() {
-  echo "Generating fancy list...";
-  [ -d $tmp ] && rm -rf $tmp
-  mkdir $tmp
+  if mount | grep -qi /magisk; then
+	echo "Success!";
+  else
+	echo "Error while mounting Magisk!";
+	exit 1;
+  fi;
   
   for mod in $(ls_mount_path); do
   	touch "$tmp/$mod"
@@ -80,7 +80,7 @@ unmnt() {
   echo "Unmounting Magisk...";
   loopTMP=$(cat /tmp/loopDevice)
   umount $mountPath
-  losetup -d $loopTMP
+  [ -f /tmp/loopDevice ] && losetup -d $loopTMP
   rmdir $mountPath
   [ -d $tmp ] && rm -rf $tmp
 }
@@ -92,13 +92,24 @@ info() {
   echo "---";
   echo "Args:";
   echo "mnt - Mount Magisk to $mountPath";
-  echo "upd - Generate fancy list";
   echo "unmnt - Unmount Magisk";
+  echo "---";
+  status;
+}
+
+status() {
+  if mount | grep -qi /magisk; then
+	echo "Magisk mounted!";
+	exit 0;
+  else
+	echo "Magisk unmounted!";
+	exit 1;
+  fi;
 }
 
 case "$1" in
 	mnt ) mnt;;
-	upd ) upd;;
+	status ) status;;
 	unmnt ) unmnt;;
 	* ) info;;
 esac
