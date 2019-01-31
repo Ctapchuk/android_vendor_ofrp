@@ -1,7 +1,7 @@
 #!/sbin/sh
 # MM GUI by fordownloads for OrangeFox Recovery Project
 # Based on MM by VR25
-# Ver: 1.2
+# Ver: 1.3
 # Args: mnt, status, unmnt
 
 # Default permissions
@@ -74,6 +74,16 @@ mnt() {
   for mod in $(ls_mount_path); do
   	touch "$tmp/$mod"
   done
+  
+  work="/tmp/mmver";
+  [ -d $work ] && rm -rf $work;
+  mkdir $work;
+  cd $work;
+  
+  prop="/data/adb/magisk/util_functions.sh";
+  ver=$(cat $prop | grep "MAGISK_VER=" | cut -d'=' -f2 | sed "s/\""//g);
+  
+  echo "" > "$work/$ver";
 }
 
 unmnt() {
@@ -92,6 +102,7 @@ info() {
   echo "---";
   echo "Args:";
   echo "mnt - Mount Magisk to $mountPath";
+  echo "status - Show Magisk status";
   echo "unmnt - Unmount Magisk";
   echo "---";
   status;
