@@ -45,6 +45,11 @@
 #      different from the default "/dev/block/bootdevice/by-name/recovery"
 #    - default = "/dev/block/bootdevice/by-name/recovery"
 #
+# "FOX_18_9_DISPLAY"
+#    - set this to 1 if your device has an 18:9 display (eg, vince, chiron, whyred)
+#    - default = 0
+#
+#
 # ******************************************************************************
 
 RED='\033[0;31m'
@@ -299,22 +304,20 @@ DEBUG=0
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
   # Change splash image for 18:9 phones
-  case "$FOX_DEVICE" in
-        vince | whyred | chiron | polaris)
-     	    echo -e "${GREEN}-- Changing splash${NC}";
-     	    cp -a $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
-     ;;        
-  esac
+  if [ "$FOX_18_9_DISPLAY" = "1" ]; then
+      echo -e "${GREEN}-- Changing splash for 18:9 display${NC}";
+      cp -a $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
+  fi
   
   # deal with magiskboot/mkbootimg/unpackbootimg
-   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
+  if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
         echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
         rm -f "$FOX_RAMDISK/sbin/magiskboot"
-   else
+  else
         echo "${GREEN}-- Using magiskboot [$FOX_RAMDISK/sbin/magiskboot] - delete mkbootimg/unpackbootimg ...${NC}"
         rm -f "$FOX_RAMDISK/sbin/mkbootimg"
         rm -f "$FOX_RAMDISK/sbin/unpackbootimg"
-   fi
+  fi
 
   # replace busybox ps with our own ?
   if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
