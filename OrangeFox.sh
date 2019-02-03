@@ -1,7 +1,7 @@
 #!/bin/bash
-
 #
-# Custom build script
+#
+# Custom build script for OrangeFox Recovery Project
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -16,6 +16,36 @@
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
+# ******************************************************************************
+# Optional (new) environment variables - to be declared before building
+#
+# "FOX_PORTS_TMP" 
+#    - point to a custom temp directory for creating the zip installer
+#
+# "FOX_PORTS_INSTALLER" 
+#    - point to a custom directory for amended/additional installer files 
+#    - the contents will simply be copied over before creating the zip installer
+#
+# "FOX_LOCAL_CALLBACK_SCRIPT"
+#    - point to a custom "callback" script that will be executed just before creating the final recovery image
+#    - eg, a script to delete some files, or add some files to the ramdisk
+#
+# "BUILD_2GB_VERSION"
+#    - whether to build a stripped down "GO" version for 2GB devices
+#    - default = 0
+#
+# "FOX_REPLACE_BUSYBOX_PS"
+#    - set to 1 to replace the (stripped down) busybox version of the "ps" command
+#    - if this is defined, the busybox "ps" command will be replaced by a fuller version
+#    - default = 0
+# 
+# "FOX_RECOVERY_INSTALL_PARTITION"
+#    - !!! this should normally BE LEFT WELL ALONE !!!
+#    - set this ONLY if your device's recovery partition is in a location that is
+#      different from the default "/dev/block/bootdevice/by-name/recovery"
+#    - default = "/dev/block/bootdevice/by-name/recovery"
+#
+# ******************************************************************************
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -54,10 +84,11 @@ FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
+DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
 
 # FOX_REPLACE_BUSYBOX_PS: default to 0
 if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
-   export FOX_REPLACE_BUSYBOX_PS=0
+   export FOX_REPLACE_BUSYBOX_PS="0"
 fi
 
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
@@ -67,27 +98,8 @@ cp -r $OUT/recovery.img $RECOVERY_IMAGE
 
 # 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_GO.img"
-[ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION=0 # by default, build only the full version
+[ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION="0" # by default, build only the full version
 #
-
-#
-# Optional (new) environment variables - to be declared before building
-#
-# "FOX_PORTS_TMP" 
-#    - point to a custom temp directory for creating the zip installer
-#
-# "FOX_PORTS_INSTALLER" 
-#    - point to a custom directory for amended/additional installer files 
-#    - the contents will simply be copied over before creating the zip installer
-#
-# "FOX_LOCAL_CALLBACK_SCRIPT"
-#    - point to a custom "callback" script that will be executed just before creating the final recovery image
-#    - eg, a script to delete some files, or add some files to the ramdisk
-#
-# "FOX_REPLACE_BUSYBOX_PS"
-#    - set to 1 to replace the (stripped down) busybox version of the "ps" command
-#    - if this is defined, the busybox "ps" command will be replaced by a fuller version
-#    - default = 0
 
 # expand a directory path
 fullpath() {
@@ -168,7 +180,14 @@ local TDT=$(date "+%d %B %Y")
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$WORK_DIR" "--last-call"
   fi
-    
+
+  # embed the recovery partition
+  if [ -n "$FOX_RECOVERY_INSTALL_PARTITION" ]; then
+     echo -e "${RED}- Changing the recovery install partiition to \"$FOX_RECOVERY_INSTALL_PARTITION\" ${NC}"
+     sed -i -e "s|^RECOVERY_PARTITION=.*|RECOVERY_PARTITION=\"$FOX_RECOVERY_INSTALL_PARTITION\"|" $F
+     # sed -i -e "s|$DEFAULT_INSTALL_PARTITION|$FOX_RECOVERY_INSTALL_PARTITION|" $F
+  fi
+      
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
@@ -300,21 +319,25 @@ DEBUG=0
   # replace busybox ps with our own ?
   if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
      if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
-        echo "${GREEN} -- Replacing the busybox \"ps\" command with our own full version ...${NC}"
+        echo -e "${GREEN}-- Replacing the busybox \"ps\" command with our own full version ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/ps
   	ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
      fi
   fi
     
   # Include bash shell
-  cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
-  cp -a $FOX_VENDOR/Files/fox.bashrc $FOX_RAMDISK/etc/bash.bashrc
-  chmod 0755 $FOX_RAMDISK/sbin/bash
+  if [ "$FOX_REMOVE_BASH" = "1" ]; then
+     export FOX_USE_BASH_SHELL="0"
+  else
+     cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
+     cp -a $FOX_VENDOR/Files/fox.bashrc $FOX_RAMDISK/etc/bash.bashrc
+     chmod 0755 $FOX_RAMDISK/sbin/bash
+  fi
   
   # replace busybox "sh" with bash ?
   if [ "$FOX_USE_BASH_SHELL" = "1" ] && [ "$BUILD_2GB_VERSION" != "1" ]; then
      if [ -f "$FOX_RAMDISK/sbin/sh" ]; then
-        echo "${GREEN} -- Replacing the busybox \"sh\" command with bash ...${NC}"
+        echo -e "${GREEN}-- Replacing the busybox \"sh\" command with bash ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/sh
   	ln -s /sbin/bash $FOX_RAMDISK/sbin/sh
      fi
