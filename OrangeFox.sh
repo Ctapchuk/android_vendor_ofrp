@@ -314,9 +314,10 @@ DEBUG=0
         echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
         rm -f "$FOX_RAMDISK/sbin/magiskboot"
   else
-        echo "${GREEN}-- Using magiskboot [$FOX_RAMDISK/sbin/magiskboot] - delete mkbootimg/unpackbootimg ...${NC}"
-        rm -f "$FOX_RAMDISK/sbin/mkbootimg"
-        rm -f "$FOX_RAMDISK/sbin/unpackbootimg"
+        echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
+        ##echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/sbin/magiskboot] - delete mkbootimg/unpackbootimg ...${NC}"
+        ##rm -f "$FOX_RAMDISK/sbin/mkbootimg"
+        ##rm -f "$FOX_RAMDISK/sbin/unpackbootimg"
   fi
 
   # replace busybox ps with our own ?
