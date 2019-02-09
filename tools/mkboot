@@ -51,11 +51,11 @@ zip_command()
     elif [ "$1" == lz4 ]; then
         zcommand="lz4 -f -9"
     elif [ "$1" == lzma ]; then
-        zcommand="lzma -f -c"
+        zcommand="lzma -f -c -2"
     elif [ "$1" == xz ]; then
         zcommand="xz -f -c"
     else
-        zcommand="gzip -n -f"
+        zcommand="gzip -n -f -9"
     fi
 }
 
