@@ -338,15 +338,15 @@ DEBUG=0
      fi
   fi
 
-  # replace busybox lzma (and "xz") with our own ?
+  # replace busybox lzma (and "xz") with our own 
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
-  if [ "$FOX_USE_LZMA_COMPRESSION" = "1" ]; then
-      echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
-      rm -f $FOX_RAMDISK/sbin/lzma
-      rm -f $FOX_RAMDISK/sbin/xz
-      cp -a $FOX_VENDOR/Files/xz $FOX_RAMDISK/sbin/lzma
-      ln -s lzma $FOX_RAMDISK/sbin/xz
-  fi
+  #if [ "$FOX_USE_LZMA_COMPRESSION" = "1" ]; then
+  echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
+  rm -f $FOX_RAMDISK/sbin/lzma
+  rm -f $FOX_RAMDISK/sbin/xz
+  cp -a $FOX_VENDOR/Files/xz $FOX_RAMDISK/sbin/lzma
+  ln -s lzma $FOX_RAMDISK/sbin/xz
+  # fi
     
   # Include bash shell
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
