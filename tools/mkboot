@@ -51,7 +51,7 @@ zip_command()
     elif [ "$1" == lz4 ]; then
         zcommand="lz4 -f -9"
     elif [ "$1" == lzma ]; then
-        zcommand="lzma -f -c -2"
+        zcommand="lzma -f -c -4" # use lower compression level
     elif [ "$1" == xz ]; then
         zcommand="xz -f -c"
     else

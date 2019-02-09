@@ -31,7 +31,7 @@
 #    - eg, a script to delete some files, or add some files to the ramdisk
 #
 # "BUILD_2GB_VERSION"
-#    - whether to build a stripped down "GO" version for 2GB devices
+#    - whether to build a stripped down "lite" version for 2GB devices
 #    - default = 0
 #
 # "FOX_REPLACE_BUSYBOX_PS"
@@ -49,6 +49,15 @@
 #    - set this to 1 if your device has an 18:9 display (eg, vince, chiron, whyred)
 #    - default = 0
 #
+# "FOX_USE_LZMA_COMPRESSION"
+#    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
+#    - if set to 1, it will replace the busybox "lzma" and "xz" applets with a full version
+#    - * this requires you to have an up-to-date lzma binary in your build system, and 
+#    - * set these in your BoardConfig: 
+#    -     LZMA_RAMDISK_TARGETS := [boot,recovery]
+#    -     BOARD_NEEDS_LZMA_MINIGZIP := true
+#    - * your kernel must also have built-in lzma compression support
+#    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
 #
 # ******************************************************************************
 
@@ -102,7 +111,7 @@ export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 cp -r $OUT/recovery.img $RECOVERY_IMAGE
 
 # 2GB version
-RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_GO.img"
+RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_lite.img"
 [ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION="0" # by default, build only the full version
 #
 
@@ -144,7 +153,7 @@ local TDT=$(date "+%d %B %Y")
 
   # names of output zip file(s)
   ZIP_FILE=$OUT/$FOX_OUT_NAME.zip
-  ZIP_FILE_GO=$OUT/$FOX_OUT_NAME"_GO.zip"
+  ZIP_FILE_GO=$OUT/$FOX_OUT_NAME"_lite.zip"
   echo "- Creating $ZIP_FILE for deployment ..."
   
   # clean any existing files
@@ -209,14 +218,14 @@ local TDT=$(date "+%d %B %Y")
   echo -e "${BLUE}-- Creating md5 for $ZIP_FILE${NC}"
   cd "$OUT" && md5sum "$ZIP_FILE" > "$ZIP_FILE.md5" && cd - > /dev/null 2>&1
 
-  # create update zip for "GO" version
+  # create update zip for "lite" version
   if [ "$BUILD_2GB_VERSION" = "1" ]; then
   	rm -f ./recovery.img
   	cp -a $RECOVERY_IMAGE_2GB ./recovery.img
   	ZIP_CMD="zip --exclude=*.git* --exclude=OrangeFox*.zip* -r9 $ZIP_FILE_GO ."
   	echo "- Running ZIP command: $ZIP_CMD"
   	$ZIP_CMD
-  	#  sign zip installer ("GO" version)
+  	#  sign zip installer ("lite" version)
   	if [ -f $ZIP_FILE_GO ]; then
      	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
      	   echo "- Running ZIP command: $ZIP_CMD"
@@ -328,11 +337,22 @@ DEBUG=0
   	ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
      fi
   fi
+
+  # replace busybox lzma (and "xz") with our own ?
+  # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
+  if [ "$FOX_USE_LZMA_COMPRESSION" = "1" ]; then
+      echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
+      rm -f $FOX_RAMDISK/sbin/lzma
+      rm -f $FOX_RAMDISK/sbin/xz
+      cp -a $FOX_VENDOR/Files/xz $FOX_RAMDISK/sbin/lzma
+      ln -s lzma $FOX_RAMDISK/sbin/xz
+  fi
     
   # Include bash shell
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
      export FOX_USE_BASH_SHELL="0"
   else
+     echo -e "${GREEN}-- Copying bash ...${NC}"
      cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
      cp -a $FOX_VENDOR/Files/fox.bashrc $FOX_RAMDISK/etc/bash.bashrc
      chmod 0755 $FOX_RAMDISK/sbin/bash
@@ -343,7 +363,7 @@ DEBUG=0
      if [ -f "$FOX_RAMDISK/sbin/sh" ]; then
         echo -e "${GREEN}-- Replacing the busybox \"sh\" command with bash ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/sh
-  	ln -s /sbin/bash $FOX_RAMDISK/sbin/sh
+  	ln -s bash $FOX_RAMDISK/sbin/sh
      fi
   fi
 
@@ -363,9 +383,9 @@ DEBUG=0
   cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 # end: standard version
 
-#: build "GO" (2GB) version (virtually obsolete now) #
+#: build "lite" (2GB) version (virtually obsolete now) #
 if [ "$BUILD_2GB_VERSION" = "1" ]; then
-	echo -e "${BLUE}-- Repacking and copying the \"GO\" version of recovery${NC}"
+	echo -e "${BLUE}-- Repacking and copying the \"lite\" version of recovery${NC}"
 	FFil="$FOX_RAMDISK/FFiles"
 	rm -rf $FFil/OF_initd
 	rm -rf $FFil/AromaFM
