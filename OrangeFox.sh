@@ -330,11 +330,15 @@ DEBUG=0
   fi
 
   # replace busybox ps with our own ?
-  if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
-     if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
-        echo -e "${GREEN}-- Replacing the busybox \"ps\" command with our own full version ...${NC}"
-  	rm -f $FOX_RAMDISK/sbin/ps
-  	ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
+  if [ "$TW_USE_TOOLBOX" = "true" ]; then # if using toybox, then we don't need this
+     rm -f "$FOX_RAMDISK/FFiles/ps"
+  else
+     if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
+        if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
+           echo -e "${GREEN}-- Replacing the busybox \"ps\" command with our own full version ...${NC}"
+  	   rm -f $FOX_RAMDISK/sbin/ps
+  	   ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
+        fi
      fi
   fi
 
@@ -348,7 +352,7 @@ DEBUG=0
   ln -s lzma $FOX_RAMDISK/sbin/xz
   # fi
     
-  # Include bash shell
+  # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
      export FOX_USE_BASH_SHELL="0"
   else
@@ -359,7 +363,7 @@ DEBUG=0
   fi
   
   # replace busybox "sh" with bash ?
-  if [ "$FOX_USE_BASH_SHELL" = "1" ] && [ "$BUILD_2GB_VERSION" != "1" ]; then
+  if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
      if [ -f "$FOX_RAMDISK/sbin/sh" ]; then
         echo -e "${GREEN}-- Replacing the busybox \"sh\" command with bash ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/sh
