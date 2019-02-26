@@ -157,7 +157,11 @@ MIUI_Action() {
    echo "DEBUG: OrangeFox: check for MIUI." >> $L
    D="DEBUG: OrangeFox: detected a Custom ROM."
    if [ "$M" = "1" ]; then
-      D="DEBUG: OrangeFox: detected a non-Treble MIUI ROM."
+      D="DEBUG: OrangeFox: detected a MIUI ROM"
+      if [ "$T" = "1" ]; then
+         D="$D (Treble)"
+      fi
+      D=$D"."
    fi
   echo $D >> $L
   echo "MIUI=$M" >> $CFG
