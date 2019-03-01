@@ -2,15 +2,16 @@
 #
 # - /sbin/findmiui.sh
 # - Custom script for OrangeFox TWRP Recovery
+# - Copyright (C) 2018-2019 OrangeFox Recovery Project
+#
 # - Author: DarthJabba9
-# - Date: 18 January 2019
+# - Date:   1 March 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 # * Identify some hardware components
 # * Do some other sundry stuff
 #
-# Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 
 C="/tmp_cust"
@@ -62,13 +63,17 @@ local V=/dev/block/bootdevice/by-name/vendor
 }
 
 isTreble() {
-local C="/tmp_cust"
-local T=$(realTreble)
-  [ "$T" = "1" ] && {
+local TT=$(realTreble)
+  echo "REALTREBLE=$TT" >> $CFG
+  [ "$TT" = "1" ] && {
+     setprop orangefox.realtreble.rom 1
      echo "1"
      return
-  }  
+  }
+
   # try /cust
+local C="/tmp_cust"
+  setprop orangefox.realtreble.rom 0
   mkdir -p $C
   mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
   T=$(Has_Treble_Dirs $C)
