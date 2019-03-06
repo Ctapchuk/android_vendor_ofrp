@@ -69,9 +69,14 @@ package_extract_file() {
    fi 
 }
 
+# file_getprop <file> <property>
+file_getprop() { 
+  grep "^$2=" "$1" | cut -d= -f2
+}
+
 # getprop <property>
 getprop() { 
-   [ -e /sbin/getprop ] && /sbin/getprop $1 || grep "^$1" /default.prop | head -n1 | cut -d= -f2
+   [ -e /sbin/getprop ] && /sbin/getprop $1 || grep "^$1=" /default.prop | head -n1 | cut -d= -f2
 }
 
 # abort [<message>]

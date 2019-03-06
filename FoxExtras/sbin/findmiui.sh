@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   1 March 2019
+# - Date:   3 March 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -15,7 +15,7 @@
 #
 
 C="/tmp_cust"
-L="/tmp/recovery.log"
+LOG="/tmp/recovery.log"
 CFG="/tmp/orangefox.cfg"
 FS="/etc/recovery.fstab"
 T=0
@@ -23,18 +23,25 @@ M=0
 DEBUG="0"  	  # enable for more debug messages
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
+ROM=""   
+
+# file_getprop <file> <property>
+file_getprop() 
+{ 
+   grep "^$2=" "$1" | cut -d= -f2
+}
 
 #  some optional debug message stuff
 DebugDirList() {
    [ ! "$DEBUG" = "1" ] && return
-   echo "DEBUG: OrangeFox: directory list of $1" >> $L
-   ls -all $1 >> $L
+   echo "DEBUG: OrangeFox: directory list of $1" >> $LOG
+   ls -all $1 >> $LOG
 }
 
 # optional debug message
 DebugMsg() {
    [ ! "$DEBUG" = "1" ] && return
-   echo "DEBUG: OrangeFox: $@" >> $L
+   echo "DEBUG: OrangeFox: $@" >> $LOG
 }
 
 # is it a treble ROM ?
@@ -54,7 +61,7 @@ local V=/dev/block/bootdevice/by-name/vendor
     echo "0"
     return
   }
-  mkdir -p $CC
+  mkdir -p $CC > /dev/null 2>&1
   mount -t ext4 $V $CC > /dev/null 2>&1
   local R=$(Has_Treble_Dirs $CC)
   umount $CC > /dev/null 2>&1
@@ -65,16 +72,18 @@ local V=/dev/block/bootdevice/by-name/vendor
 isTreble() {
 local TT=$(realTreble)
   echo "REALTREBLE=$TT" >> $CFG
+  echo "" >> $LOG
+  echo "DEBUG: OrangeFox: REALTREBLE=$TT" >> $LOG
   [ "$TT" = "1" ] && {
-     setprop orangefox.realtreble.rom 1
+     setprop orangefox.realtreble.rom 1 > /dev/null 2>&1
      echo "1"
      return
   }
+  setprop orangefox.realtreble.rom 0  > /dev/null 2>&1
 
   # try /cust
 local C="/tmp_cust"
-  setprop orangefox.realtreble.rom 0
-  mkdir -p $C
+  mkdir -p $C > /dev/null 2>&1
   mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
   T=$(Has_Treble_Dirs $C)
   DebugDirList "$C/"
@@ -82,6 +91,37 @@ local C="/tmp_cust"
   umount $C > /dev/null 2>&1
   rmdir $C > /dev/null 2>&1
   echo "$T"
+}
+
+get_ROM() {
+local S="/tmp_system_rom"
+   # mount /system and check
+   if [ -d "$S" ]; then
+      DebugMsg "$S already exists"
+      umount $S > /dev/null 2>&1
+   else
+      DebugMsg "Creating $S"
+      mkdir -p $S
+   fi
+   
+   mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
+   local tmp1="$S/build.prop"
+   local tmp2=""
+
+   if [ -e "$tmp1" ]; then 
+      tmp2=$(file_getprop "$tmp1" "ro.build.display.id")
+   fi
+   
+   if [ -z "$tmp2" ]; then
+      tmp1="$/system/build.prop"
+      [ -e "$tmp1" ] && tmp2=$(file_getprop "$tmp1" "ro.build.display.id")
+   fi
+
+   # unmount
+   umount $S > /dev/null 2>&1
+   rmdir $S
+
+   echo "$tmp2"
 }
 
 # is it miui ?
@@ -99,9 +139,9 @@ isMIUI() {
       DebugMsg "Creating $S"
       mkdir -p $S
    fi
-   
-   mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
 
+   mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
+   
    DebugDirList "$S/"
    DebugDirList "$S/vendor"
 
@@ -127,6 +167,10 @@ Get_Details() {
 
    # check for MIUI
    M=$(isMIUI)
+
+   # look for installed ROM
+   ROM=$(get_ROM)
+   #   
 }
 
 # remove /cust or /vendor from fstab
@@ -146,20 +190,30 @@ mod_cust_vendor() {
 
 # report on Treble
 Treble_Action() {
-   echo "DEBUG: OrangeFox: check for Treble." >> $L
+   echo "DEBUG: OrangeFox: check for Treble." >> $LOG
+   if [ -z "$ROM" ]; then
+      echo "DEBUG: OrangeFox: detected no ROM" >> $LOG
+      echo "TREBLE=0" >> $CFG
+      return
+   fi   
    if [ "$T" = "1" ]; then
       D="DEBUG: OrangeFox: detected a Treble ROM."
    else
       D="DEBUG: OrangeFox: detected a Non-Treble ROM."
    fi
    mod_cust_vendor "$T"
-   echo $D >> $L
+   echo $D >> $LOG
    echo "TREBLE=$T" >> $CFG
+   echo "ROM=$ROM" >> $CFG
 }
 
 # report on MIUI and take action
 MIUI_Action() {
-   echo "DEBUG: OrangeFox: check for MIUI." >> $L
+   echo "DEBUG: OrangeFox: check for MIUI." >> $LOG
+   if [ -z "$ROM" ]; then
+      echo "MIUI=0" >> $CFG
+      return
+   fi
    D="DEBUG: OrangeFox: detected a Custom ROM."
    if [ "$M" = "1" ]; then
       D="DEBUG: OrangeFox: detected a MIUI ROM"
@@ -168,7 +222,7 @@ MIUI_Action() {
       fi
       D=$D"."
    fi
-  echo $D >> $L
+  echo $D >> $LOG
   echo "MIUI=$M" >> $CFG
 }
 
