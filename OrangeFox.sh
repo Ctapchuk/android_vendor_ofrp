@@ -170,8 +170,11 @@ local TDT=$(date "+%d %B %Y")
   # copy installer bins and script 
   cp -ar $INST_DIR/* .
 
-  # copy FoxFiles/ to sdcard/
+  # copy FoxFiles/ to sdcard/Fox/
   cp -a $FILES_DIR/ sdcard/Fox
+  
+  # copy splash logo to sdcard/Fox/
+  cp -a $FOX_RAMDISK/twres/images/splash.png sdcard/Fox/
   
   # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
