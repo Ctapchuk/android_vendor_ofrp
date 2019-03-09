@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-#
 # Custom build script for OrangeFox Recovery Project
 #
 # This software is licensed under the terms of the GNU General Public
@@ -36,9 +35,10 @@
 #
 # "FOX_REPLACE_BUSYBOX_PS"
 #    - set to 1 to replace the (stripped down) busybox version of the "ps" command
-#    - if this is defined, the busybox "ps" command will be replaced by a fuller version
+#    - if this is defined, the busybox "ps" command will be replaced by a fuller (arm64) version
 #    - default = 0
-# 
+#    - this should NOT be enabled for arm32 devices
+#
 # "FOX_RECOVERY_INSTALL_PARTITION"
 #    - !!! this should normally BE LEFT WELL ALONE !!!
 #    - set this ONLY if your device's recovery partition is in a location that is
@@ -58,6 +58,37 @@
 #    -     BOARD_NEEDS_LZMA_MINIGZIP := true
 #    - * your kernel must also have built-in lzma compression support
 #    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
+#
+# "FOX_USE_NANO_EDITOR"
+#    - set this to 1 if you want the nano editor to be added
+#    - this must be set in a shell script, or at the command line, before building
+#    - this will add about 300kb to the size of the recovery image
+#    - default = 0
+#
+# "FOX_USE_BASH_SHELL"
+#    - set this to 1 if you the bash shell to replace the busybox "sh"
+#    - default = 0
+#    - if not set, bash will still be copied, but it will not replace "sh"
+#
+# "FOX_REMOVE_BASH"
+#    - set this to 1 if you want to remove bash completely from the recovery
+#    - default = 0
+#
+# "OF_DONT_PATCH_ON_FRESH_INSTALLATION"
+#    - set to 1 to prevent patching dm-verity and forced-encryption when the OrangeFox zip is flashed
+#    - default = 0
+#    - if dm-verity is enabled in the ROM, and this is turned on, there will be a bootloop
+#
+#  "OF_TWRP_COMPATIBILITY_MODE" ; "OF_DISABLE_MIUI_SPECIFIC_FEATURES"
+#    - set either of them to 1 to enable stock TWRP-compatibility mode 
+#    - in this mode, MIUI OTA, and dm-verity/forced-encryption patching will be disabled
+#    - default = 0
+#    - ** this is quite experimental at the moment *** - use at your own risk!!!
+# 
+# "OF_DONT_PATCH_ENCRYPTED_DEVICE"
+#    - set to 1 to avoid patching forced-encryption on encrypted devices
+#    - default = 0
+#    - this should NOT be used unless the default is causing issues on your device
 #
 # ******************************************************************************
 
@@ -372,6 +403,13 @@ DEBUG=0
   	rm -f $FOX_RAMDISK/sbin/sh
   	ln -s bash $FOX_RAMDISK/sbin/sh
      fi
+  fi
+
+  # Include nano editor ?
+  if [ "$FOX_USE_NANO_EDITOR" = "1" ]; then
+      echo -e "${GREEN}-- Copying nano editor ...${NC}"
+      cp -af $FOX_VENDOR/Files/nano/ $FOX_RAMDISK/FFiles/
+      cp -af $FOX_VENDOR/Files/nano/sbin/nano $FOX_RAMDISK/sbin/
   fi
 
   # Include mmgui

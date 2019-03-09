@@ -1,0 +1,21 @@
+
+Examples of terminals:
+ansi
+cygwin
+Eterm
+Eterm-color
+linux
+pcansi
+rxvt
+rxvt-basic
+screen
+screen-256color
+vt52
+vt100
+vt102
+vt220
+xterm
+xterm-256color
+xterm-color
+xterm-vt220
+
