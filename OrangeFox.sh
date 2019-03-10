@@ -18,6 +18,8 @@
 # ******************************************************************************
 # Optional (new) environment variables - to be declared before building
 #
+# It is best to declare these in a script that you will use for building 
+#
 # "FOX_PORTS_TMP" 
 #    - point to a custom temp directory for creating the zip installer
 #
@@ -434,8 +436,17 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	FFil="$FOX_RAMDISK/FFiles"
 	rm -rf $FFil/OF_initd
 	rm -rf $FFil/AromaFM
+	rm -rf $FFil/nano
+	rm -f $FOX_RAMDISK/sbin/nano
 	rm -f $FOX_RAMDISK/sbin/bash
 	rm -f $FOX_RAMDISK/etc/bash.bashrc
+  	if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
+     	   if [ -h "$FOX_RAMDISK/sbin/sh" ]; then
+              echo -e "${GREEN}-- Replacing bash 'sh' with busybox 'sh' ...${NC}"
+  	      rm -f $FOX_RAMDISK/sbin/sh
+  	      ln -s busybox $FOX_RAMDISK/sbin/sh
+     	   fi
+ 	fi
 	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
 	bash "$FOX_VENDOR/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
