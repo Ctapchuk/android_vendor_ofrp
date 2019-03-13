@@ -92,6 +92,18 @@
 #    - default = 0
 #    - this should NOT be used unless the default is causing issues on your device
 #
+# "OF_USE_MAGISKBOOT"
+#    - set to 1 to use magiskboot for patching the ROM's boot image
+#    - else, mkbootimg/unpackbootimg will be used
+#    - magiskboot does a better job of patching boot images, but is slow
+#    - default = 0
+#
+# "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES"
+#    - set to 1 to use magisboot for all patching of boot images *and* recovery images
+#    - this means that mkbootimg/unpackbootimg/lzma will be deleted
+#    - if this is set, this script will also automatically set OF_USE_MAGISKBOOT to 1
+#    - default = 0
+#
 # ******************************************************************************
 
 RED='\033[0;31m'
@@ -138,9 +150,15 @@ if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
    export FOX_REPLACE_BUSYBOX_PS="0"
 fi
 
+# magiskboot
+if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" ]; then
+   export OF_USE_MAGISKBOOT=1
+fi
+
+# exports
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 
-#Copy recovery.img
+# copy recovery.img
 cp -r $OUT/recovery.img $RECOVERY_IMAGE
 
 # 2GB version
@@ -356,13 +374,15 @@ DEBUG=0
   
   # deal with magiskboot/mkbootimg/unpackbootimg
   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
-        echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
-        rm -f "$FOX_RAMDISK/sbin/magiskboot"
+      echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
+      rm -f "$FOX_RAMDISK/sbin/magiskboot"
   else
-        echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
-        ##echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/sbin/magiskboot] - delete mkbootimg/unpackbootimg ...${NC}"
-        ##rm -f "$FOX_RAMDISK/sbin/mkbootimg"
-        ##rm -f "$FOX_RAMDISK/sbin/unpackbootimg"
+     echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
+     if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" ]; then
+        echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/sbin/magiskboot] - deleting mkbootimg/unpackbootimg ...${NC}"
+        rm -f $FOX_RAMDISK/sbin/mkbootimg
+        rm -f $FOX_RAMDISK/sbin/unpackbootimg
+     fi
   fi
 
   # replace busybox ps with our own ?
@@ -381,12 +401,13 @@ DEBUG=0
   # replace busybox lzma (and "xz") with our own 
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
   #if [ "$FOX_USE_LZMA_COMPRESSION" = "1" ]; then
-  echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
-  rm -f $FOX_RAMDISK/sbin/lzma
-  rm -f $FOX_RAMDISK/sbin/xz
-  cp -a $FOX_VENDOR/Files/xz $FOX_RAMDISK/sbin/lzma
-  ln -s lzma $FOX_RAMDISK/sbin/xz
-  # fi
+  if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" ]; then
+     echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
+     rm -f $FOX_RAMDISK/sbin/lzma
+     rm -f $FOX_RAMDISK/sbin/xz
+     cp -a $FOX_VENDOR/Files/xz $FOX_RAMDISK/sbin/lzma
+     ln -s lzma $FOX_RAMDISK/sbin/xz
+  fi
     
   # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
