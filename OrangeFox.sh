@@ -262,11 +262,11 @@ local TDT=$(date "+%d %B %Y")
   $ZIP_CMD
    
   #  sign zip installer
-  if [ -f $ZIP_FILE ]; then
-     ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
-     echo "- Running ZIP command: $ZIP_CMD"
-     $ZIP_CMD
-  fi
+  #if [ -f $ZIP_FILE ]; then
+  #   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
+  #   echo "- Running ZIP command: $ZIP_CMD"
+  #   $ZIP_CMD
+  #fi
 
   #Creating ZIP md5
   echo -e "${BLUE}-- Creating md5 for $ZIP_FILE${NC}"
@@ -280,11 +280,11 @@ local TDT=$(date "+%d %B %Y")
   	echo "- Running ZIP command: $ZIP_CMD"
   	$ZIP_CMD
   	#  sign zip installer ("lite" version)
-  	if [ -f $ZIP_FILE_GO ]; then
-     	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
-     	   echo "- Running ZIP command: $ZIP_CMD"
-     	   $ZIP_CMD
-     	fi
+  	# if [ -f $ZIP_FILE_GO ]; then
+   #  	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
+   #  	   echo "- Running ZIP command: $ZIP_CMD"
+   #  	   $ZIP_CMD
+   #  	fi
     #md5 Go zip
     echo -e "${BLUE}-- Creating md5 for $ZIP_FILE_GO${NC}"
     cd "$OUT" && md5sum "$ZIP_FILE_GO" > "$ZIP_FILE_GO.md5" && cd - > /dev/null 2>&1
@@ -439,6 +439,10 @@ DEBUG=0
   cp -a $FOX_VENDOR/Files/mmgui $FOX_RAMDISK/sbin/mmgui
   chmod 0755 $FOX_RAMDISK/sbin/mmgui
 
+  # Include aapt
+  cp -a $FOX_VENDOR/Files/aapt $FOX_RAMDISK/sbin/aapt
+  chmod 0755 $FOX_RAMDISK/sbin/aapt
+
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
@@ -460,6 +464,8 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	rm -rf $FFil/nano
 	rm -f $FOX_RAMDISK/sbin/nano
 	rm -f $FOX_RAMDISK/sbin/bash
+   rm -f $FOX_RAMDISK/sbin/mmgui
+	rm -f $FOX_RAMDISK/sbin/aapt
 	rm -f $FOX_RAMDISK/etc/bash.bashrc
   	if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
      	   if [ -h "$FOX_RAMDISK/sbin/sh" ]; then
