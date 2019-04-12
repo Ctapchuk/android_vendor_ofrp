@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   3 March 2019
+# - Date:   7 April 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -23,7 +23,8 @@ M=0
 DEBUG="0"  	  # enable for more debug messages
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
-ROM=""   
+ROM=""
+FOX_DEVICE=$(getprop "ro.product.device")
 
 # file_getprop <file> <property>
 file_getprop() 
@@ -113,7 +114,7 @@ local S="/tmp_system_rom"
    fi
    
    if [ -z "$tmp2" ]; then
-      tmp1="$/system/build.prop"
+      tmp1="/system/build.prop"
       [ -e "$tmp1" ] && tmp2=$(file_getprop "$tmp1" "ro.build.display.id")
    fi
 
@@ -238,8 +239,7 @@ backup_restore_FS() {
 # fix yellow flashlight on mido/vince/kenzo
 fix_yellow_flashlight() {
 local LED=""
-local DEV=$(getprop "ro.product.device")
-   case "$DEV" in
+   case "$FOX_DEVICE" in
        	mido)
        		LED="/sys/devices/soc/qpnp-flash-led-25";
        	;;
@@ -268,6 +268,8 @@ local OPS=$(getprop "orangefox.postinit.status")
    echo "# OrangeFox live cfg" > $CFG
    OPS=$(uname -r)
    echo "KERNEL=$OPS" >> $CFG
+   echo "DEBUG: OrangeFox: FOX_DEVICE=$FOX_DEVICE" >> $LOG
+   echo "DEBUG: OrangeFox: FOX_KERNEL=$OPS" >> $LOG
    setprop orangefox.postinit.status 1
 }
 
