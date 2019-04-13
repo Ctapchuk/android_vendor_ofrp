@@ -155,9 +155,17 @@ local ToRename="/system/bin/install-recovery.sh
    do
      Process_StockRecovery "$i"
    done
-   
-   # log this install
-   mount /cache
+}
+
+# log this install
+LogFreshInstall() { 
+local F=$(is_mounted "/cache")
+   [ "$F" != "1" ] && mount /cache
+   F=$(is_mounted "/cache")
+   [ "$F" != "1" ] && {
+      echo "- Error mounting /cache; the post-install patches will not be processed."
+      return
+   }
    mkdir -p /cache/recovery/
    echo "FOX_NEW=1" > /cache/recovery/Fox_Installed
    umount /cache
@@ -199,9 +207,9 @@ Main() {
 	   internal_SD="/data/media/0"
 	   mount $internal_SD
 	}	
-	#ui_print "- internal_SD=$internal_SD"
-   	rm -rf "/$internal_SD/Fox/FoxFiles"
-   	rm -f "/$internal_SD/Fox/.wolfs"
+	ui_print "- internal_SD=$internal_SD"
+   	rm -rf "$internal_SD/Fox/FoxFiles"
+   	rm -f "$internal_SD/Fox/.wolfs"
    	package_extract_dir "sdcard" "$internal_SD"
 
 # Prevent the stock recovery from replacing this recovery
@@ -211,9 +219,13 @@ Main() {
 	
 	Disable_stock_recovery_overwrites
 	
+	LogFreshInstall
+	
 	UnMountThemAll
 
 # backup recovery.log -> Fox/install.log
+        ui_print "- Finished."
+        ui_print "- Backing up recovery.log to $internal_SD/Fox/install.log ..."
 	cp -a /tmp/recovery.log $internal_SD/Fox/install.log
    	[ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
 
