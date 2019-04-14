@@ -157,18 +157,34 @@ local ToRename="/system/bin/install-recovery.sh
    done
 }
 
+# get the cache dir
+GetCacheDir() {
+local C="/cache/" 
+local AB="/data/cache/"
+local P="/persist/cache/"
+ [ -e $C ] && { echo "$C"; return; }
+ [ -e $AB ] && { echo "$AB"; return; }
+ [ -e $P ] && echo "$P" || echo "$C"
+}
+
 # log this install
 LogFreshInstall() { 
-local F=$(is_mounted "/cache")
-   [ "$F" != "1" ] && mount /cache
-   F=$(is_mounted "/cache")
-   [ "$F" != "1" ] && {
-      echo "- Error mounting /cache; the post-install patches will not be processed."
-      return
-   }
-   mkdir -p /cache/recovery/
-   echo "FOX_NEW=1" > /cache/recovery/Fox_Installed
-   umount /cache
+local cache_dir=$(GetCacheDir)
+local F="0"
+
+  if [ "$cache_dir" = "/cache/" ]; then
+     F=$(is_mounted "/cache")
+     [ "$F" != "1" ] && mount /cache
+     F=$(is_mounted "/cache")
+     [ "$F" != "1" ] && {
+       ui_print "- Error mounting /cache; the post-install patches will not be processed."
+       return
+     }
+ fi
+ F="$cache_dir"recovery/
+ [ ! -d $F ] && mkdir -p $F
+ echo "FOX_NEW=1" > "$F"Fox_Installed
+ [ "$cache_dir" = "/cache/" ] && umount /cache
 }
 
 # unzip the installer package into /tmp
