@@ -2,6 +2,9 @@
 #
 # Custom build script for OrangeFox Recovery Project
 #
+# Copyright (C) 2018-2019 OrangeFox Recovery Project
+# Date: 15 April 2019
+#
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
 # may be copied, distributed, and modified under those terms.
@@ -13,12 +16,19 @@
 #
 # Please maintain this if you use this script or any part of it
 #
-# Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # ******************************************************************************
 # Optional (new) environment variables - to be declared before building
 #
 # It is best to declare these in a script that you will use for building 
+#
+# "OF_AB_DEVICE"
+#    - whether the device is an A/B device
+#    - set to 1 if your device is an A/B device (** make sure that it really is **)
+#    - if you enable this (by setting to 1), you must also (before building):
+#         set "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1" and
+#         set "OF_USE_MAGISKBOOT=1"
+#    - default = 0
 #
 # "FOX_PORTS_TMP" 
 #    - point to a custom temp directory for creating the zip installer
@@ -145,6 +155,9 @@ RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
 
+# whether to print extra debug messages
+DEBUG="0"
+
 # FOX_REPLACE_BUSYBOX_PS: default to 0
 if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
    export FOX_REPLACE_BUSYBOX_PS="0"
@@ -153,6 +166,16 @@ fi
 # magiskboot
 if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" ]; then
    export OF_USE_MAGISKBOOT=1
+fi
+
+# A/B devices
+if [ "$OF_AB_DEVICE" = "1" ]; then
+   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" ] || [ "$OF_USE_MAGISKBOOT" != "1" ]; then
+      echo -e "${RED}-- ************************************************************************************************${NC}"
+      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - A/B device - but other necessary vars not set. Quitting now ... ${NC}"
+      echo -e "${RED}-- ************************************************************************************************${NC}"
+      exit 200
+   fi
 fi
 
 # exports
@@ -255,7 +278,14 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s|^RECOVERY_PARTITION=.*|RECOVERY_PARTITION=\"$FOX_RECOVERY_INSTALL_PARTITION\"|" $F
      # sed -i -e "s|$DEFAULT_INSTALL_PARTITION|$FOX_RECOVERY_INSTALL_PARTITION|" $F
   fi
-      
+
+  # A/B devices
+  if [ "$OF_AB_DEVICE" = "1" ]; then
+     echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
+     cp -a $FOX_RAMDISK/sbin/magiskboot .
+     sed -i -e "s|^OF_AB_DEVICE=.*|OF_AB_DEVICE=\"1\"|" $F
+  fi
+
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
@@ -360,8 +390,6 @@ case "$TARGET_ARCH" in
 esac
 
 # build standard (3GB) version
-DEBUG=0
-
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
@@ -464,7 +492,7 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	rm -rf $FFil/nano
 	rm -f $FOX_RAMDISK/sbin/nano
 	rm -f $FOX_RAMDISK/sbin/bash
-   rm -f $FOX_RAMDISK/sbin/mmgui
+        rm -f $FOX_RAMDISK/sbin/mmgui
 	rm -f $FOX_RAMDISK/sbin/aapt
 	rm -f $FOX_RAMDISK/etc/bash.bashrc
   	if [ "$FOX_USE_BASH_SHELL" = "1" ]; then

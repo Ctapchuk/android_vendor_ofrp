@@ -20,7 +20,10 @@ SCREEN=/proc/self/fd/$2
 ZIPFILE="$3"
 
 # the zip extract directory
-EX_DIR=/tmp/DJ9
+EX_DIR=/tmp/ofox_installer
+
+# AB device?
+OF_AB_DEVICE=""
 
 # ui_print "<message>" ["<message 2>" ...]
 ui_print() {
@@ -124,9 +127,13 @@ local F=$(is_mounted "/system")
 
 # unmount everything that we mounted
 UnMountThemAll() {
-	umount /system
-    	local F=$(is_mounted "/vendor")
-    	[ "$F" = "1" ] && umount /vendor
+   umount /system
+   local F=$(is_mounted "/vendor")
+   [ "$F" = "1" ] && umount /vendor
+   F=$(is_mounted "/cache")
+   [ "$F" = "1" ] && umount /cache
+   F=$(is_mounted "/persist")
+   [ "$F" = "1" ] && umount /persist
 }
 
 Process_StockRecovery() {
@@ -164,7 +171,8 @@ local AB="/data/cache/"
 local P="/persist/cache/"
  [ -e $C ] && { echo "$C"; return; }
  [ -e $AB ] && { echo "$AB"; return; }
- [ -e $P ] && echo "$P" || echo "$C"
+ [ -e $P ] && { echo "$P"; return; }
+ [ "$OF_AB_DEVICE" = "1" ] && echo "$AB" || echo "$C"
 }
 
 # log this install
@@ -180,11 +188,25 @@ local F="0"
        ui_print "- Error mounting /cache; the post-install patches will not be processed."
        return
      }
+ else
+     if [ "$cache_dir" = "$P" ]; then
+     	F=$(is_mounted "/persist")
+     	[ "$F" != "1" ] && mount /persist
+     	F=$(is_mounted "/persist")
+     	[ "$F" != "1" ] && {
+     	  ui_print "- Error mounting the cache directory; the post-install patches will not be processed."
+     	  return
+     	}
+     fi 
  fi
- F="$cache_dir"recovery/
- [ ! -d $F ] && mkdir -p $F
- echo "FOX_NEW=1" > "$F"Fox_Installed
- [ "$cache_dir" = "/cache/" ] && umount /cache
+ 
+  F="$cache_dir"recovery/
+  [ ! -d $F ] && mkdir -p $F
+  ui_print "- OrangeFox fresh installation - "$F"Fox_Installed"
+  echo "FOX_NEW=1" > "$F"Fox_Installed
+  [ ! -f "$F"Fox_Installed ] && {
+    ui_print "- Error writing to the cache directory; the post-install patches will not be processed."
+  }
 }
 
 # unzip the installer package into /tmp
@@ -193,6 +215,49 @@ Unzip_Installer_Package() {
    mkdir -p $EX_DIR
    cd $EX_DIR
    unzip -o "$ZIPFILE"
+}
+
+# routine for flashing on A/B devices
+AB_Install_Recovery() {
+local toolname="/magiskboot"
+local tool="$EX_DIR$toolname"
+local targetfile="/boot.img"
+local target="$EX_DIR$targetfile"
+
+	cd "$EX_DIR"
+	chmod 0755 "$tool"
+
+	ui_print "- Extracting the ramdisk ..."
+	"$tool" --unpack recovery.img > /dev/null 2>&1
+	rm -f kernel dtb
+	mv -f ramdisk.cpio ramdisk-ofrp.cpio
+
+	ui_print "- Running boot image patcher on slot A..."
+	dd if=/dev/block/bootdevice/by-name/boot_a "of=$target"
+	"$tool" --unpack boot.img > /dev/null 2>&1
+	cp -f ramdisk-ofrp.cpio ramdisk.cpio
+	"$tool" --repack boot.img > /dev/null 2>&1
+	dd if=new-boot.img of=/dev/block/bootdevice/by-name/boot_a
+	rm -f boot.img dtb kernel new-boot.img ramdisk.cpio
+
+	ui_print "- Running boot image patcher on slot B..."
+	dd if=/dev/block/bootdevice/by-name/boot_b "of=$target"
+	"$tool" --unpack boot.img > /dev/null 2>&1
+	cp -f ramdisk-ofrp.cpio ramdisk.cpio
+	"$tool" --repack boot.img > /dev/null 2>&1
+	dd if=new-boot.img of=/dev/block/bootdevice/by-name/boot_b
+	rm -f boot.img dtb kernel new-boot.img ramdisk.cpio ramdisk-ofrp.cpio
+}
+
+# install the recovery
+Install_Recovery() {
+  [ "$OF_AB_DEVICE" != "1" ] && {
+    package_extract_file "recovery.img" "$RECOVERY_PARTITION"
+    return
+  }
+  # this is declared to be an A/B device
+  ui_print "- A/B device ... "
+  AB_Install_Recovery
 }
 
 # main function
@@ -209,9 +274,9 @@ Main() {
 # extract the zip installer
 	Unzip_Installer_Package
 	
-# Install the recovery image
+# Install the recovery
 	ui_print "- Installing OrangeFox recovery ..."
-	package_extract_file "recovery.img" "$RECOVERY_PARTITION"
+	Install_Recovery
 
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."
@@ -237,13 +302,14 @@ Main() {
 	
 	LogFreshInstall
 	
-	UnMountThemAll
-
 # backup recovery.log -> Fox/install.log
-        ui_print "- Finished."
-        ui_print "- Backing up recovery.log to $internal_SD/Fox/install.log ..."
+    	ui_print "- Finished."
+    	ui_print "- Backing up recovery.log to $internal_SD/Fox/install.log ..."
 	cp -a /tmp/recovery.log $internal_SD/Fox/install.log
    	[ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
+
+# umount
+	UnMountThemAll
 
 # Finish and reboot
 	ui_print "- Finished installing OrangeFox!" 
