@@ -500,7 +500,7 @@ do_create_update_zip
 #Info
 echo -e ""
 echo -e ""
-cat ../../../vendor/recovery/Files/FoxBanner
+cat $FOX_VENDOR_PATH/Files/FoxBanner
 echo -e ""
 echo -e ""
 echo -e "===================${BLUE}Finished building OrangeFox${NC}==================="
