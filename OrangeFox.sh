@@ -121,21 +121,7 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${RED}=====================================================================${NC}"
-echo -e ""
-echo -e "${RED} .d88888b.                                             8888888888                ${NC}"
-echo -e "${RED}d88P\" \"Y88b                                            888                       ${NC}"
-echo -e "${RED}888     888                                            888                       ${NC}"
-echo -e "${RED}888     888 888d888 8888b.  88888b.   .d88b.   .d88b.  8888888  .d88b.  888  888 ${NC}"
-echo -e "${RED}888     888 888P\"      \"88b 888 \"88b d88P\"88b d8P  Y8b 888     d88\"\"88b \`Y8bd8P' ${NC}"
-echo -e "${RED}888     888 888    .d888888 888  888 888  888 88888888 888     888  888   X88K   ${NC}"
-echo -e "${RED}Y88b. .d88P 888    888  888 888  888 Y88b 888 Y8b.     888     Y88..88P .d8\"\"8b. ${NC}"
-echo -e "${RED} \"Y88888P\"  888    \"Y888888 888  888  \"Y88888  \"Y8888  888      \"Y88P\"  888  888 ${NC}"
-echo -e "${RED}                                          888                                    ${NC}"
-echo -e "${RED}                                     Y8b d88P                                    ${NC}"
-echo -e "${RED}                                      \"Y88P\"                                     ${NC}"
-echo -e ""
-echo -e "${RED}----------------------------Building OrangeFox-----------------------${NC}"
+echo -e "${RED}Building OrangeFox...${NC}"
 
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 
@@ -150,7 +136,7 @@ FOX_VENDOR=vendor/$RECOVERY_DIR
 FOX_WORK=$OUT/FOX_AIK
 FOX_RAMDISK="$FOX_WORK/ramdisk"
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
-FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
+FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$BUILD_TYPE-$FOX_DEVICE
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
@@ -492,7 +478,7 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	rm -rf $FFil/nano
 	rm -f $FOX_RAMDISK/sbin/nano
 	rm -f $FOX_RAMDISK/sbin/bash
-        rm -f $FOX_RAMDISK/sbin/mmgui
+   rm -f $FOX_RAMDISK/sbin/mmgui
 	rm -f $FOX_RAMDISK/sbin/aapt
 	rm -f $FOX_RAMDISK/etc/bash.bashrc
   	if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
@@ -514,23 +500,26 @@ do_create_update_zip
 #Info
 echo -e ""
 echo -e ""
-echo -e "${RED}--------------------Finished building OrangeFox---------------------${NC}"
-echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE"
-echo -e "          MD5: $RECOVERY_IMAGE.md5${NC}"
+cat ../../../vendor/recovery/Files/FoxBanner
 echo -e ""
-echo -e "${GREEN}Recovery zip: $OUT/$FOX_OUT_NAME.zip"
-echo -e "          MD5: $ZIP_FILE.md5${NC}"
-echo -e "${RED}==================================================================${NC}"
+echo -e ""
+echo -e "===================${BLUE}Finished building OrangeFox${NC}==================="
+echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
+echo -e "          MD5: $RECOVERY_IMAGE.md5"
+echo -e ""
+echo -e "${GREEN}Recovery zip:${NC} $OUT/$FOX_OUT_NAME.zip"
+echo -e "          MD5: $ZIP_FILE.md5"
+echo -e "=================================================================="
 
 if [ "$BUILD_2GB_VERSION" = "1" ]; then
 echo -e ""
 echo -e ""
-echo -e "${RED}---------------Finished building OrangeFox Go Edition---------------${NC}"
-echo -e "${GREEN}Recovery image: $RECOVERY_IMAGE_2GB"
-echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5${NC}"
+echo -e "---------------${BLUE}Finished building OrangeFox Lite Edition${NC}---------------"
+echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
+echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
 echo -e ""
-echo -e "${GREEN}Recovery zip: $OUT/$ZIP_FILE_GO.zip"
-echo -e "          MD5: $ZIP_FILE_GO.md5${NC}"
-echo -e "${RED}==================================================================${NC}"
+echo -e "${GREEN}Recovery zip:${NC} $OUT/$ZIP_FILE_GO.zip"
+echo -e "          MD5: $ZIP_FILE_GO.md5"
+echo -e "=================================================================="
 fi
 # end!
