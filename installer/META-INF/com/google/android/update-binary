@@ -134,6 +134,8 @@ UnMountThemAll() {
    [ "$F" = "1" ] && umount /cache
    F=$(is_mounted "/persist")
    [ "$F" = "1" ] && umount /persist
+   F=$(is_mounted "/data")
+   [ "$F" = "1" ] && umount /data
 }
 
 Process_StockRecovery() {
@@ -169,10 +171,18 @@ GetCacheDir() {
 local C="/cache/" 
 local AB="/data/cache/"
 local P="/persist/cache/"
+ if [ "$OF_AB_DEVICE" = "1" ]; then
+    [ -e $AB ] && { echo "$AB"; return; }
+    [ -e $P ] && { echo "$P"; return; }
+    F=$(is_mounted "/data")
+    [ "$F" != "1" ] && mount /data
+    echo "$AB"
+    return
+ fi
  [ -e $C ] && { echo "$C"; return; }
  [ -e $AB ] && { echo "$AB"; return; }
  [ -e $P ] && { echo "$P"; return; }
- [ "$OF_AB_DEVICE" = "1" ] && echo "$AB" || echo "$C"
+ echo "$C"
 }
 
 # log this install
@@ -189,12 +199,12 @@ local F="0"
        return
      }
  else
-     if [ "$cache_dir" = "$P" ]; then
+     if [ "$cache_dir" = "/persist/cache/" ]; then
      	F=$(is_mounted "/persist")
      	[ "$F" != "1" ] && mount /persist
      	F=$(is_mounted "/persist")
      	[ "$F" != "1" ] && {
-     	  ui_print "- Error mounting the cache directory; the post-install patches will not be processed."
+     	  ui_print "- Error mounting the cache directory ($cache_dir); the post-install patches will not be processed."
      	  return
      	}
      fi 
@@ -205,7 +215,7 @@ local F="0"
   ui_print "- OrangeFox fresh installation - "$F"Fox_Installed"
   echo "FOX_NEW=1" > "$F"Fox_Installed
   [ ! -f "$F"Fox_Installed ] && {
-    ui_print "- Error writing to the cache directory; the post-install patches will not be processed."
+    ui_print "- Error writing to the cache directory ($cache_dir); the post-install patches will not be processed."
   }
 }
 
