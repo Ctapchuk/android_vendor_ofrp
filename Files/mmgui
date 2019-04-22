@@ -45,45 +45,60 @@ mount_image() {
 
 mnt() {
   echo "Mounting Magisk to $mountPath...";
+  
+  prop="/data/adb/magisk/util_functions.sh"
+  
+  if [ ! -f "$prop" ]; then
+	echo -e "\n(!) No Magisk installation found or installed version is not supported\n"
+	twrp xset ft_mm_found=0
+	exit 1
+  fi
+  
   if mount | grep -qi /magisk; then
-	echo "Already mounted! Exiting w/o errors.";
-	exit 0;
-  fi;
+	echo "Already mounted! Exiting w/o errors."
+	exit 0
+  fi
   
   mount /data 2>/dev/null
   mount /cache 2>/dev/null
   
-  if [ ! -d /data/adb/magisk ] && [ ! -d /data/magisk ]; then
-  	echo -e "\n(!) No Magisk installation found or installed version is not supported\n"
-  	exit 1
+  MAG_19=0
+  
+  if [ -d /data/adb/magisk ] && [ -d /data/adb/modules ]; then
+	echo -e "\n* Magisk version is 19.x\n"
+	mountPath=/data/adb/modules
+	MAG_19=1
+  else
+	if [ ! -d /data/adb/magisk ] && [ ! -d /data/magisk ]; then
+		echo -e "\n(!) No Magisk installation found or installed version is not supported\n"
+		twrp xset ft_mm_found=0
+		exit 1
+	fi
   fi
   
   [ -d $tmp ] && rm -rf $tmp
   mkdir $tmp
   
-  [ -d /data/adb/magisk ] && IMG=/data/adb/magisk.img || IMG=/data/magisk.img
-  mount_image $IMG $mountPath
+  if [[ $MAG_19 == "0" ]]; then
+	[ -d /data/adb/magisk ] && IMG=/data/adb/magisk.img || IMG=/data/magisk.img
+	mount_image $IMG $mountPath
   
-  if mount | grep -qi /magisk; then
-	echo "Success!";
-  else
-	echo "Error while mounting Magisk!";
-	exit 1;
-  fi;
-  
+	if mount | grep -qi /magisk; then
+		echo "Success!"
+	else
+		echo "Error while mounting Magisk!"
+		twrp xset ft_mm_found=0
+		exit 1
+	fi
+  fi
+
   for mod in $(ls_mount_path); do
   	touch "$tmp/$mod"
   done
   
-  work="/tmp/mmver";
-  [ -d $work ] && rm -rf $work;
-  mkdir $work;
-  cd $work;
-  
-  prop="/data/adb/magisk/util_functions.sh";
-  ver=$(cat $prop | grep "MAGISK_VER=" | cut -d'=' -f2 | sed "s/\""//g);
-  
-  echo "" > "$work/$ver";
+  twrp xset ft_mm_found=1
+  twrp xset ft_mm_isnew=$MAG_19
+  twrp xset ft_mm_ver=$(cat "$prop" | grep "MAGISK_VER=" | cut -d'=' -f2 | sed "s/\""//g)
 }
 
 unmnt() {
