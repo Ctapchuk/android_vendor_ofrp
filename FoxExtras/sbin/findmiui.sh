@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   7 April 2019
+# - Date:   22 April 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -242,6 +242,7 @@ local LED=""
    case "$FOX_DEVICE" in
        	mido)
        		LED="/sys/devices/soc/qpnp-flash-led-25";
+       		echo 0 > /proc/touchpanel/capacitive_keys_disable;
        	;;
        vince)
        		LED="/sys/devices/soc/qpnp-flash-led-24";
