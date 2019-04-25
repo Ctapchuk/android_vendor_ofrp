@@ -103,9 +103,11 @@ mnt() {
 
 unmnt() {
   echo "Unmounting Magisk...";
-  loopTMP=$(cat /tmp/loopDevice)
   umount $mountPath
-  [ -f /tmp/loopDevice ] && losetup -d $loopTMP
+  if [ -f /tmp/loopDevice ]; then
+	losetup -d $(cat /tmp/loopDevice)
+	rm -f /tmp/loopDevice
+  fi
   rmdir $mountPath
   [ -d $tmp ] && rm -rf $tmp
 }
