@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 15 April 2019
+# Date: 25 April 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -114,6 +114,9 @@
 #    - if this is set, this script will also automatically set OF_USE_MAGISKBOOT to 1
 #    - default = 0
 #
+# "OF_DISABLE_UPDATEZIP"
+#    - set to 1 to disable recovery zip creation
+#    - default = 0
 # ******************************************************************************
 
 RED='\033[0;31m'
@@ -495,7 +498,11 @@ fi
 # end: "GO" version
 
 # create update zip installer
-do_create_update_zip
+if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
+	do_create_update_zip
+else
+	echo -e "${RED}-- Skip creating recovery zip${NC}"
+fi
 
 #Info
 echo -e ""
@@ -506,9 +513,11 @@ echo -e ""
 echo -e "===================${BLUE}Finished building OrangeFox${NC}==================="
 echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5"
-echo -e ""
-echo -e "${GREEN}Recovery zip:${NC} $OUT/$FOX_OUT_NAME.zip"
-echo -e "          MD5: $ZIP_FILE.md5"
+if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
+	echo -e ""
+	echo -e "${GREEN}Recovery zip:${NC} $OUT/$FOX_OUT_NAME.zip"
+	echo -e "          MD5: $ZIP_FILE.md5"
+fi
 echo -e "=================================================================="
 
 if [ "$BUILD_2GB_VERSION" = "1" ]; then
@@ -517,9 +526,11 @@ echo -e ""
 echo -e "---------------${BLUE}Finished building OrangeFox Lite Edition${NC}---------------"
 echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
 echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
+if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 echo -e ""
 echo -e "${GREEN}Recovery zip:${NC} $OUT/$ZIP_FILE_GO.zip"
 echo -e "          MD5: $ZIP_FILE_GO.md5"
+fi
 echo -e "=================================================================="
 fi
 # end!
