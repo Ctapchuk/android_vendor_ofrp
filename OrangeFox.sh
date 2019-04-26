@@ -204,7 +204,6 @@ expand_vendor_path() {
 
 # create zip file
 do_create_update_zip() {
-echo -e "${BLUE}-- Making update.zip${NC}"
 local WORK_DIR=""
 local TDT=$(date "+%d %B %Y")
   echo -e "${BLUE}-- Creating update.zip${NC}"
@@ -332,11 +331,21 @@ local TDT=$(date "+%d %B %Y")
 
 # create old_theme zip
 do_create_old_theme_zip() {
-   path=$PWD
+local INST_DIR=$FOX_VENDOR_PATH/theme_installer
+local F=$INST_DIR/pa.zip
+local ZIP_FILE=$OUT/ClassicTheme.zip
+local ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
    cd $FOX_VENDOR_PATH/Files/classic_theme/
-   zip -r -0 $OUT/pa.zip * > /dev/null 2>&1
-   cd $PWD
+   rm -f $F
+   zip -r0 $F * > /dev/null 2>&1
+   cd $INST_DIR
+   echo "- Running ZIP command: $ZIP_CMD"
+   rm -f $ZIP_FILE
+   $ZIP_CMD
+   echo " $(/bin/ls -laFt $ZIP_FILE)"
+   rm -f $F
 } # function
+
 
 
 # ****************************************************
@@ -557,7 +566,7 @@ echo -e ""
 echo -e ""
 echo -e "===========================${BLUE}Classic theme${NC}=========================="
 echo -e ""
-echo -e "${GREEN}ZIP File:${NC} $OUT/pa.zip"
+echo -e "${GREEN}ZIP File:${NC} $OUT/ClassicTheme.zip"
 echo -e ""
 echo -e "=================================================================="
 

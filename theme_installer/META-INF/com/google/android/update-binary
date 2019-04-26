@@ -1,0 +1,122 @@
+#!/sbin/sh
+
+# ******************************************************
+# Description: 	Theme Installer for OrangeFox Recovery
+# Author: 	DarthJabba9
+# Date: 	26 April 2019
+# ******************************************************
+
+# the display screen
+SCREEN=/proc/self/fd/$2
+
+# the current zip installer
+ZIPFILE="$3"
+
+# the zip extract directory
+EX_DIR=/tmp/ofox_theme_installer
+
+# the description of the theme
+THEME_NAME="OrangeFox Classic Theme"
+
+# ui_print "<message>" ["<message 2>" ...]
+ui_print() {
+  until [ ! "$1" ]; do
+    echo -e "ui_print $1\nui_print" >> $SCREEN
+    shift
+  done
+}
+
+# is_mounted <partition>
+is_mounted() {
+  case `mount` in
+    *" $1 "*) echo 1;;
+    *) echo 0;;
+  esac;
+}
+
+package_extract_dir() {
+   if [ -d $EX_DIR/$1 ]; then
+      cp -a $EX_DIR/$1/* $2
+   else
+      ui_print "Invalid directory: $1"
+   fi
+} 
+
+package_extract_file() {
+   if [ -e $EX_DIR/$1 ]; then
+      dd if=$EX_DIR/$1 of=$2
+   else
+      ui_print "Invalid file: $1"   
+   fi 
+}
+
+# abort [<message>]
+abort() { 
+   ui_print "$*"
+   exit 1
+}
+
+# unzip the installer package into /tmp
+Unzip_Installer_Package() {
+   cd /tmp
+   mkdir -p $EX_DIR
+   cd $EX_DIR
+   unzip -o "$ZIPFILE"
+}
+
+# clean up
+cleanup () {
+  rm -rf $EX_DIR
+}
+
+# main function
+Main() {
+	ui_print "*************************************"
+	ui_print "*** |OrangeFox Theme Installer |  ***"
+	ui_print "***   |By The OrangeFox Team|     ***"
+	ui_print "*************************************"
+	ui_print " "
+
+	# extract the zip installer
+	Unzip_Installer_Package
+
+	# install the theme	
+	ui_print "- Installing $THEME_NAME ..."
+	local internal_SD="/sdcard"
+	local F=$(is_mounted "$internal_SD")
+	[ "$F" = "0" ] && mount $internal_SD
+	F=$(is_mounted "$internal_SD")
+	[ "$F" = "0" ] && {
+	   internal_SD="/data/media/0"
+	   mount $internal_SD
+	}	
+
+	THEME_FILE=$EX_DIR/pa.zip
+	THEME_DEST="$internal_SD/Fox/.bin."
+	[ ! -d $THEME_DEST ] && mkdir -p $THEME_DEST
+	[ ! -d $THEME_DEST ] && {
+	   cleanup
+	   abort "- Error - invalid destination directory: $THEME_DEST"
+	}
+	
+	# copy the theme file
+	cp -af "$THEME_FILE" "$THEME_DEST"
+
+	# cleanup
+	cleanup
+   	# [ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
+	
+	# report
+	if [ -f $THEME_DEST/pa.zip ]; then
+	   ui_print "- Successfully installed $THEME_NAME."
+	else
+	   ui_print "- Error installing $THEME_NAME."	
+	fi
+	
+	ui_print " "
+
+} # end Main(); 
+
+# --
+Main
+# --
