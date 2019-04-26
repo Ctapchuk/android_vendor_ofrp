@@ -329,6 +329,16 @@ local TDT=$(date "+%d %B %Y")
   rm -rf $WORK_DIR # delete OF Working dir 
 } # function
 
+
+# create old_theme zip
+do_create_old_theme_zip() {
+   path=$PWD
+   cd $FOX_VENDOR_PATH/Files/classic_theme/
+   zip -r -0 $OUT/pa.zip * > /dev/null 2>&1
+   cd $PWD
+} # function
+
+
 # ****************************************************
 # *** now the real work starts!
 # ****************************************************
@@ -504,6 +514,9 @@ else
 	echo -e "${RED}-- Skip creating recovery zip${NC}"
 fi
 
+# create old theme zip file
+do_create_old_theme_zip
+
 #Info
 echo -e ""
 echo -e ""
@@ -511,26 +524,41 @@ cat $FOX_VENDOR_PATH/Files/FoxBanner
 echo -e ""
 echo -e ""
 echo -e "===================${BLUE}Finished building OrangeFox${NC}==================="
+echo -e ""
 echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5"
 if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 	echo -e ""
 	echo -e "${GREEN}Recovery zip:${NC} $OUT/$FOX_OUT_NAME.zip"
 	echo -e "          MD5: $ZIP_FILE.md5"
+echo -e ""
 fi
 echo -e "=================================================================="
 
+# OrangeFox Lite
 if [ "$BUILD_2GB_VERSION" = "1" ]; then
 echo -e ""
 echo -e ""
 echo -e "---------------${BLUE}Finished building OrangeFox Lite Edition${NC}---------------"
+echo -e ""
 echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
 echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
 if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 echo -e ""
 echo -e "${GREEN}Recovery zip:${NC} $OUT/$ZIP_FILE_GO.zip"
 echo -e "          MD5: $ZIP_FILE_GO.md5"
+echo -e ""
 fi
 echo -e "=================================================================="
 fi
+#
+
+echo -e ""
+echo -e ""
+echo -e "===========================${BLUE}Classic theme${NC}=========================="
+echo -e ""
+echo -e "${GREEN}ZIP File:${NC} $OUT/pa.zip"
+echo -e ""
+echo -e "=================================================================="
+
 # end!
