@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 25 April 2019
+# Date: 27 April 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -505,7 +505,6 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	rm -rf $FFil/nano
 	rm -f $FOX_RAMDISK/sbin/nano
 	rm -f $FOX_RAMDISK/sbin/bash
-   rm -f $FOX_RAMDISK/sbin/mmgui
 	rm -f $FOX_RAMDISK/sbin/aapt
 	rm -f $FOX_RAMDISK/etc/bash.bashrc
   	if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
