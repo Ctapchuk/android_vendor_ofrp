@@ -470,6 +470,11 @@ esac
   cp -a $FOX_VENDOR/Files/aapt $FOX_RAMDISK/sbin/aapt
   chmod 0755 $FOX_RAMDISK/sbin/aapt
 
+  # Include text files
+  cp -a $FOX_VENDOR/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
+  cp -a $FOX_VENDOR/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
+  cp -a $FOX_VENDOR/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
+
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
