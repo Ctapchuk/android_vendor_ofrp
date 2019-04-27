@@ -128,18 +128,31 @@ echo -e "${RED}Building OrangeFox...${NC}"
 
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 
+RECOVERY_DIR="recovery"
+FOX_VENDOR=vendor/$RECOVERY_DIR
+FOX_WORK=$OUT/FOX_AIK
+FOX_RAMDISK="$FOX_WORK/ramdisk"
+FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
+
+# build_type
+if [ -z "$BUILD_TYPE" ]; then 
+   export BUILD_TYPE=Unofficial
+fi
+
+# tw_device_version && fox_build
 if [ -z "$TW_DEVICE_VERSION" ]; then
    FOX_BUILD=Unofficial
 else
    FOX_BUILD=$TW_DEVICE_VERSION
 fi
 
-RECOVERY_DIR="recovery"
-FOX_VENDOR=vendor/$RECOVERY_DIR
-FOX_WORK=$OUT/FOX_AIK
-FOX_RAMDISK="$FOX_WORK/ramdisk"
-FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
-FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$BUILD_TYPE-$FOX_DEVICE
+# sort out the out_name
+if [ "$BUILD_TYPE" = "Unofficial" ] && [ "$FOX_BUILD" = "Unofficial" ]; then
+   FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
+else
+   FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$BUILD_TYPE-$FOX_DEVICE
+fi
+
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
