@@ -300,6 +300,8 @@ Main() {
 	}	
 	ui_print "- internal_SD=$internal_SD"
    	rm -rf "$internal_SD/Fox/FoxFiles"
+   	rm -rf "$internal_SD/Fox/.theme"
+   	rm -rf "$internal_SD/Fox/.navbar"
    	rm -f "$internal_SD/Fox/.wolfs"
    	package_extract_dir "sdcard" "$internal_SD"
 
