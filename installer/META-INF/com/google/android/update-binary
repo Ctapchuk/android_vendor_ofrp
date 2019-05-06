@@ -259,10 +259,45 @@ local target="$EX_DIR$targetfile"
 	rm -f boot.img dtb kernel new-boot.img ramdisk.cpio ramdisk-ofrp.cpio
 }
 
+# print the size of a file
+FileSize() {
+  if [ -f $1 ]; then
+     set -- $(ls -l "$1"); echo "$5"
+  else
+     echo "0"
+  fi
+}
+
 # install the recovery
 Install_Recovery() {
   [ "$OF_AB_DEVICE" != "1" ] && {
-    package_extract_file "recovery.img" "$RECOVERY_PARTITION"
+    local bak="/tmp/org_recovery.img"
+    dd if="$RECOVERY_PARTITION" of=$bak > /dev/null 2>&1
+    local oldF=$(FileSize $bak)
+    local newF=$(FileSize recovery.img)
+    ui_print "- Partition_Size=$oldF bytes; Recovery_Size=$newF bytes"
+    [  $newF -gt $oldF ] && {
+       rm -f $bak
+       abort "The recovery image ($newF bytes) is bigger than your recovery partition ($oldF bytes)! Quitting."
+    }
+    
+    if [ -x "/sbin/flash_image" ] && [ -x "/sbin/erase_image" ]; then
+       ui_print "- Cleaning the old recovery."
+       /sbin/erase_image "$RECOVERY_PARTITION"
+       [ $? == 0 ] && ui_print "- Succeeded." || ui_print "- Failed."
+
+       ui_print "- Flashing the new recovery."
+       /sbin/flash_image "$RECOVERY_PARTITION" "recovery.img"    
+       [ $? == 0 ] && ui_print "- Succeeded." || {
+       	   ui_print "- Flashing failed. Trying to restore original recovery..."
+       	   /sbin/flash_image "$RECOVERY_PARTITION" "$bak"
+       	   $? == 0 ] && ui_print "- Succeeded." || abort "- Failed! There is now no recovery! Flash a working recovery via fastboot."
+       }
+    else
+         ui_print "- Flashing the new recovery."
+         package_extract_file "recovery.img" "$RECOVERY_PARTITION"
+    fi
+    rm -f $bak
     return
   }
   # this is declared to be an A/B device
