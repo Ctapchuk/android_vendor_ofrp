@@ -249,9 +249,11 @@ local LED=""
        		echo battery-charging > /sys/class/leds/red/trigger;
        		echo battery-full > /sys/class/leds/green/trigger;
        		echo bkl-trigger > /sys/class/leds/button-backlight/trigger;
+            echo 5 > /sys/class/leds/button-backlight/brightness; # Enable keys by default.
        	;;
        vince)
        		LED="/sys/devices/soc/qpnp-flash-led-24";
+            echo battery-charging-blink-full-solid > /sys/class/leds/red/trigger;
        	;;
        whyred)
        		echo battery-charging-blink-full-solid > /sys/class/leds/red/trigger;
