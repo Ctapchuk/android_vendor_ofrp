@@ -246,7 +246,7 @@ local LED=""
        	mido)
        		LED="/sys/devices/soc/qpnp-flash-led-25";
        		echo 0 > /proc/touchpanel/capacitive_keys_disable;
-       		echo battery-charging > /sys/class/leds/red/trigger;
+       		echo battery-charging > /sys/class/leds/blue/trigger;
        		echo battery-full > /sys/class/leds/green/trigger;
        		echo bkl-trigger > /sys/class/leds/button-backlight/trigger;
             echo 5 > /sys/class/leds/button-backlight/brightness; # Enable keys by default.
@@ -259,6 +259,10 @@ local LED=""
        		echo battery-charging-blink-full-solid > /sys/class/leds/red/trigger;
        		return;
        	;;
+       x00t)
+            echo battery-charging > /sys/class/leds/red/trigger;
+       		echo battery-full > /sys/class/leds/green/trigger;
+         ;;
        *)
        		return;
        	;;
