@@ -1,1 +1,4 @@
-O
+KMP Design - for amazing splash
+TWRP Team - for base recovery
+
+Our testers and you

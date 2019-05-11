@@ -1,1 +1,73 @@
-OWO
+OrangeFox R10 ReleaseCandidate 1
+mido, vince, whyred, pie-whyred, riva
+
+Merged TWRP commits:
+* mkshrc: remove post-install cmd and use LOCAL_MODULE_STEM
+* Clean up logd init file
+* Use BSD grep for builds with toybox
+* awk: add awk for trees including one-true-awk
+* toybox: fix build in 6.0 tree
+* awk: add awk for trees including one-true-aw
+* mkshrc: remove post-install cmd and use LOCAL_MODULE_STEM
+* Clean up logd init file
+* Use BSD grep for builds with toybox
+
+Changelog:
+* Re-added in 5 time new flsahlight code to support more devices
+* Improve support for A/B devices
+* Fix wrong Partition SD button on 18:9 screens
+* OTA menu for non-miui devices; Updated lang files
+* Magisk updated to last 19.1 version
+* Magisk 19 support
+* Some changes in Magisk Manager
+* Wait screen for app manager
+* Hide Aroma/Magisk/AppMgr when they not included
+* Fix sort button position
+* Right ADB status
+* Darker OLED theme
+* Inverse several options in customisation settings
+* Reworked sort menu in File Manager
+* Updated fox addons
+* Hide fileselector in restore menu when no backups
+* Fix orangefox resetting after changing theme
+* Added perfomance menu
+* Remove code for unnecessary boot image patches
+* App manager for OrangeFox lite version
+* Better instant theme apply
+* Outline-ify flash icon
+* Changes in theme engine
+* Added button to reset customisation settings to default
+* Add flags to allow Pie build system to build without issues
+* Reduce GBoard-styled keyboard lags; keyboard fixes
+* Do not enable white led when it not found
+* Updated Russian trnslations
+* Dark navbar for light theme
+* Disable ADB when recovery locked
+* Fix LED on devices that doesn't support blinking
+* Move terminal monospace setting to customization
+* Fix themes screen on devices with cutout
+* Added settings to disable simple OTA screen
+* Password fixes
+* Added Graphical UI for checksums and file info
+* Double tap to start AromaFM
+* Updated navbar logic 
+* Updated bookmarks
+* Updated language menu
+* Updated search
+* Added missing strings
+* Change default vibaration values
+* Disabled debug setting
+* Add warning for users that installed OrangeFox theme on TWRP
+* Disable ADB on startup
+* Cleanup
+* Other minor fixes and changes
+* Add some magic from @VnukovD ~~
+
+// Format data in Manage Partition page, stop asking about it.
+
+[ mido ]:
+* Fixed hardware keys
+
+[ riva ]:
+* First build for riva
+* Oreo version will be later

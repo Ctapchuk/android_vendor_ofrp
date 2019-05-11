@@ -1,1 +1,17 @@
-OWO@
+Chinese Simplified:
+- qetxdc
+German:
+- Fabian
+Hungarian:
+- MKAdam
+Italian:
+- Filippo Giovannini
+Indonesian:
+- Lazuardi Elki
+- Ninja_14
+Russian:
+- MrYacha
+- fordownloads
+Ukranian:
+- MrYacha
+- Dima Borch
