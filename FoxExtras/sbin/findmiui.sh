@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   22 April 2019
+# - Date:   11 May 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -240,15 +240,22 @@ backup_restore_FS() {
 fix_yellow_flashlight() {
 local LED=""
    case "$FOX_DEVICE" in
+       kenzo | kate)
+       		LED="/sys/devices/soc.0/qpnp-flash-led-23";
+       	;;
        	mido)
        		LED="/sys/devices/soc/qpnp-flash-led-25";
        		echo 0 > /proc/touchpanel/capacitive_keys_disable;
+       		echo battery-charging > /sys/class/leds/red/trigger;
+       		echo battery-full > /sys/class/leds/green/trigger;
+       		echo bkl-trigger > /sys/class/leds/button-backlight/trigger;
        	;;
        vince)
        		LED="/sys/devices/soc/qpnp-flash-led-24";
        	;;
-       kenzo | kate)
-       		LED="/sys/devices/soc.0/qpnp-flash-led-23";
+       whyred)
+       		echo battery-charging-blink-full-solid > /sys/class/leds/red/trigger;
+       		return;
        	;;
        *)
        		return;
