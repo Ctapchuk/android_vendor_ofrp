@@ -22,6 +22,9 @@ ZIPFILE="$3"
 # the zip extract directory
 EX_DIR=/tmp/ofox_installer
 
+# global error code (0=good; 1=error)
+ERROR_CODE=0
+
 # AB device?
 OF_AB_DEVICE=""
 
@@ -85,6 +88,7 @@ getprop() {
 # abort [<message>]
 abort() { 
    ui_print "$*"
+   ERROR_CODE=1
    exit 1
 }
 
@@ -282,16 +286,20 @@ Install_Recovery() {
     }
     
     if [ -x "/sbin/flash_image" ] && [ -x "/sbin/erase_image" ]; then
-       ui_print "- Cleaning the old recovery."
+       ui_print "- Cleaning the recovery partition ($RECOVERY_PARTITION)"
        /sbin/erase_image "$RECOVERY_PARTITION"
        [ $? == 0 ] && ui_print "- Succeeded." || ui_print "- Failed."
 
-       ui_print "- Flashing the new recovery."
-       /sbin/flash_image "$RECOVERY_PARTITION" "recovery.img"    
+       ui_print "- Flashing OrangeFox recovery..."
+       /sbin/flash_image "$RECOVERY_PARTITION" "$EX_DIR/recovery.img"    
        [ $? == 0 ] && ui_print "- Succeeded." || {
-       	   ui_print "- Flashing failed. Trying to restore original recovery..."
-       	   /sbin/flash_image "$RECOVERY_PARTITION" "$bak"
-       	   $? == 0 ] && ui_print "- Succeeded." || abort "- Failed! There is now no recovery! Flash a working recovery via fastboot."
+       	   ui_print "- Problems encountered. Trying an alternative flashing method..."
+       	   package_extract_file "recovery.img" "$RECOVERY_PARTITION"
+       	   [ $? == 0 ] && ui_print "- Succeeded." || {
+       	      ui_print "- Flashing failed. Trying to restore original recovery..."
+       	      /sbin/flash_image "$RECOVERY_PARTITION" "$bak"
+       	      [ $? == 0 ] && ui_print "- Succeeded." || abort "- Failed! There is now no recovery! Flash a working recovery via fastboot."
+       	   }
        }
     else
          ui_print "- Flashing the new recovery."
@@ -322,6 +330,11 @@ Main() {
 # Install the recovery
 	ui_print "- Installing OrangeFox recovery ..."
 	Install_Recovery
+	
+	[ "$ERROR_CODE" = "1" ] && {
+	   ui_print "- The installation of OrangeFox recovery was not successful ..."
+	   exit 1
+	}
 
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."
