@@ -22,6 +22,9 @@ ZIPFILE="$3"
 # the zip extract directory
 EX_DIR=/tmp/ofox_installer
 
+# global error code (0=good; 1=error)
+ERROR_CODE=0
+
 # AB device?
 OF_AB_DEVICE=""
 
@@ -85,6 +88,7 @@ getprop() {
 # abort [<message>]
 abort() { 
    ui_print "$*"
+   ERROR_CODE=1
    exit 1
 }
 
@@ -270,9 +274,12 @@ FileSize() {
 
 # install the recovery
 Install_Recovery() {
+local PART=$(readlink -f $RECOVERY_PARTITION)
+  [ -z "$PART" ] && PART=$RECOVERY_PARTITION
+
   [ "$OF_AB_DEVICE" != "1" ] && {
     local bak="/tmp/org_recovery.img"
-    dd if="$RECOVERY_PARTITION" of=$bak > /dev/null 2>&1
+    dd if="$PART" of=$bak > /dev/null 2>&1
     local oldF=$(FileSize $bak)
     local newF=$(FileSize recovery.img)
     ui_print "- Partition_Size=$oldF bytes; Recovery_Size=$newF bytes"
@@ -282,20 +289,24 @@ Install_Recovery() {
     }
     
     if [ -x "/sbin/flash_image" ] && [ -x "/sbin/erase_image" ]; then
-       ui_print "- Cleaning the old recovery."
-       /sbin/erase_image "$RECOVERY_PARTITION"
+       ui_print "- Cleaning the recovery partition ($PART)"
+       /sbin/erase_image "$PART"
        [ $? == 0 ] && ui_print "- Succeeded." || ui_print "- Failed."
 
-       ui_print "- Flashing the new recovery."
-       /sbin/flash_image "$RECOVERY_PARTITION" "recovery.img"    
+       ui_print "- Flashing OrangeFox recovery..."
+       /sbin/flash_image "$PART" "$EX_DIR/recovery.img"    
        [ $? == 0 ] && ui_print "- Succeeded." || {
-       	   ui_print "- Flashing failed. Trying to restore original recovery..."
-       	   /sbin/flash_image "$RECOVERY_PARTITION" "$bak"
-       	   $? == 0 ] && ui_print "- Succeeded." || abort "- Failed! There is now no recovery! Flash a working recovery via fastboot."
+       	   ui_print "- Problems encountered. Trying an alternative flashing method..."
+       	   package_extract_file "recovery.img" "$PART"
+       	   [ $? == 0 ] && ui_print "- Succeeded." || {
+       	      ui_print "- Flashing failed. Trying to restore original recovery..."
+       	      /sbin/flash_image "$PART" "$bak"
+       	      [ $? == 0 ] && ui_print "- Succeeded." || abort "- Failed! There is now no recovery! Flash a working recovery via fastboot."
+       	   }
        }
     else
          ui_print "- Flashing the new recovery."
-         package_extract_file "recovery.img" "$RECOVERY_PARTITION"
+         package_extract_file "recovery.img" "$PART"
     fi
     rm -f $bak
     return
@@ -322,6 +333,11 @@ Main() {
 # Install the recovery
 	ui_print "- Installing OrangeFox recovery ..."
 	Install_Recovery
+	
+	[ "$ERROR_CODE" = "1" ] && {
+	   ui_print "- The installation of OrangeFox recovery was not successful ..."
+	   exit 1
+	}
 
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."

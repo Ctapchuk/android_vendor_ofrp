@@ -236,32 +236,38 @@ backup_restore_FS() {
    fi
 }
 
-# fix yellow flashlight on mido/vince/kenzo
-fix_yellow_flashlight() {
+# set up Leds for charging 
+charging_Leds() {
+  echo battery-charging > /sys/class/leds/blue/trigger
+  echo battery-full > /sys/class/leds/green/trigger
+}
+
+# fix yellow flashlight on mido/vince/kenzo and configure Leds on others
+flashlight_Leds_config() {
 local LED=""
    case "$FOX_DEVICE" in
        kenzo | kate)
        		LED="/sys/devices/soc.0/qpnp-flash-led-23";
+       		charging_Leds;
        	;;
        	mido)
        		LED="/sys/devices/soc/qpnp-flash-led-25";
        		echo 0 > /proc/touchpanel/capacitive_keys_disable;
-       		echo battery-charging > /sys/class/leds/blue/trigger;
-       		echo battery-full > /sys/class/leds/green/trigger;
+       		charging_Leds;
        		echo bkl-trigger > /sys/class/leds/button-backlight/trigger;
-            echo 5 > /sys/class/leds/button-backlight/brightness; # Enable keys by default.
+            	echo 5 > /sys/class/leds/button-backlight/brightness; # Enable keys by default.
        	;;
        vince)
        		LED="/sys/devices/soc/qpnp-flash-led-24";
-            echo battery-charging-blink-full-solid > /sys/class/leds/red/trigger;
+       		charging_Leds;
        	;;
        whyred)
        		echo battery-charging-blink-full-solid > /sys/class/leds/red/trigger;
        		return;
        	;;
        x00t)
-            echo battery-charging > /sys/class/leds/red/trigger;
-       		echo battery-full > /sys/class/leds/green/trigger;
+       		charging_Leds;
+       		return;
          ;;
        *)
        		return;
@@ -318,7 +324,7 @@ else
 fi
 
 # post-init
-fix_yellow_flashlight
+flashlight_Leds_config
 
 exit 0
 ### end main ###
