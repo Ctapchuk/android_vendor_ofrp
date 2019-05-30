@@ -109,22 +109,32 @@ PRODUCT_DEVICE=$(getprop "ro.product.device")
 # mount everything we might need
 MountThemAll() {
 local F=$(is_mounted "/system")
-    	[ "$F" = "0" ] && mount /system
-	mount -o rw,remount /system
-	mount -o rw,remount /system /system
+    	# /system
+    	if [ "$F" = "0" ]; then
+    	   mount "/system" > /dev/null 2>&1
+    	   F=$(is_mounted "/system")
+    	   [ "$F" = "0" ] && mount -t ext4 /dev/block/bootdevice/by-name/system /system
+    	fi
+    	F=$(is_mounted "/system")
+    	[ "$F" = "1" ] && {
+	   mount -o rw,remount /system
+	   mount -o rw,remount /system /system
+    	}
     	
+    	# /vendor    	
     	F=$(is_mounted "/vendor")
     	if [ "$F" = "0" ]; then
-    	    mount /vendor
-    	    F=$(is_mounted "/vendor")
-    	    [ "$F" = "1" ] && {
-		mount -o rw,remount /vendor
-		mount -o rw,remount /vendor /vendor
-    	    }
-        else
-	    mount -o rw,remount /vendor
-	    mount -o rw,remount /vendor /vendor
+    	   mount "/vendor" > /dev/null 2>&1
+    	   F=$(is_mounted "/vendor")
+    	   [ "$F" = "0" ] && mount -t ext4 /dev/block/bootdevice/by-name/vendor /vendor
     	fi
+    	F=$(is_mounted "/vendor")
+    	[ "$F" = "1" ] && {
+	   mount -o rw,remount /vendor
+	   mount -o rw,remount /vendor /vendor
+    	}
+    	
+    	# /
 	mount -o rw,remount /
 	mount -o rw,remount / /
 } 
@@ -346,15 +356,19 @@ Main() {
 	[ "$F" = "0" ] && mount $internal_SD
 	F=$(is_mounted "$internal_SD")
 	[ "$F" = "0" ] && {
-	   internal_SD="/data/media/0"
+	   internal_SD="$EXTERNAL_STORAGE"
+	   [ -z "$internal_SD" ] && internal_SD="/data/media/0"
 	   mount $internal_SD
-	}	
-	ui_print "- internal_SD=$internal_SD"
-   	rm -rf "$internal_SD/Fox/FoxFiles"
-   	rm -rf "$internal_SD/Fox/.theme"
-   	rm -rf "$internal_SD/Fox/.navbar"
-   	rm -f "$internal_SD/Fox/.wolfs"
-   	package_extract_dir "sdcard" "$internal_SD"
+	}
+	F=$(is_mounted "$internal_SD")
+	[ "$F" = "1" ] && {	
+	   ui_print "- internal_SD=$internal_SD"
+	   rm -rf "$internal_SD/Fox/FoxFiles"
+   	   rm -rf "$internal_SD/Fox/.theme"
+   	   rm -rf "$internal_SD/Fox/.navbar"
+   	   rm -f "$internal_SD/Fox/.wolfs"
+   	   package_extract_dir "sdcard" "$internal_SD"
+   	} 
 
 # Prevent the stock recovery from replacing this recovery
 	ui_print "- Disabling stock recovery overwrites"
