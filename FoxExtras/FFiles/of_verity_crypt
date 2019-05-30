@@ -1,0 +1,181 @@
+#!/sbin/sh
+#
+# LazyFlasher installer backend  -- modified by wzsx150
+# v7.1-20181008
+# - converted by DarthJabba9 to a standalone shell script, 20190530
+#
+
+# globals
+FOX_TMP_DIR=/tmp/OF_tmp
+SPLIT_IMG=$FOX_TMP_DIR/split-img
+BOOTIMAGE=$FOX_TMP_DIR/boot.img
+LOGFILE=/tmp/recovery.log
+MAGISKBOOT=/sbin/magiskboot
+[ "$1" = "true" ] && KEEPVERITY=true || KEEPVERITY=false
+[ "$2" = "true" ] && KEEPFORCEENCRYPT=true || KEEPFORCEENCRYPT=false
+
+ui_print() {
+   echo "$@"
+   echo "$@" >> $LOGFILE
+}
+
+cleanup() {
+	cd /tmp
+	rm -rf $FOX_TMP_DIR
+}
+
+abort() {
+	[ "$1" ] && {
+		ui_print "# Error: $1"
+		ui_print "# Aborting..."
+		ui_print " "
+	}
+	cleanup
+	ui_print "Failed to patch !"
+	exit 1
+}
+
+# start
+OF_welcome() {
+	[ ! -x $MAGISKBOOT ] && abort "- Fatal error! Unable to find the magiskboot executable!"
+}
+
+# Locate the boot block
+OF_locate_boot() {
+	mkdir -p "$FOX_TMP_DIR"
+	cd "$FOX_TMP_DIR"
+	mkdir -p "$SPLIT_IMG"
+	ui_print "- Searching for the boot image..."
+	bootpart=`find /dev/block -name boot | grep "by-name/boot" -m 1 2>/dev/null`
+	if [ -z "$bootpart" ];then
+		slot_suffix=`getprop ro.boot.slot_suffix`
+		bootpart=`find /dev/block -name boot_a | grep "by-name/boot_a" -m 1 2>/dev/null`
+		if [ -z "$bootpart" -o "$slot_suffix"s = "_b"s ];then
+			bootpart=`find /dev/block -name boot_b | grep "by-name/boot_b" -m 1 2>/dev/null`
+			manufacturer=`getprop ro.vendor.product.manufacturer`
+    
+			if [ -z "$bootpart" ];then
+				bootpart=`find /dev/block -name ramdisk | grep "by-name/ramdisk" -m 1 2>/dev/null`
+			fi
+
+			if [ -z "$bootpart" ];then
+				bootpart=`find /dev/block -name ramdisk_a | grep "by-name/ramdisk_a" -m 1 2>/dev/null`
+			fi
+		
+			if [ -z "$bootpart" ];then
+				abort "- Unable to locate the boot block"
+			fi
+		fi
+	fi
+	ui_print "- Found boot: $bootpart"
+}
+
+# dump and unpack  boot image
+OF_unpack_boot_image() {
+	ui_print "- Unpacking the original boot image..."
+	cd "$FOX_TMP_DIR"
+	dd if="$bootpart" of="$BOOTIMAGE"
+	[ -f "$BOOTIMAGE" ] || dump_image "$bootpart" "$BOOTIMAGE"
+	[ -f "$BOOTIMAGE" ] || abort "- Unable to read the boot partition"
+
+	cd "$SPLIT_IMG"
+	$MAGISKBOOT --unpack "$BOOTIMAGE"
+	[ $? = 0 ] || abort "- Unpacking the boot image failed"
+}
+
+# patch boot image
+OF_patch_boot_image() {
+	ui_print "- Patching the boot image..."
+	if [ "$KEEPVERITY" != "true" ]; then
+		ui_print "- Removing dm-verity"
+		[ -f dtb ] && ui_print "- Removing dm(avb)-verity in dtb" && $MAGISKBOOT --dtb-patch dtb
+		[ -f extra ] && ui_print "- Removing dm(avb)-verity in extra-dtb" && $MAGISKBOOT --dtb-patch extra
+		setprop ro.config.dmverity false > /dev/null 2>&1
+		resetprop ro.config.dmverity false > /dev/null 2>&1
+	fi
+	$MAGISKBOOT --cpio ramdisk.cpio "patch $KEEPVERITY $KEEPFORCEENCRYPT"
+	ui_print "- Finished patching the boot image"
+}
+
+# patch system/vendor fstab
+OF_patch_fstab() {
+	ui_print "- Patching the vendor fstab..."
+	[ "$KEEPVERITY" = "true" ] || ui_print "- Removing dm-verity"
+	[ "$KEEPFORCEENCRYPT" = "true" ] || ui_print "- Removing forced encryption"
+
+	# no_force_encrypt for vendor/etc/fstab
+	mount -o rw /system || mount -o rw,remount /system
+	mount -o rw /system_root > /dev/null 2>&1 || mount -o rw,remount /system_root > /dev/null 2>&1
+	mount -o rw /vendor || mount -o rw,remount /vendor
+	sleep 1
+
+	# /system/vendor/etc/fstab.*
+	# /vendor/etc/fstab.*
+	# /system/system/vendor/etc/fstab.*
+	for fstab in /system/vendor/etc/fstab.* /vendor/etc/fstab.* /system/system/vendor/etc/fstab.*; do
+	  [ -f "$fstab" ] || continue
+	  ui_print "- Found fstab: $fstab"
+	  [ "$KEEPVERITY" = "true" ] || sed -i "
+		s/,verify\b//g
+		s/\bverify,//g
+		s/\bverify\b//g
+		s/,verify,/,/g
+		s/,support_scfs\b//g
+		s/\bsupport_scfs,//g
+		s/\bsupport_scfs\b//g
+		s/,support_scfs,/,/g
+		s/,avb\b//g
+		s/\bavb,//g
+		s/\bavb\b//g
+		s/,avb,/,/g
+	  " "$fstab"
+	
+	  usleep 100
+	
+	  [ "$KEEPFORCEENCRYPT" = "true" ] || sed -i "
+		  s/\b\(forceencrypt\|forcefdeorfbe\)=/encryptable=/g
+		  s/\bfileencryption/encryptable/g
+	  " "$fstab"
+
+	  usleep 1000
+	
+	done
+	ui_print "- Finished patching the vendor fstab"
+}
+
+# repack boot image
+OF_repack_boot_image() {
+	ui_print "- Repacking the boot image..."
+	cd "$SPLIT_IMG"
+	$MAGISKBOOT --repack "$BOOTIMAGE" $FOX_TMP_DIR/boot-new.img || abort "- Unable to repack the boot image!"
+
+	# write boot image
+	ui_print "- Writing the new boot image..."
+	dd if=$FOX_TMP_DIR/boot-new.img of="$bootpart" || flash_image "$bootpart" $FOX_TMP_DIR/boot-new.img
+	[ $? = 0 ] || abort "- Failed to write the boot image! You may need to restore your boot partition"
+
+	# clean up
+	ui_print "- Cleaning up..."
+	umount /vendor > /dev/null 2>&1
+	umount /system_root > /dev/null 2>&1
+	umount /system > /dev/null 2>&1
+	$MAGISKBOOT --cleanup > /dev/null 2>&1
+	cleanup
+}
+
+#
+Main() {
+	OF_welcome
+	OF_locate_boot
+	OF_unpack_boot_image
+	OF_patch_boot_image
+	OF_patch_fstab
+	OF_repack_boot_image
+	ui_print "- Done!"
+	exit 0
+}
+#
+
+# main
+Main
+#
