@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   11 May 2019
+# - Date:   01 June 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -20,6 +20,7 @@ CFG="/tmp/orangefox.cfg"
 FS="/etc/recovery.fstab"
 T=0
 M=0
+SYS_ROOT="0"	  # device with system_root?
 DEBUG="0"  	  # enable for more debug messages
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
@@ -94,6 +95,12 @@ local C="/tmp_cust"
   echo "$T"
 }
 
+# does this device have system_root?
+has_system_root() {
+  local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
+  [ "$F" = "true" ] && echo "1" || echo "0"
+}
+
 get_ROM() {
 local S="/tmp_system_rom"
    # mount /system and check
@@ -107,6 +114,7 @@ local S="/tmp_system_rom"
    
    mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
    local tmp1="$S/build.prop"
+   [ ! -e "$tmp1" ] && tmp1="$S/system/build.prop"
    local tmp2=""
 
    if [ -e "$tmp1" ]; then 
@@ -287,9 +295,12 @@ local OPS=$(getprop "orangefox.postinit.status")
    [ -f "$CFG" ] || [ "$OPS" = "1" ] && exit 0
    echo "# OrangeFox live cfg" > $CFG
    OPS=$(uname -r)
+   SYS_ROOT=$(has_system_root)
    echo "KERNEL=$OPS" >> $CFG
+   echo "SYSTEM_ROOT=$SYS_ROOT" >> $CFG
    echo "DEBUG: OrangeFox: FOX_DEVICE=$FOX_DEVICE" >> $LOG
    echo "DEBUG: OrangeFox: FOX_KERNEL=$OPS" >> $LOG
+   echo "DEBUG: OrangeFox: SYSTEM_ROOT=$SYS_ROOT" >> $LOG
    setprop orangefox.postinit.status 1
 }
 
