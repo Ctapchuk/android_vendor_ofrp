@@ -556,7 +556,7 @@ echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
 echo -e "          MD5: $RECOVERY_IMAGE.md5"
 if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 	echo -e ""
-	echo -e "${GREEN}Recovery zip:${NC} $OUT/$FOX_OUT_NAME.zip"
+	echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE"
 	echo -e "          MD5: $ZIP_FILE.md5"
 echo -e ""
 fi
@@ -572,7 +572,7 @@ echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
 echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
 if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 echo -e ""
-echo -e "${GREEN}Recovery zip:${NC} $OUT/$ZIP_FILE_GO.zip"
+echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE_GO"
 echo -e "          MD5: $ZIP_FILE_GO.md5"
 echo -e ""
 fi

@@ -87,7 +87,8 @@ Main() {
 	[ "$F" = "0" ] && mount $internal_SD
 	F=$(is_mounted "$internal_SD")
 	[ "$F" = "0" ] && {
-	   internal_SD="/data/media/0"
+	   internal_SD="$EXTERNAL_STORAGE"
+	   [ -z "$internal_SD" ] && internal_SD="/data/media/0"
 	   mount $internal_SD
 	}	
 
