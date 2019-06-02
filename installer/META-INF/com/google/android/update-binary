@@ -98,10 +98,10 @@ abort() {
 
 # check if we have specified a target device and whether this is it
 CheckRequirements() {
-   if [ "$PRODUCT_DEVICE" = "$TARGET_DEVICE" ]; then
+   if echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE"; then
        ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE ..."
    else
-       if [ -n "$TARGET_DEVICE_ALT" ] && [ "$PRODUCT_DEVICE" = "$TARGET_DEVICE_ALT" ]; then
+       if [ -n "$TARGET_DEVICE_ALT" ] && echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE_ALT"; then
           ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE_ALT ..."
        else
          abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
