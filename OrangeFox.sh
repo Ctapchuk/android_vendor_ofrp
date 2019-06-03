@@ -260,6 +260,7 @@ local TDT=$(date "+%d %B %Y")
   # (mido is the default)
   local F="$WORK_DIR/META-INF/com/google/android/update-binary"
   sed -i -e "s/mido/$FOX_DEVICE/g" $F     
+  sed -i -e "s/ALT_DEVICE/$FOX_DEVICE_ALT/g" $F     
 
   # embed the release version
   sed -i -e "s/RELEASE_VER/$FOX_BUILD/" $F
