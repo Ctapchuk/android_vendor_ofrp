@@ -2,7 +2,9 @@
 #
 # LazyFlasher installer backend  -- modified by wzsx150
 # v7.1-20181008
-# - converted by DarthJabba9 to a standalone shell script, 20190530
+# - converted by DarthJabba9 to a standalone shell script, 20190601
+# - usage = of_verity_script [keepdmverity] [keepforcedencryption]
+# - arguments = either "false" or "true"
 #
 
 # globals
