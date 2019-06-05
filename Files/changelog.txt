@@ -1,73 +1,70 @@
-OrangeFox R10 ReleaseCandidate 1
-mido, vince, whyred, pie-whyred, riva
-
-Merged TWRP commits:
-* mkshrc: remove post-install cmd and use LOCAL_MODULE_STEM
-* Clean up logd init file
-* Use BSD grep for builds with toybox
-* awk: add awk for trees including one-true-awk
-* toybox: fix build in 6.0 tree
-* awk: add awk for trees including one-true-aw
-* mkshrc: remove post-install cmd and use LOCAL_MODULE_STEM
-* Clean up logd init file
-* Use BSD grep for builds with toybox
+OrangeFox R10Stable
 
 Changelog:
-* Re-added in 5 time new flsahlight code to support more devices
-* Improve support for A/B devices
-* Fix wrong Partition SD button on 18:9 screens
-* OTA menu for non-miui devices; Updated lang files
-* Magisk updated to last 19.1 version
-* Magisk 19 support
-* Some changes in Magisk Manager
-* Wait screen for app manager
-* Hide Aroma/Magisk/AppMgr when they not included
-* Fix sort button position
-* Right ADB status
-* Darker OLED theme
-* Inverse several options in customisation settings
-* Reworked sort menu in File Manager
-* Updated fox addons
-* Hide fileselector in restore menu when no backups
-* Fix orangefox resetting after changing theme
-* Added perfomance menu
-* Remove code for unnecessary boot image patches
-* App manager for OrangeFox lite version
-* Better instant theme apply
-* Outline-ify flash icon
-* Changes in theme engine
-* Added button to reset customisation settings to default
-* Add flags to allow Pie build system to build without issues
-* Reduce GBoard-styled keyboard lags; keyboard fixes
-* Do not enable white led when it not found
-* Updated Russian trnslations
-* Dark navbar for light theme
-* Disable ADB when recovery locked
-* Fix LED on devices that doesn't support blinking
-* Move terminal monospace setting to customization
-* Fix themes screen on devices with cutout
-* Added settings to disable simple OTA screen
-* Password fixes
-* Added Graphical UI for checksums and file info
-* Double tap to start AromaFM
-* Updated navbar logic 
-* Updated bookmarks
-* Updated language menu
-* Updated search
-* Added missing strings
-* Change default vibaration values
-* Disabled debug setting
-* Add warning for users that installed OrangeFox theme on TWRP
-* Disable ADB on startup
-* Cleanup
-* Other minor fixes and changes
-* Add some magic from @VnukovD ~~
-
-// Format data in Manage Partition page, stop asking about it.
-
-[ mido ]:
-* Fixed hardware keys
-
-[ riva ]:
-* First build for riva
-* Oreo version will be later
+* Fully refreshed design to Material Design 2 Guidelines
+* OrangeFox team rethought logic of recovery
+* Merged latest TWRP 3.3.1 commits
+* Magisk updated to v19.3
+* Added inbuilt ROM app manager
+* Added inbuilt Magisk Manger 
+(No more bootloops by wrong modules!)
+* Flashlight code updated to support more devices
+* Added Quick backup option
+(to backup essential partitions with one click)
+* Added support for OTA of non-MIUI devices
+* MIUI OTA updated with many fixes
+* Added PIN Code security option
+* Added Gesture key security option
+* Significantly increased the persistence of OrangeFox
+protection. The password will not reset
+even after reinstalling OrangeFox.
+* Added ability to block ADB on startup.
+* Significant upgrades to the built-in File Manager
+* File manager supports the "back" key to go into the
+parent directories
+* Installing ZIPs merged with File Manager
+* Added ZIP, IMG files sort in File Manager
+* To see the available actions for a file, long press it
+* File Manager shows path to current directory
+* Added search in File Manager
+* Added txt files read ability in File Manager
+* Added ability to Compress/Unpack in File Manager
+* Added Checksum checker in File Manager
+* Added Information page in file action
+* Added ability to set premissions in File Manager
+* Added hardware navigation key support
+* Vol+ and power key for enable flashlight
+* Added EDL reboot option
+* Removed hard coded MIUI OTA, we can build OrangeFox 
+without it for non-Xiaomi devices
+* Added tons of customisation, new themes, colors,
+settings, battery styles, navbar settings,
+and many more.
+* Themes now apply MUCH faster and keep after
+OrangeFox reinstallation
+* Format data and partition SD merged to the new
+"Manage Partitions" page.
+* The "Wipe" menu contains only wipe
+actions, and no more.
+* To launch AromaFM you need click twice
+(mo more accidental opening of AromaFM)
+* Backups and Restores merged in one page
+(to add backups, click on the '+' button)
+* Settings page redesigned to rainbow icons list
+(as in Android Pie)
+* Added "Fox Addons" page for OrangeFox's ZIP
+\installer addons
+* Added new beautiful page, if backups are not found
+* Changed welcome message in log
+* Fixed slider unlocking in lockscreen and
+changed to default
+* We support now deep notches, statusbar
+will stretch as MIUI
+* Added support for big round corners
+(Hello Poco)
+* We maked optimisation to reduce lagging pages,
+keyboards and dialogs
+* Default vibrations was reduced
+* Also huge number of other changes and bug fixes
+* Translations have been updated from our Crowdin page.
+Old translation have been removed.
