@@ -267,16 +267,7 @@ local LED=""
        	;;
        vince)
        		LED="/sys/devices/soc/qpnp-flash-led-24";
-       		charging_Leds;
        	;;
-       whyred)
-       		echo battery-charging-blink-full-solid > /sys/class/leds/red/trigger;
-       		return;
-       	;;
-       x00t)
-       		charging_Leds;
-       		return;
-         ;;
        *)
        		return;
        	;;
