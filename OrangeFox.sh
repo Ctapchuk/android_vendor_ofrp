@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 27 April 2019
+# Date: 3 June 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -129,7 +129,7 @@ echo -e "${RED}Building OrangeFox...${NC}"
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 
 RECOVERY_DIR="recovery"
-FOX_VENDOR=vendor/$RECOVERY_DIR
+FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
 FOX_WORK=$OUT/FOX_AIK
 FOX_RAMDISK="$FOX_WORK/ramdisk"
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
@@ -276,7 +276,7 @@ local TDT=$(date "+%d %B %Y")
 
   # embed the recovery partition
   if [ -n "$FOX_RECOVERY_INSTALL_PARTITION" ]; then
-     echo -e "${RED}- Changing the recovery install partiition to \"$FOX_RECOVERY_INSTALL_PARTITION\" ${NC}"
+     echo -e "${RED}- Changing the recovery install partition to \"$FOX_RECOVERY_INSTALL_PARTITION\" ${NC}"
      sed -i -e "s|^RECOVERY_PARTITION=.*|RECOVERY_PARTITION=\"$FOX_RECOVERY_INSTALL_PARTITION\"|" $F
      # sed -i -e "s|$DEFAULT_INSTALL_PARTITION|$FOX_RECOVERY_INSTALL_PARTITION|" $F
   fi
@@ -377,7 +377,7 @@ fi
 
 # unpack recovery image into working directory
 echo -e "${BLUE}-- Unpacking recovery image${NC}"
-bash "$FOX_VENDOR/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
+bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 
 # copy stuff to the ramdisk
 echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
@@ -390,23 +390,23 @@ fi
 case "$TARGET_ARCH" in
  "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
-      cp "$FOX_VENDOR/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/sbin"
-      cp "$FOX_VENDOR/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
  "arm64")
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
-      cp "$FOX_VENDOR/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/sbin"
-      cp "$FOX_VENDOR/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
  "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
-      cp "$FOX_VENDOR/prebuilt/x86/mkbootimg" "$FOX_RAMDISK/sbin"
-      cp "$FOX_VENDOR/prebuilt/x86/unpackbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/x86/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/x86/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
  "x86_64")
       echo -e "${GREEN}-- x86_64 arch detected. Copying x86_64 binaries${NC}"
-      cp "$FOX_VENDOR/prebuilt/x86_64/mkbootimg" "$FOX_RAMDISK/sbin"
-      cp "$FOX_VENDOR/prebuilt/x86_64/unpackbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/x86_64/mkbootimg" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/x86_64/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
 esac
@@ -419,7 +419,7 @@ esac
   # Change splash image for 18:9 phones
   if [ "$FOX_18_9_DISPLAY" = "1" ]; then
       echo -e "${GREEN}-- Changing splash for 18:9 display${NC}";
-      cp -a $FOX_VENDOR/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
+      cp -a $FOX_VENDOR_PATH/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
   fi
   
   # deal with magiskboot/mkbootimg/unpackbootimg
@@ -455,7 +455,7 @@ esac
      echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
      rm -f $FOX_RAMDISK/sbin/lzma
      rm -f $FOX_RAMDISK/sbin/xz
-     cp -a $FOX_VENDOR/Files/xz $FOX_RAMDISK/sbin/lzma
+     cp -a $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/sbin/lzma
      ln -s lzma $FOX_RAMDISK/sbin/xz
   fi
     
@@ -464,8 +464,8 @@ esac
      export FOX_USE_BASH_SHELL="0"
   else
      echo -e "${GREEN}-- Copying bash ...${NC}"
-     cp -a $FOX_VENDOR/Files/bash $FOX_RAMDISK/sbin/bash
-     cp -a $FOX_VENDOR/Files/fox.bashrc $FOX_RAMDISK/etc/bash.bashrc
+     cp -a $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/sbin/bash
+     cp -a $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/etc/bash.bashrc
      chmod 0755 $FOX_RAMDISK/sbin/bash
   fi
   
@@ -481,22 +481,22 @@ esac
   # Include nano editor ?
   if [ "$FOX_USE_NANO_EDITOR" = "1" ]; then
       echo -e "${GREEN}-- Copying nano editor ...${NC}"
-      cp -af $FOX_VENDOR/Files/nano/ $FOX_RAMDISK/FFiles/
-      cp -af $FOX_VENDOR/Files/nano/sbin/nano $FOX_RAMDISK/sbin/
+      cp -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
+      cp -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/sbin/
   fi
 
   # Include mmgui
-  cp -a $FOX_VENDOR/Files/mmgui $FOX_RAMDISK/sbin/mmgui
+  cp -a $FOX_VENDOR_PATH/Files/mmgui $FOX_RAMDISK/sbin/mmgui
   chmod 0755 $FOX_RAMDISK/sbin/mmgui
 
   # Include aapt
-  cp -a $FOX_VENDOR/Files/aapt $FOX_RAMDISK/sbin/aapt
+  cp -a $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/sbin/aapt
   chmod 0755 $FOX_RAMDISK/sbin/aapt
 
   # Include text files
-  cp -a $FOX_VENDOR/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
-  cp -a $FOX_VENDOR/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
-  cp -a $FOX_VENDOR/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
+  cp -a $FOX_VENDOR_PATH/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
+  cp -a $FOX_VENDOR_PATH/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
+  cp -a $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
 
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
@@ -505,8 +505,8 @@ esac
   #
   # repack
   echo -e "${BLUE}-- Repacking and copying recovery${NC}"
-  [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
-  bash "$FOX_VENDOR/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
+  [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
+  bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
   cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 # end: standard version
 
@@ -528,8 +528,8 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
   	      ln -s busybox $FOX_RAMDISK/sbin/sh
      	   fi
  	fi
-	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
-	bash "$FOX_VENDOR/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
+	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
+	bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
 fi
 # end: "GO" version
