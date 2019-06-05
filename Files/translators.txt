@@ -2,6 +2,8 @@ Chinese Simplified:
 - qetxdc
 German:
 - Fabian
+Greek:
+- spkprs
 Hungarian:
 - MKAdam
 Italian:
@@ -9,9 +11,16 @@ Italian:
 Indonesian:
 - Lazuardi Elki
 - Ninja_14
+- muhajaya
+Polish:
+- makstrix
+Romanian:
+- Igor Sorocean
 Russian:
 - MrYacha
 - fordownloads
-Ukranian:
-- MrYacha
-- Dima Borch
+Spanish:
+- Jimgsey
+Turkish:
+- yanikyigit59
+- Metin Arslan

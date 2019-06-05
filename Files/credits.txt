@@ -1,4 +1,24 @@
 KMP Design - for amazing splash
 TWRP Team - for base recovery
+Red team - for initial OTA implantation 
+    and burning push to start OrangeFox project
+PBRP - Nice guys, we used some of their trees.
 
-Our testers and you
+@PrimoDev - For helping with Unified kernel for whyred
+@DarthJabba - This man was a breath of fresh air for us,
+    impossible to describe everything he did.
+@VnukovD - Developed amazing OrangeFox theme
+@F1a5H - Donated server for OrangeFox
+GitLab team - supported us by Gold status
+
+
+== Guys who help moderate OrangeFox chats ==
+@zakaryan2004
+@ko_he
+@SteamerX
+@SitiSchu - Also thanks for his Federation
+
+Our maintainers
+Our testers which test many builds per day
+
+Please write to @MrYacha (Telegram) if I forgot someone
