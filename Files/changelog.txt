@@ -1,4 +1,4 @@
-OrangeFox R10Stable
+OrangeFox R10 Stable
 
 Changelog:
 * Fully refreshed design to Material Design 2 Guidelines
