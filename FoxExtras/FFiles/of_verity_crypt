@@ -54,7 +54,7 @@ OF_locate_boot() {
 		bootpart=`find /dev/block -name boot_a | grep "by-name/boot_a" -m 1 2>/dev/null`
 		if [ -z "$bootpart" -o "$slot_suffix"s = "_b"s ];then
 			bootpart=`find /dev/block -name boot_b | grep "by-name/boot_b" -m 1 2>/dev/null`
-			manufacturer=`getprop ro.vendor.product.manufacturer`
+			#manufacturer=`getprop ro.vendor.product.manufacturer`
     
 			if [ -z "$bootpart" ];then
 				bootpart=`find /dev/block -name ramdisk | grep "by-name/ramdisk" -m 1 2>/dev/null`
@@ -90,13 +90,43 @@ OF_patch_boot_image() {
 	ui_print "- Patching the boot image..."
 	if [ "$KEEPVERITY" != "true" ]; then
 		ui_print "- Removing dm-verity"
-		[ -f dtb ] && ui_print "- Removing dm(avb)-verity in dtb" && $MAGISKBOOT --dtb-patch dtb
-		[ -f extra ] && ui_print "- Removing dm(avb)-verity in extra-dtb" && $MAGISKBOOT --dtb-patch extra
+  		[ -f dtb ] && $MAGISKBOOT dtb-patch dtb && print "- Removing dm(avb)-verity in dtb"
+  		[ -f kernel_dtb ] && $MAGISKBOOT dtb-patch kernel_dtb && print "- Removing dm(avb)-verity in dtb"
+  		[ -f extra ] && $MAGISKBOOT dtb-patch extra && print "- Removing dm(avb)-verity in extra-dtb"
 		setprop ro.config.dmverity false > /dev/null 2>&1
 		resetprop ro.config.dmverity false > /dev/null 2>&1
 	fi
 	$MAGISKBOOT --cpio ramdisk.cpio "patch $KEEPVERITY $KEEPFORCEENCRYPT"
 	ui_print "- Finished patching the boot image"
+}
+
+# patch the dtbo image
+OF_patch_dtbo() {
+	ui_print "- Searching for the dtbo image..."
+	dtbopart=`find /dev/block -name dtbo | grep "by-name/dtbo" -m 1 2>/dev/null`
+	if [ -z "$dtbopart" ];then
+  		slot_suffix=`getprop ro.boot.slot_suffix`
+  		dtbopart=`find /dev/block -name dtbo_a | grep "by-name/dtbo_a" -m 1 2>/dev/null`
+  		if [ -z "$dtbopart" -o "$slot_suffix"s = "_b"s ];then
+    			dtbopart=`find /dev/block -name dtbo_b | grep "by-name/dtbo_b" -m 1 2>/dev/null`
+    			if [ -z "$dtbopart" ];then
+      				ui_print "- Unable to find dtbo block location"
+    			else
+      				ui_print "- Found dtbo: $dtbopart"
+    			fi
+  		fi
+	fi
+
+	# patch the dtbo image
+	if [ ! -z "$dtbopart" ];then
+  		if $MAGISKBOOT --dtb-test "$dtbopart"; then
+    			ui_print "- Backing up stock dtbo image"
+    			$MAGISKBOOT --compress "$dtbopart" /data/stock_dtbo.img.gz
+    			ui_print "- Patching dtbo to remove avb-verity"
+    			$MAGISKBOOT --dtb-patch "$dtbopart"  
+  		fi  
+	fi
+
 }
 
 # patch system/vendor fstab
@@ -171,6 +201,7 @@ Main() {
 	OF_locate_boot
 	OF_unpack_boot_image
 	OF_patch_boot_image
+	OF_patch_dtbo
 	OF_patch_fstab
 	OF_repack_boot_image
 	ui_print "- Done!"
