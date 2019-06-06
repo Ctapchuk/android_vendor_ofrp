@@ -10,9 +10,6 @@
 TARGET_DEVICE="mido"
 TARGET_DEVICE_ALT="ALT_DEVICE"
 PRODUCT_DEVICE=$(getprop "ro.product.device")
-typeset -l PRODUCT_DEVICE
-typeset -l TARGET_DEVICE
-typeset -l TARGET_DEVICE_ALT
 
 # target partition
 RECOVERY_PARTITION="/dev/block/bootdevice/by-name/recovery"
