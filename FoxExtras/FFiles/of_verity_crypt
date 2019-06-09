@@ -2,7 +2,7 @@
 #
 # LazyFlasher installer backend  -- modified by wzsx150
 # v7.1-20181008
-# - converted by DarthJabba9 to a standalone shell script, 20190601
+# - converted by DarthJabba9 to a standalone shell script, 20190609
 # - usage = of_verity_script [keepdmverity] [keepforcedencryption]
 # - arguments = either "false" or "true"
 #
@@ -90,9 +90,9 @@ OF_patch_boot_image() {
 	ui_print "- Patching the boot image..."
 	if [ "$KEEPVERITY" != "true" ]; then
 		ui_print "- Removing dm-verity"
-  		[ -f dtb ] && $MAGISKBOOT dtb-patch dtb && print "- Removing dm(avb)-verity in dtb"
-  		[ -f kernel_dtb ] && $MAGISKBOOT dtb-patch kernel_dtb && print "- Removing dm(avb)-verity in dtb"
-  		[ -f extra ] && $MAGISKBOOT dtb-patch extra && print "- Removing dm(avb)-verity in extra-dtb"
+  		[ -f dtb ] && $MAGISKBOOT --dtb-patch dtb && print "- Removing dm(avb)-verity in dtb"
+  		[ -f kernel_dtb ] && $MAGISKBOOT --dtb-patch kernel_dtb && print "- Removing dm(avb)-verity in dtb"
+  		[ -f extra ] && $MAGISKBOOT --dtb-patch extra && print "- Removing dm(avb)-verity in extra-dtb"
 		setprop ro.config.dmverity false > /dev/null 2>&1
 		resetprop ro.config.dmverity false > /dev/null 2>&1
 	fi
