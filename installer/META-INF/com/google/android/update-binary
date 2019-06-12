@@ -326,6 +326,17 @@ local PART=$(readlink -f $RECOVERY_PARTITION)
   AB_Install_Recovery
 }
 
+# reset settings to default
+Reset_Settings() {
+local F="$1"
+	[ -z "$F" ] && F=/sdcard
+	ui_print "- Removing old OrangeFox configuration files ..."
+	rm -f $F/Fox/.foxs
+	mount /persist
+	rm -f /persist/.foxs
+	umount /persist
+}
+
 # main function
 Main() {
 	ui_print "*************************************"
@@ -379,6 +390,8 @@ Main() {
 	
 	LogFreshInstall
 	
+	# Reset_Settings "$internal_SD"
+
 # backup recovery.log -> Fox/install.log
     	ui_print "- Finished."
     	ui_print "- Backing up recovery.log to $internal_SD/Fox/install.log ..."
