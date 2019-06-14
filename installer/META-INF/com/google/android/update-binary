@@ -29,6 +29,9 @@ ERROR_CODE=0
 # AB device?
 OF_AB_DEVICE=""
 
+# Reset OrangeFox settings to default?
+FOX_RESET_SETTINGS=""
+
 # ui_print "<message>" ["<message 2>" ...]
 ui_print() {
   until [ ! "$1" ]; do
@@ -95,10 +98,12 @@ abort() {
 
 # check if we have specified a target device and whether this is it
 CheckRequirements() {
-   if echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE"; then
+   local F=$(echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE")
+   if [ -n "$F" ]; then
        ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE ..."
    else
-       if [ -n "$TARGET_DEVICE_ALT" ] && echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE_ALT"; then
+       F=$(echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE_ALT")
+       if [ -n "$TARGET_DEVICE_ALT" ] && [ -n "$F" ]; then
           ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE_ALT ..."
        else
          abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
@@ -390,7 +395,7 @@ Main() {
 	
 	LogFreshInstall
 	
-	# Reset_Settings "$internal_SD"
+	[ "$FOX_RESET_SETTINGS" = "1" ] && Reset_Settings "$internal_SD"
 
 # backup recovery.log -> Fox/install.log
     	ui_print "- Finished."

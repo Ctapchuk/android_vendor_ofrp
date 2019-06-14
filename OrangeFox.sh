@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 3 June 2019
+# Date: 14 June 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -109,7 +109,7 @@
 #    - default = 0
 #
 # "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES"
-#    - set to 1 to use magisboot for all patching of boot images *and* recovery images
+#    - set to 1 to use magiskboot for all patching of boot images *and* recovery images
 #    - this means that mkbootimg/unpackbootimg/lzma will be deleted
 #    - if this is set, this script will also automatically set OF_USE_MAGISKBOOT to 1
 #    - default = 0
@@ -117,6 +117,41 @@
 # "OF_DISABLE_UPDATEZIP"
 #    - set to 1 to disable recovery zip creation
 #    - default = 0
+#
+# "OF_SUPPORT_PRE_FLASH_SCRIPT"
+#    - set to 1 to support running a script before flashing zips (other than ROMs)
+#    - the script must be called /sbin/fox_pre_flash - and you need to copy it there yourself
+#    - default = 0 (in lavender, default=1)
+#
+# "OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; 
+#    - set to 1 to turn OrangeFox dm-verity forced-encryption settings off by default 
+#    - default = 0 (in lavender, default=1)
+#
+# "OF_SKIP_LEDS_FUNCTION"
+#    - set to 1 to avoid the Leds function until the bugs are fixed
+#    - default = 0 (in polaris and dipper, default=1)
+#
+# "OF_SKIP_FBE_DECRYPTION" 
+#    - set to 1 to skip the FBE decryption routines (prevents hangng at the Fox logo or Redmi/Mi logo)
+#    - default = 0 (in dipper, default=1)
+#
+# "OF_NO_TREBLE_COMPATIBILITY_CHECK"
+#    - set to 1 to disable checking for compatibility.zip in ROMs
+#    - default = 0
+
+# "FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER"
+#    - set to 1 to use the TWRP build system's tools to build the recovery image
+#    - default = 0
+#
+# "FOX_BUILD_NO_ENCRYPTION"
+#    -  set to 1 to avoid building in any encryption support at all
+#    - default = 0
+#
+# "FOX_RESET_SETTINGS"
+#    - set to 1 to reset OrangeFox settings to defaults, after installation
+#    - default = 0
+#
+#
 # ******************************************************************************
 
 RED='\033[0;31m'
@@ -288,6 +323,12 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s|^OF_AB_DEVICE=.*|OF_AB_DEVICE=\"1\"|" $F
   fi
 
+  # Reset Settings
+  if [ "$FOX_RESET_SETTINGS" = "1" ]; then
+     echo -e "${RED}-- Instructing zip installer to reset OrangeFox settings ... ${NC}"
+     sed -i -e "s|^FOX_RESET_SETTINGS=.*|FOX_RESET_SETTINGS=\"1\"|" $F
+  fi
+
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
@@ -397,6 +438,7 @@ case "$TARGET_ARCH" in
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/sbin"
+      cp -a "$FOX_VENDOR_PATH/prebuilt/arm64/resetprop" "$FOX_RAMDISK/sbin"
       ;;
  "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
