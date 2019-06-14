@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   01 June 2019
+# - Date:   14 June 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -26,6 +26,7 @@ ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 ROM=""
 FOX_DEVICE=$(getprop "ro.product.device")
+SETPROP=/sbin/setprop
 
 # file_getprop <file> <property>
 file_getprop() 
@@ -77,11 +78,11 @@ local TT=$(realTreble)
   echo "" >> $LOG
   echo "DEBUG: OrangeFox: REALTREBLE=$TT" >> $LOG
   [ "$TT" = "1" ] && {
-     setprop orangefox.realtreble.rom 1 > /dev/null 2>&1
+     $SETPROP orangefox.realtreble.rom 1 > /dev/null 2>&1
      echo "1"
      return
   }
-  setprop orangefox.realtreble.rom 0  > /dev/null 2>&1
+  $SETPROP orangefox.realtreble.rom 0  > /dev/null 2>&1
 
   # try /cust
 local C="/tmp_cust"
@@ -292,10 +293,25 @@ local OPS=$(getprop "orangefox.postinit.status")
    echo "DEBUG: OrangeFox: FOX_DEVICE=$FOX_DEVICE" >> $LOG
    echo "DEBUG: OrangeFox: FOX_KERNEL=$OPS" >> $LOG
    echo "DEBUG: OrangeFox: SYSTEM_ROOT=$SYS_ROOT" >> $LOG
-   setprop orangefox.postinit.status 1
+   $SETPROP orangefox.postinit.status 1
 }
 
+# cater for situations where setprop is a dead symlinked applet
+get_setprop() {
+  $SETPROP > /dev/null 2>&1
+  [ $? == 0 ] && return
+  SETPROP=/sbin/resetprop
+  [ -x $SETPROP ] && {
+    rm -f /sbin/setprop
+    ln -sf $SETPROP /sbin/setprop
+    return
+  }
+  SETPROP=/sbin/setprop
+}
+
+
 ### main() ###
+get_setprop
 
 # have we executed once before/are we running now?
 start_script
