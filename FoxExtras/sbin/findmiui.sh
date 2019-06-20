@@ -269,6 +269,10 @@ local LED=""
        vince)
        		LED="/sys/devices/soc/qpnp-flash-led-24";
        	;;
+       riva)
+            echo 1 > /sys/class/leds/flashlight/max_brightness
+            echo 0 > /sys/class/leds/flashlight/brightness
+         ;;
        *)
        		return;
        	;;
