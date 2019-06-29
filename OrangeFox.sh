@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 14 June 2019
+# Date: 29 June 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -151,6 +151,9 @@
 #    - set to 1 to reset OrangeFox settings to defaults, after installation
 #    - default = 0
 #
+# "FOX_DELETE_AROMAFM"
+#    - set to 1 delete AromaFM from the zip installer (for devices where it doesn't work)
+#    - default = 0
 #
 # ******************************************************************************
 
@@ -329,6 +332,12 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s|^FOX_RESET_SETTINGS=.*|FOX_RESET_SETTINGS=\"1\"|" $F
   fi
 
+  # omit AromaFM ?
+  if [ "$FOX_DELETE_AROMAFM" = "1" ]; then
+     echo -e "${GREEN}-- Deleting AromaFM ...${NC}"
+     rm -rf $WORK_DIR/sdcard/Fox/FoxFiles/AromaFM
+  fi
+
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
@@ -401,7 +410,10 @@ local ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
    rm -f $F
 } # function
 
-
+# file_getprop <file> <property>
+file_getprop() { 
+  grep "^$2=" "$1" | cut -d= -f2
+}
 
 # ****************************************************
 # *** now the real work starts!
@@ -548,7 +560,16 @@ esac
   # repack
   echo -e "${BLUE}-- Repacking and copying recovery${NC}"
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
+  SAMSUNG_DEVICE=$(file_getprop "$FOX_WORK/ramdisk/prop.default" "ro.product.manufacturer")
+  if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
+     echo -e "${RED}-- Appending SEANDROIDENFORCE to $FOX_WORK/kernel ${NC}"
+     [ -e "$FOX_WORK/kernel" ] && echo -n "SEANDROIDENFORCE" >> "$FOX_WORK/kernel"
+  fi
   bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
+  if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
+     echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
+     echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
+  fi
   cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 # end: standard version
 
@@ -572,6 +593,10 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
  	fi
 	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
 	bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
+  	if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
+     	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE_2GB ${NC}"
+     	   echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE_2GB
+  	fi
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
 fi
 # end: "GO" version
