@@ -102,11 +102,14 @@ CheckRequirements() {
    if [ -n "$F" ]; then
        ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE ..."
    else
+       if [ -z "$TARGET_DEVICE_ALT" ]; then
+          abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
+       fi
        F=$(echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE_ALT")
-       if [ -n "$TARGET_DEVICE_ALT" ] && [ -n "$F" ]; then
+       if [ -n "$F" ]; then
           ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE_ALT ..."
        else
-         abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
+          abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
        fi
    fi
 }
