@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   14 June 2019
+# - Date:   20 June 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -270,8 +270,8 @@ local LED=""
        		LED="/sys/devices/soc/qpnp-flash-led-24";
        	;;
        riva)
-            echo 1 > /sys/class/leds/flashlight/max_brightness
-            echo 0 > /sys/class/leds/flashlight/brightness
+            	echo 1 > /sys/class/leds/flashlight/max_brightness;
+            	echo 0 > /sys/class/leds/flashlight/brightness;
          ;;
        *)
        		return;

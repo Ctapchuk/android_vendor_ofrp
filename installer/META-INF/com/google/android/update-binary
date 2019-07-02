@@ -178,6 +178,7 @@ local ToRename="/system/bin/install-recovery.sh
 /system/vendor/etc/install-recovery.sh
 /system/vendor/etc/recovery-resource.dat
 /system/recovery-from-boot.p
+/system/system/recovery-from-boot.p
 /vendor/bin/install-recovery.sh
 /vendor/etc/install-recovery.sh
 /vendor/etc/recovery-resource.dat"

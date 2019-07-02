@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 29 June 2019
+# Date: 2 July 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -127,13 +127,17 @@
 #    - set to 1 to turn OrangeFox dm-verity forced-encryption settings off by default 
 #    - default = 0 (in lavender, default=1)
 #
-# "OF_SKIP_LEDS_FUNCTION"
-#    - set to 1 to avoid the Leds function until the bugs are fixed
-#    - default = 0 (in polaris and dipper, default=1)
+# "OF_CLASSIC_LEDS_FUNCTION"
+#    - set to 1 to use the old R9.x Leds function
+#    - default = 0 (in polaris, oxygen, dipper and dipper, default=1)
 #
 # "OF_SKIP_FBE_DECRYPTION" 
 #    - set to 1 to skip the FBE decryption routines (prevents hangng at the Fox logo or Redmi/Mi logo)
 #    - default = 0 (in dipper, default=1)
+#
+# "OF_OTA_RES_DECRYPT"
+#    - set to 1 to try and decrypt internal storage (instead baling out with an error) during MIUI OTA restore
+#    - default = 0
 #
 # "OF_NO_TREBLE_COMPATIBILITY_CHECK"
 #    - set to 1 to disable checking for compatibility.zip in ROMs
