@@ -1,3 +1,6 @@
+OrangeFox Translators
+---------------------
+
 Chinese Simplified:
 - qetxdc
 German:
