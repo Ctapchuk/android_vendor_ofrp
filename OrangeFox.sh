@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 2 July 2019
+# Date: 19 July 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -58,6 +58,7 @@
 #    - default = "/dev/block/bootdevice/by-name/recovery"
 #
 # "FOX_18_9_DISPLAY"
+#    - Deprecated
 #    - set this to 1 if your device has an 18:9 display (eg, vince, chiron, whyred)
 #    - default = 0
 #
@@ -200,7 +201,7 @@ TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
 
 # whether to print extra debug messages
-DEBUG="0"
+DEBUG="1"
 
 # FOX_REPLACE_BUSYBOX_PS: default to 0
 if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
@@ -289,9 +290,6 @@ local TDT=$(date "+%d %B %Y")
 
   # copy FoxFiles/ to sdcard/Fox/
   cp -a $FILES_DIR/ sdcard/Fox
-  
-  # copy splash logo to sdcard/Fox/
-  cp -a $FOX_RAMDISK/twres/images/splash.png sdcard/Fox/
   
   # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
@@ -474,10 +472,8 @@ esac
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
-  # Change splash image for 18:9 phones
   if [ "$FOX_18_9_DISPLAY" = "1" ]; then
-      echo -e "${GREEN}-- Changing splash for 18:9 display${NC}";
-      cp -a $FOX_VENDOR_PATH/Files/OrangeFoxSplashScreen.png $FOX_RAMDISK/twres/images/splash.png;
+      echo -e "${RED}! FOX_18_9_DISPLAY is DEPRECATED${NC}";
   fi
   
   # deal with magiskboot/mkbootimg/unpackbootimg
