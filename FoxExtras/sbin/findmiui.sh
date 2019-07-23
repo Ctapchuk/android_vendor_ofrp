@@ -297,6 +297,7 @@ local OPS=$(getprop "orangefox.postinit.status")
    echo "KERNEL=$OPS" >> $CFG
    echo "SYSTEM_ROOT=$SYS_ROOT" >> $CFG
    echo "FOX_BUILD_DATE=$D" >> $CFG
+   echo "FOX_BUILD_DATE=$D" >> $LOG
    echo "DEBUG: OrangeFox: FOX_DEVICE=$FOX_DEVICE" >> $LOG
    echo "DEBUG: OrangeFox: FOX_KERNEL=$OPS" >> $LOG
    echo "DEBUG: OrangeFox: SYSTEM_ROOT=$SYS_ROOT" >> $LOG
