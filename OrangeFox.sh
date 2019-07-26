@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 19 July 2019
+# Date: 23 July 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -133,19 +133,21 @@
 #    - default = 0 (in polaris, oxygen, dipper and dipper, default=1)
 #
 # "OF_SKIP_FBE_DECRYPTION" 
-#    - set to 1 to skip the FBE decryption routines (prevents hangng at the Fox logo or Redmi/Mi logo)
-#    - default = 0 (in dipper, default=1)
+#    - set to 1 to skip the FBE decryption routines (prevents hanging at the Fox logo or Redmi/Mi logo)
+#    - default = 0
 #
 # "OF_OTA_RES_DECRYPT"
-#    - set to 1 to try and decrypt internal storage (instead baling out with an error) during MIUI OTA restore
+#    - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
 #    - default = 0
 #
 # "OF_NO_TREBLE_COMPATIBILITY_CHECK"
 #    - set to 1 to disable checking for compatibility.zip in ROMs
 #    - default = 0
-
+#
 # "FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER"
 #    - set to 1 to use the TWRP build system's tools to build the recovery image
+#    - requires patches to "build/core/Makefile" in the build system
+#    - if in doubt, do NOT use this var
 #    - default = 0
 #
 # "FOX_BUILD_NO_ENCRYPTION"
@@ -161,7 +163,23 @@
 #    - default = 0
 #
 # ******************************************************************************
-
+#
+# export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
+if [ -n "$4" ]; then
+   echo "#########################################################################"
+   echo "Variables exported from build/core/Makefile:"
+   echo "$@"
+   export "$@"
+   echo "#########################################################################"
+else
+   if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
+      echo -e "${RED}-- Build OrangeFox: FATAL ERROR! ${NC}"
+      echo -e "${RED}-- You cannot use FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER without patching build/core/Makefile in the build system! ${NC}"
+      exit 100  
+   fi
+fi
+#
+#
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -173,8 +191,15 @@ echo -e "${BLUE}-- Setting up environment variables${NC}"
 
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
-FOX_WORK=$OUT/FOX_AIK
-FOX_RAMDISK="$FOX_WORK/ramdisk"
+
+if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+	FOX_WORK="$TARGET_RECOVERY_ROOT_OUT"
+	FOX_RAMDISK="$TARGET_RECOVERY_ROOT_OUT"
+else
+	FOX_WORK=$OUT/FOX_AIK
+	FOX_RAMDISK="$FOX_WORK/ramdisk"
+fi
+
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
 # build_type
@@ -227,7 +252,7 @@ fi
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 
 # copy recovery.img
-cp -r $OUT/recovery.img $RECOVERY_IMAGE
+[ -f $OUT/recovery.img ] && cp -r $OUT/recovery.img $RECOVERY_IMAGE
 
 # 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_lite.img"
@@ -286,14 +311,14 @@ local TDT=$(date "+%d %B %Y")
   cp -a $RECOVERY_IMAGE ./recovery.img
    
   # copy installer bins and script 
-  cp -ar $INST_DIR/* .
+  cp -a $INST_DIR/* .
 
   # copy FoxFiles/ to sdcard/Fox/
   cp -a $FILES_DIR/ sdcard/Fox
   
   # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
-     cp -ar $FOX_PORTS_INSTALLER/* . 
+     cp -a $FOX_PORTS_INSTALLER/* . 
   fi
   
   # patch update-binary (which is a script) to run only for the current device 
@@ -412,6 +437,7 @@ local ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
    rm -f $F
 } # function
 
+
 # file_getprop <file> <property>
 file_getprop() { 
   grep "^$2=" "$1" | cut -d= -f2
@@ -425,14 +451,15 @@ file_getprop() {
 expand_vendor_path
 
 # is the working directory still there from a previous build? If so, remove it
-if [ -d "$FOX_WORK" ]; then
-  echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
-  rm -rf "$FOX_WORK"
+if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
+   if [ -d "$FOX_WORK" ]; then
+      echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
+      rm -rf "$FOX_WORK"
+   fi
+   # unpack recovery image into working directory
+   echo -e "${BLUE}-- Unpacking recovery image${NC}"
+   bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 fi
-
-# unpack recovery image into working directory
-echo -e "${BLUE}-- Unpacking recovery image${NC}"
-bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 
 # copy stuff to the ramdisk
 echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
@@ -452,7 +479,7 @@ case "$TARGET_ARCH" in
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/sbin"
-      cp -a "$FOX_VENDOR_PATH/prebuilt/arm64/resetprop" "$FOX_RAMDISK/sbin"
+      cp "$FOX_VENDOR_PATH/prebuilt/arm64/resetprop" "$FOX_RAMDISK/sbin"
       ;;
  "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
@@ -558,23 +585,30 @@ esac
   fi
   #
   # repack
-  echo -e "${BLUE}-- Repacking and copying recovery${NC}"
-  [ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
-  SAMSUNG_DEVICE=$(file_getprop "$FOX_WORK/ramdisk/prop.default" "ro.product.manufacturer")
-  if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
-     echo -e "${RED}-- Appending SEANDROIDENFORCE to $FOX_WORK/kernel ${NC}"
-     [ -e "$FOX_WORK/kernel" ] && echo -n "SEANDROIDENFORCE" >> "$FOX_WORK/kernel"
-  fi
-  bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
-  if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
-     echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
-     echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
-  fi
-  cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
-# end: standard version
+  if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+     if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
+  	echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
+        cp -af "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
+  	cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
+     else
+  	echo -e "${BLUE}-- Repacking and copying recovery${NC}"
+  	[ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
+  	SAMSUNG_DEVICE=$(file_getprop "$FOX_WORK/ramdisk/prop.default" "ro.product.manufacturer")
+  	if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
+     	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $FOX_WORK/kernel ${NC}"
+     	   [ -e "$FOX_WORK/kernel" ] && echo -n "SEANDROIDENFORCE" >> "$FOX_WORK/kernel"
+  	fi
+  	bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
+  	if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
+     	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
+     	   echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
+  	fi
+  	cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
+     fi
+     # end: standard version
 
-#: build "lite" (2GB) version (virtually obsolete now) #
-if [ "$BUILD_2GB_VERSION" = "1" ]; then
+     #: build "lite" (2GB) version (virtually obsolete now) #
+      if [ "$BUILD_2GB_VERSION" = "1" ] && [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" != "1" ]; then
 	echo -e "${BLUE}-- Repacking and copying the \"lite\" version of recovery${NC}"
 	FFil="$FOX_RAMDISK/FFiles"
 	rm -rf $FFil/OF_initd
@@ -598,61 +632,65 @@ if [ "$BUILD_2GB_VERSION" = "1" ]; then
      	   echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE_2GB
   	fi
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
+    fi
 fi
 # end: "GO" version
 
 # create update zip installer
-if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
+if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+   if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 	do_create_update_zip
-else
+   else
 	echo -e "${RED}-- Skip creating recovery zip${NC}"
-fi
+   fi
 
-# create old theme zip file
-do_create_old_theme_zip
+   # create old theme zip file
+   do_create_old_theme_zip
 
-#Info
-echo -e ""
-echo -e ""
-cat $FOX_VENDOR_PATH/Files/FoxBanner
-echo -e ""
-echo -e ""
-echo -e "===================${BLUE}Finished building OrangeFox${NC}==================="
-echo -e ""
-echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
-echo -e "          MD5: $RECOVERY_IMAGE.md5"
-if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
+   #Info
+   echo -e ""
+   echo -e ""
+   cat $FOX_VENDOR_PATH/Files/FoxBanner
+   echo -e ""
+   echo -e ""
+   echo -e "===================${BLUE}Finished building OrangeFox${NC}==================="
+   echo -e ""
+   echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
+   echo -e "          MD5: $RECOVERY_IMAGE.md5"
+   
+   if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 	echo -e ""
 	echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE"
 	echo -e "          MD5: $ZIP_FILE.md5"
-echo -e ""
-fi
-echo -e "=================================================================="
+   echo -e ""
+   fi
+  
+   echo -e "=================================================================="
 
-# OrangeFox Lite
-if [ "$BUILD_2GB_VERSION" = "1" ]; then
-echo -e ""
-echo -e ""
-echo -e "---------------${BLUE}Finished building OrangeFox Lite Edition${NC}---------------"
-echo -e ""
-echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
-echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
-if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
-echo -e ""
-echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE_GO"
-echo -e "          MD5: $ZIP_FILE_GO.md5"
-echo -e ""
-fi
-echo -e "=================================================================="
-fi
-#
+   # OrangeFox Lite
+   if [ "$BUILD_2GB_VERSION" = "1" ]; then
+   	echo -e ""
+   	echo -e ""
+   	echo -e "---------------${BLUE}Finished building OrangeFox Lite Edition${NC}---------------"
+   	echo -e ""
+   	echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
+   	echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
+   	if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
+   	   echo -e ""
+   	   echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE_GO"
+   	   echo -e "          MD5: $ZIP_FILE_GO.md5"
+   	   echo -e ""
+   	fi
+   	echo -e "=================================================================="
+   fi
+   #
 
-echo -e ""
-echo -e ""
-echo -e "===========================${BLUE}Classic theme${NC}=========================="
-echo -e ""
-echo -e "${GREEN}ZIP File:${NC} $OUT/ClassicTheme.zip"
-echo -e ""
-echo -e "=================================================================="
-
+   echo -e ""
+   echo -e ""
+   echo -e "===========================${BLUE}Classic theme${NC}=========================="
+   echo -e ""
+   echo -e "${GREEN}ZIP File:${NC} $OUT/ClassicTheme.zip"
+   echo -e ""
+   echo -e "=================================================================="
+fi
 # end!
