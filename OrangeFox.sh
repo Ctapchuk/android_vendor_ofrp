@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 23 July 2019
+# Date: 27 July 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -122,7 +122,7 @@
 # "OF_SUPPORT_PRE_FLASH_SCRIPT"
 #    - set to 1 to support running a script before flashing zips (other than ROMs)
 #    - the script must be called /sbin/fox_pre_flash - and you need to copy it there yourself
-#    - default = 0 (in lavender, default=1)
+#    - default = 0 (in lavender/violet/perseus, default=1)
 #
 # "OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; 
 #    - set to 1 to turn OrangeFox dm-verity forced-encryption settings off by default 
@@ -539,7 +539,14 @@ esac
      cp -a $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/sbin/lzma
      ln -s lzma $FOX_RAMDISK/sbin/xz
   fi
-    
+  
+  # system_root stuff
+  if [ "$OF_SUPPORT_PRE_FLASH_SCRIPT" = "1" ]; then
+     echo -e "${GREEN}-- OF_SUPPORT_PRE_FLASH_SCRIPT=1 (system_root device); copying fox_pre_flash to sbin ...${NC}"
+     echo -e "${GREEN}-- Make sure that you mount both /system *and* /system_root in your fstab.${NC}"     
+     cp -a $FOX_VENDOR_PATH/Files/fox_pre_flash $FOX_RAMDISK/sbin
+  fi
+     
   # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
      export FOX_USE_BASH_SHELL="0"
