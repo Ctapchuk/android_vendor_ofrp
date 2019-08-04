@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 27 July 2019
+# Date: 4 August 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -56,11 +56,6 @@
 #    - set this ONLY if your device's recovery partition is in a location that is
 #      different from the default "/dev/block/bootdevice/by-name/recovery"
 #    - default = "/dev/block/bootdevice/by-name/recovery"
-#
-# "FOX_18_9_DISPLAY"
-#    - Deprecated
-#    - set this to 1 if your device has an 18:9 display (eg, vince, chiron, whyred)
-#    - default = 0
 #
 # "FOX_USE_LZMA_COMPRESSION"
 #    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
@@ -148,10 +143,6 @@
 #    - set to 1 to use the TWRP build system's tools to build the recovery image
 #    - requires patches to "build/core/Makefile" in the build system
 #    - if in doubt, do NOT use this var
-#    - default = 0
-#
-# "FOX_BUILD_NO_ENCRYPTION"
-#    -  set to 1 to avoid building in any encryption support at all
 #    - default = 0
 #
 # "FOX_RESET_SETTINGS"
@@ -499,10 +490,6 @@ esac
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
-  if [ "$FOX_18_9_DISPLAY" = "1" ]; then
-      echo -e "${RED}! FOX_18_9_DISPLAY is DEPRECATED${NC}";
-  fi
-  
   # deal with magiskboot/mkbootimg/unpackbootimg
   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
       echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
