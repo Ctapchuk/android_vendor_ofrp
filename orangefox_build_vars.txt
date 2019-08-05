@@ -162,6 +162,10 @@
   - whether the enable the flashlight feature
   - default is "1"
 #
+"OF_FL_PATH1" and "OF_FL_PATH2"
+  - set custom flashlight path (if flashlight isn't working)
+  - eg. OF_FL_PATH1="/sys/class/leds/led_torch_2"
+#
 "FOX_KEEP_BUSYBOX_PS"
   - wehther to keep the (stripped down) busybox version of the "ps" command
   - if this is not defined, the busybox "ps" command will be replaced by a fuller version
@@ -173,24 +177,39 @@
 "OF_MAINTAINER"
   - the maintainer's name
 #
-"FOX_NOTCH"
-  - whether to have a notch
-  - default is "0"
-#
 "OF_SCREEN_H"
   - Use this if your screen's aspect ratio is not 16:9
   - to calculate OF_SCREEN_H, if your screen width is not 1080, use this formula: <aspect ratio height>*120
   - e.g. if the aspect ratio is 19:9 then use 19*120 (=2280)
-  - use "export OF_SCREEN_H=2280" to resize recovery to 1080x2280 screen
+  - use "export OF_SCREEN_H=2280" to resize recovery to 19:9 screen
+  - default = 1920
 #
 "OF_STATUS_H"
   - use this only when the device has a cutout
   - you do not need to add or subtract OF_STATUS_H from OF_SCREEN_H
   - use "export OF_STATUS_H=144" to change statusbar size to 144
+  - Tip: take screenshot in android and count status bar height using any graphics editor (eg. MSPaint)
+  - default = 72
 #
-"OF_STATUS_INDENT_LEFT"; "OF_STATUS_INDENT_RIGHT"
+"OF_STATUS_INDENT_LEFT" and "OF_STATUS_INDENT_RIGHT"
   - use OF_STATUS_INDENT_LEFT and OF_STATUS_INDENT_RIGHT when device has rounded corners
   - the recommended setting of these vars is 48 (when device has rounded corners)
-  - use "export OF_STATUS_INDENT_LEFT=48" and "export OF_STATUS_INDENT_RIGHT=48"
+  - default = 20
+# 
+"OF_HIDE_NOTCH"
+  - add option to settings that makes status bar black (hides notch)
+  - default = 0
+# 
+"OF_CLOCK_POS"
+  - var to control clock position option for devices that has cutout
+  - 0 => left, center and right clock positions available
+  - 1 => left and right clock positions available
+  - 2 => only left clock position available
+  - default = 0
+# 
+"OF_ALLOW_DISABLE_NAVBAR"
+  - set to 0 if device doesn't have hardware navigation buttons
+  - if OF_ALLOW_DISABLE_NAVBAR is set to 0 user can't hide on-screen navbar
+  - default = 1
 # 
 # -----------------------------------

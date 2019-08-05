@@ -633,13 +633,12 @@ fi
 # create update zip installer
 if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
-	do_create_update_zip
+      do_create_update_zip
+      # create old theme zip file
+      do_create_old_theme_zip
    else
-	echo -e "${RED}-- Skip creating recovery zip${NC}"
+	   echo -e "${RED}-- Skip creating recovery zip${NC}"
    fi
-
-   # create old theme zip file
-   do_create_old_theme_zip
 
    #Info
    echo -e ""
@@ -678,7 +677,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    	echo -e "=================================================================="
    fi
    #
-
+   if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
    echo -e ""
    echo -e ""
    echo -e "===========================${BLUE}Classic theme${NC}=========================="
@@ -686,5 +685,6 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    echo -e "${GREEN}ZIP File:${NC} $OUT/ClassicTheme.zip"
    echo -e ""
    echo -e "=================================================================="
+   fi
 fi
 # end!
