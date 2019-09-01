@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   23 July 2019
+# - Date:   02 September 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -290,8 +290,9 @@ start_script()
 local OPS=$(getprop "orangefox.postinit.status")
    [ -f "$CFG" ] || [ "$OPS" = "1" ] && exit 0
    echo "# OrangeFox live cfg" > $CFG
-   local D=$(getprop "ro.build.date")
+   local D=$(file_getprop "/etc/fox.cfg" "FOX_BUILD_DATE")
    [ -z "$D" ] && D=$(getprop "ro.bootimage.build.date")
+   [ -z "$D" ] && D=$(getprop "ro.build.date")
    OPS=$(uname -r)
    SYS_ROOT=$(has_system_root)
    echo "KERNEL=$OPS" >> $CFG

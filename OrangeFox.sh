@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 4 August 2019
+# Date: 02 September 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -573,6 +573,10 @@ esac
   cp -a $FOX_VENDOR_PATH/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
   cp -a $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
 
+  # save the build date
+  BUILD_DATE=$(date "+%c")
+  echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/etc/fox.cfg
+  
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
