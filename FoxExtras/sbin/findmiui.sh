@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   02 September 2019
+# - Date:   16 September 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -20,13 +20,20 @@ CFG="/tmp/orangefox.cfg"
 FS="/etc/recovery.fstab"
 T=0
 M=0
-SYS_ROOT="0"	  # device with system_root?
 DEBUG="0"  	  # enable for more debug messages
+VERBOSE_DEBUG="0" # enable for really verbose debug messages
+SYS_ROOT="0"	  # device with system_root?
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 ROM=""
 FOX_DEVICE=$(getprop "ro.product.device")
 SETPROP=/sbin/setprop
+
+# verbose logging?
+if [ "$VERBOSE_DEBUG" = "1" ]; then
+   DEBUG=1
+   set -o xtrace
+fi
 
 # file_getprop <file> <property>
 file_getprop() 
@@ -155,12 +162,24 @@ isMIUI() {
    DebugDirList "$S/"
    DebugDirList "$S/vendor"
 
-   if [ -d $A/miui/ ] &&  [ -d $A/miuisystem/ ] &&  [ -d $A/MiuiBluetooth/ ]; then
+   DebugDirList "$A/"
+   DebugDirList "$E/"
+   
+   if [ -f $S/init.miui.cust.rc ] && [ -f $S/init.miui.rc ]; then
+      DebugMsg "First round of miui checks succeeded."
+      M="1"
+   fi
+
+   if [ "$M" != "1" ] && [ -d $A/miui ] && [ -d $A/miuisystem ]; then
       DebugMsg "Second round of miui checks succeeded."
-      if [ -d $E/cust/ ] &&  [ -d $E/miui_feature/ ] &&  [ -d $E/precust_theme/ ]; then
-         DebugMsg "Third round of miui checks succeeded. Definitely MIUI!"
+      if [ -d $E/cust ] && [ -d $E/miui_feature ] && [ -d $E/precust_theme ]; then
+         DebugMsg "Third round of miui checks succeeded."
          M="1"
+      else
+         DebugMsg "Third round of miui checks returned negative."
       fi
+   else
+      DebugMsg "Second round of miui checks returned negative."
    fi
    
    # unmount
