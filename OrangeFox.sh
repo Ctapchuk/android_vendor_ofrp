@@ -574,7 +574,7 @@ esac
   cp -a $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
 
   # save the build date
-  BUILD_DATE=$(date "+%c")
+  BUILD_DATE=$(date -u "+%c")
   echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/etc/fox.cfg
   
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
