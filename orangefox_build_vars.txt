@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 4 August 2019
+# Date: 17 September 2019
 #
 # -----------------------------------
 #
@@ -212,4 +212,9 @@
   - if OF_ALLOW_DISABLE_NAVBAR is set to 0 user can't hide on-screen navbar
   - default = 1
 # 
+"OF_USE_LEGACY_CRYPTO"
+  - set to 1 if there is a need to use the legacy "lollipop" crypto code
+  - only try this as a last resort (if the normal decryption code does not work after all efforts)
+  - default = 0 (1 for lavender, polaris, dipper)
+#
 # -----------------------------------
