@@ -3,7 +3,7 @@
 # - Custom script for OrangeFox Recovery
 # - Copyright (C) 2019-2020 OrangeFox Recovery Project
 # - Author: DarthJabba9
-# - Date:   17 September 2019
+# - Date:   18 September 2019
 # - "fox_pre_flash" script, for lavender/violet/perseus - to mount system on system_root
 # - before flashing zips (apart from ROMs)
 #
@@ -29,12 +29,12 @@ local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
    
    mount -o rw /dev/block/bootdevice/by-name/system /system > /dev/null 2>&1
    
-   # is this a proper SAR ROM?
-   [ ! -d "/system/system/" ] && {
-      echo "DEBUG: OrangeFox: not a system-as-root ROM..." >> $LOGF
-      umount /system  > /dev/null 2>&1
-      return   
-   }
+  # is this a proper SAR ROM?
+  # [ ! -d "/system/system/" ] && {
+  #    echo "DEBUG: OrangeFox: not a system-as-root ROM..." >> $LOGF
+  #    umount /system  > /dev/null 2>&1
+  #    return
+  # }
    
    echo "DEBUG: OrangeFox: mounting system on system_root..." >> $LOGF
    mount --move /system /system_root > /dev/null 2>&1
