@@ -3,9 +3,9 @@
 # - Custom script for OrangeFox Recovery
 # - Copyright (C) 2019-2020 OrangeFox Recovery Project
 # - Author: DarthJabba9
-# - Date:   18 September 2019
+# - Date:   28 September 2019
 # - "fox_pre_flash" script, for lavender/violet/perseus - to mount system on system_root
-# - before flashing zips (apart from ROMs)
+# - before flashing zips (apart from ROMs) and unmount after flashing is complete
 #
 #
 
@@ -42,6 +42,30 @@ local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
    echo "DEBUG: OrangeFox: finished mounting system on system_root" >> $LOGF
 }
 
+do_unmount_system() {
+local LOGF=/tmp/recovery.log
+local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
+   [ "$F" != "true" ] && {
+      return
+   }
+
+   echo "DEBUG: OrangeFox: unmounting system and system_root..." >> $LOGF
+   F=$(is_mounted "/system_root")
+   [ "$F" = "1" ] && {
+      umount /system_root
+   }
+
+   F=$(is_mounted "/system")
+   [ "$F" = "1" ] && {
+      umount /system
+   }
+   echo "DEBUG: OrangeFox: finished unmounting system and system_root" >> $LOGF
+}
+
 #
-do_mount_system
+if [ "$1" = "--unmount" ]; then
+   do_unmount_system
+else
+   do_mount_system
+fi
 #
