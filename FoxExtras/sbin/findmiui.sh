@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   16 September 2019
+# - Date:   6 October 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -337,6 +337,32 @@ get_setprop() {
   SETPROP=/sbin/setprop
 }
 
+# try to get display panel information
+Get_Display_Panel() {
+local F1="Panel Name = "
+local F2="Successfully bind display panel "
+local GREP="grep -m 1"
+local pname=""
+local F3=""
+local KLOG="/tmp/dmesg.log"
+   pname=$(cat /sys/class/graphics/fb0/msm_fb_panel_info | grep panel_name) > /dev/null 2>&1
+   if [ -n "$pname" ]; then
+      echo $pname >> $CFG
+      return
+   fi
+   pname=$(cat $KLOG | $GREP "$F1") > /dev/null 2>&1
+   if [ -n "$pname" ]; then
+      echo -n "panel_name=" >> $CFG
+      echo "${pname#*= }" >> $CFG
+   else
+      pname=$(cat $KLOG | $GREP "$F2") > /dev/null 2>&1
+      if [ -n "$pname" ]; then
+      	 F3=$(echo "$pname" | sed "s|^.*$F2||")
+      	 echo -n "panel_name=" >> $CFG
+      	 echo $F3 | sed "s/_/ /g" | sed "s/'//g" >> $CFG
+      fi
+   fi
+}
 
 ### main() ###
 get_setprop
@@ -357,17 +383,7 @@ Treble_Action
 
 MIUI_Action
 
-# get display panel name
-pname=$(cat /sys/class/graphics/fb0/msm_fb_panel_info | grep panel_name)
-if [ -n "$pname" ]; then
-   echo $pname >> $CFG
-else
-   pname=$(cat /tmp/dmesg.log | grep "Panel Name")
-   if [ -n "$pname" ]; then
-      echo -n "panel_name=" >> $CFG
-      echo "${pname#*= }" >> $CFG
-   fi
-fi
+Get_Display_Panel
 
 # post-init
 flashlight_Leds_config
