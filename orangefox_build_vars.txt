@@ -217,4 +217,10 @@
   - only try this as a last resort (if the normal decryption code does not work after all efforts)
   - default = 0 (1 for lavender, polaris, dipper)
 #
+"OF_DONT_KEEP_LOG_HISTORY" [NEW]
+  - Time-stamped copies of the recovery.log (in .zip format) will now be kept (in /sdcard/Fox/logs/)
+  - this means that the previously saved recovery logs will not be overwritten
+  - these will be in .zip format; users might need to clear them out periodically
+  - enable this to turn off this feature (meaning that lastrecoverylog.log will be overwritten each time the recovery is rebooted)
+  - default = 0
 # -----------------------------------
