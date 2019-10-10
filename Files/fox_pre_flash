@@ -3,11 +3,21 @@
 # - Custom script for OrangeFox Recovery
 # - Copyright (C) 2019-2020 OrangeFox Recovery Project
 # - Author: DarthJabba9
-# - Date:   28 September 2019
+# - Date:   10 October 2019
+#
 # - "fox_pre_flash" script, for lavender/violet/perseus - to mount system on system_root
-# - before flashing zips (apart from ROMs) and unmount after flashing is complete
+#    before flashing zips (apart from ROMs) and unmount after flashing is complete
 #
 #
+
+LOGFILE=/tmp/recovery.log
+DEBUG=0
+[ "$DEBUG" = "1" ] && set -o xtrace
+
+DebugMsg() {
+   [ "$DEBUG" != "1" ] && return
+   echo "DEBUG - OrangeFox [fox_pre_flash]: $@" >> $LOGFILE
+}
 
 is_mounted() {
   [ -z "$1" ] && { echo "0"; return; }
@@ -15,51 +25,73 @@ is_mounted() {
   [ "$?" = "1" ] && echo "0" || echo "1"
 }
 
-do_mount_system() {
-local LOGF=/tmp/recovery.log
+# check whether the recovery supports SAR, and whether the installed ROM is SAR
+is_True_SAR() {
+local tmp=0
 local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
    [ "$F" != "true" ] && {
+      echo "0"
       return
    }
-
+   
+   # check whether we can simply mount /system_root
+   mount /system_root > /dev/null 2>&1
+   F=$(is_mounted "/system_root")
+   [ "$F" != "1" ] && {
+      echo "0"
+      return
+   }
+   umount /system_root > /dev/null 2>&1
+   
+   # check for /system/system/
+   F=$(is_mounted "/system")
+   [ "$F" = "1" ] && tmp=1 || mount -o rw /dev/block/bootdevice/by-name/system /system > /dev/null 2>&1
    F=$(is_mounted "/system")
    [ "$F" = "1" ] && {
+      [ -d "/system/system/" ] && echo "1" || echo "0"
+      [ "$tmp" = "0" ] && umount /system  > /dev/null 2>&1
       return
    }
    
+   # if we get here, return 0
+   echo "0"
+}
+
+do_mount_system() {
+local F=$(is_True_SAR)
+   [ "$F" != "1" ] && return
+
+   # Is system already mounted? If so, bail out
+   F=$(is_mounted "/system")
+   [ "$F" = "1" ] && return
+   
+   # mount system - if no success, bail out
    mount -o rw /dev/block/bootdevice/by-name/system /system > /dev/null 2>&1
+   F=$(is_mounted "/system")
+   [ "$F" != "1" ] && return
    
-  # is this a proper SAR ROM?
-  # [ ! -d "/system/system/" ] && {
-  #    echo "DEBUG: OrangeFox: not a system-as-root ROM..." >> $LOGF
-  #    umount /system  > /dev/null 2>&1
-  #    return
-  # }
-   
-   echo "DEBUG: OrangeFox: mounting system on system_root..." >> $LOGF
+   # do the stuff
+   DebugMsg "Mounting system on system_root..."
    mount --move /system /system_root > /dev/null 2>&1
    mount -o bind /system_root/system /system  > /dev/null 2>&1
-   echo "DEBUG: OrangeFox: finished mounting system on system_root" >> $LOGF
+   DebugMsg "Finished mounting system on system_root"
 }
 
 do_unmount_system() {
-local LOGF=/tmp/recovery.log
-local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
-   [ "$F" != "true" ] && {
-      return
-   }
+local F=$(is_True_SAR)
+   [ "$F" != "1" ] && return
 
-   echo "DEBUG: OrangeFox: unmounting system and system_root..." >> $LOGF
+   DebugMsg "Unmounting system and system_root..."
    F=$(is_mounted "/system_root")
    [ "$F" = "1" ] && {
-      umount /system_root
+      umount /system_root > /dev/null 2>&1
    }
 
    F=$(is_mounted "/system")
    [ "$F" = "1" ] && {
-      umount /system
+      umount /system > /dev/null 2>&1
    }
-   echo "DEBUG: OrangeFox: finished unmounting system and system_root" >> $LOGF
+   DebugMsg "Finished unmounting system and system_root"
 }
 
 #
