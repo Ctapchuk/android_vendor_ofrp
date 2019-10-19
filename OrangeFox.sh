@@ -553,6 +553,14 @@ esac
      fi
   fi
 
+  # replace busybox tar with standalone tar ?
+  if [ "$FOX_REPLACE_BUSYBOX_TAR" = "1" ] && [ -f $FOX_VENDOR_PATH/Files/tar ]; then
+     echo -e "${GREEN}-- Replacing busybox/toybox \"tar\" with standalone version ...${NC}"
+     rm -f $FOX_RAMDISK/sbin/tar
+     cp -a $FOX_VENDOR_PATH/Files/tar $FOX_RAMDISK/sbin/
+     chmod 0755 $FOX_RAMDISK/sbin/tar
+  fi
+
   # Include nano editor ?
   if [ "$FOX_USE_NANO_EDITOR" = "1" ]; then
       echo -e "${GREEN}-- Copying nano editor ...${NC}"
