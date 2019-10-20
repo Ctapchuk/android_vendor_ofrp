@@ -36,6 +36,11 @@
    - default = 0
    - this should NOT be enabled for arm32 devices
 #
+"FOX_REPLACE_BUSYBOX_TAR"
+   - set to 1 to replace the (stripped down) busybox version of the "tar" command
+   - if this is defined, the busybox "tar" command will be replaced by a full version
+   - default = 0
+#
 "FOX_RECOVERY_INSTALL_PARTITION"
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's recovery partition is in a location that is
