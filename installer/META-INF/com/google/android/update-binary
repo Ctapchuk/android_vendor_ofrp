@@ -401,10 +401,11 @@ Main() {
 	
 	[ "$FOX_RESET_SETTINGS" = "1" ] && Reset_Settings "$internal_SD"
 
-# backup recovery.log -> Fox/install.log
+# backup recovery.log -> Fox/logs/install.log
     	ui_print "- Finished."
-    	ui_print "- Backing up recovery.log to $internal_SD/Fox/install.log ..."
-	cp -a /tmp/recovery.log $internal_SD/Fox/install.log
+    	mkdir -p $internal_SD/Fox/logs
+    	ui_print "- Backing up recovery.log to $internal_SD/Fox/logs/install.log ..."
+	cp -a /tmp/recovery.log $internal_SD/Fox/logs/install.log
    	[ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
 
 # umount
