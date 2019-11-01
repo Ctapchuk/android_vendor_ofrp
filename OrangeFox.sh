@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 02 September 2019
+# Date: 01 November 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -18,143 +18,13 @@
 #
 #
 # ******************************************************************************
-# Optional (new) environment variables - to be declared before building
+# For optional environment variables - to be declared before building,
+# see "orangefox_build_vars.txt" for full details
 #
-# It is best to declare these in a script that you will use for building 
+# It is best to declare them in a script that you will use for building 
 #
-# "OF_AB_DEVICE"
-#    - whether the device is an A/B device
-#    - set to 1 if your device is an A/B device (** make sure that it really is **)
-#    - if you enable this (by setting to 1), you must also (before building):
-#         set "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1" and
-#         set "OF_USE_MAGISKBOOT=1"
-#    - default = 0
 #
-# "FOX_PORTS_TMP" 
-#    - point to a custom temp directory for creating the zip installer
-#
-# "FOX_PORTS_INSTALLER" 
-#    - point to a custom directory for amended/additional installer files 
-#    - the contents will simply be copied over before creating the zip installer
-#
-# "FOX_LOCAL_CALLBACK_SCRIPT"
-#    - point to a custom "callback" script that will be executed just before creating the final recovery image
-#    - eg, a script to delete some files, or add some files to the ramdisk
-#
-# "BUILD_2GB_VERSION"
-#    - whether to build a stripped down "lite" version for 2GB devices
-#    - default = 0
-#
-# "FOX_REPLACE_BUSYBOX_PS"
-#    - set to 1 to replace the (stripped down) busybox version of the "ps" command
-#    - if this is defined, the busybox "ps" command will be replaced by a fuller (arm64) version
-#    - default = 0
-#    - this should NOT be enabled for arm32 devices
-#
-# "FOX_RECOVERY_INSTALL_PARTITION"
-#    - !!! this should normally BE LEFT WELL ALONE !!!
-#    - set this ONLY if your device's recovery partition is in a location that is
-#      different from the default "/dev/block/bootdevice/by-name/recovery"
-#    - default = "/dev/block/bootdevice/by-name/recovery"
-#
-# "FOX_USE_LZMA_COMPRESSION"
-#    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
-#    - if set to 1, it will replace the busybox "lzma" and "xz" applets with a full version
-#    - * this requires you to have an up-to-date lzma binary in your build system, and 
-#    - * set these in your BoardConfig: 
-#    -     LZMA_RAMDISK_TARGETS := [boot,recovery]
-#    -     BOARD_NEEDS_LZMA_MINIGZIP := true
-#    - * your kernel must also have built-in lzma compression support
-#    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
-#
-# "FOX_USE_NANO_EDITOR"
-#    - set this to 1 if you want the nano editor to be added
-#    - this must be set in a shell script, or at the command line, before building
-#    - this will add about 300kb to the size of the recovery image
-#    - default = 0
-#
-# "FOX_USE_BASH_SHELL"
-#    - set this to 1 if you the bash shell to replace the busybox "sh"
-#    - default = 0
-#    - if not set, bash will still be copied, but it will not replace "sh"
-#
-# "FOX_REMOVE_BASH"
-#    - set this to 1 if you want to remove bash completely from the recovery
-#    - default = 0
-#
-# "OF_DONT_PATCH_ON_FRESH_INSTALLATION"
-#    - set to 1 to prevent patching dm-verity and forced-encryption when the OrangeFox zip is flashed
-#    - default = 0
-#    - if dm-verity is enabled in the ROM, and this is turned on, there will be a bootloop
-#
-#  "OF_TWRP_COMPATIBILITY_MODE" ; "OF_DISABLE_MIUI_SPECIFIC_FEATURES"
-#    - set either of them to 1 to enable stock TWRP-compatibility mode 
-#    - in this mode, MIUI OTA, and dm-verity/forced-encryption patching will be disabled
-#    - default = 0
-#    - ** this is quite experimental at the moment *** - use at your own risk!!!
-# 
-# "OF_DONT_PATCH_ENCRYPTED_DEVICE"
-#    - set to 1 to avoid patching forced-encryption on encrypted devices
-#    - default = 0
-#    - this should NOT be used unless the default is causing issues on your device
-#
-# "OF_USE_MAGISKBOOT"
-#    - set to 1 to use magiskboot for patching the ROM's boot image
-#    - else, mkbootimg/unpackbootimg will be used
-#    - magiskboot does a better job of patching boot images, but is slow
-#    - default = 0
-#
-# "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES"
-#    - set to 1 to use magiskboot for all patching of boot images *and* recovery images
-#    - this means that mkbootimg/unpackbootimg/lzma will be deleted
-#    - if this is set, this script will also automatically set OF_USE_MAGISKBOOT to 1
-#    - default = 0
-#
-# "OF_DISABLE_UPDATEZIP"
-#    - set to 1 to disable recovery zip creation
-#    - default = 0
-#
-# "OF_SUPPORT_PRE_FLASH_SCRIPT"
-#    - set to 1 to support running a script before flashing zips (other than ROMs)
-#    - the script must be called /sbin/fox_pre_flash - and you need to copy it there yourself
-#    - default = 0 (in lavender/violet/perseus, default=1)
-#
-# "OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; 
-#    - set to 1 to turn OrangeFox dm-verity forced-encryption settings off by default 
-#    - default = 0 (in lavender, default=1)
-#
-# "OF_CLASSIC_LEDS_FUNCTION"
-#    - set to 1 to use the old R9.x Leds function
-#    - default = 0 (in polaris, oxygen, dipper and dipper, default=1)
-#
-# "OF_SKIP_FBE_DECRYPTION" 
-#    - set to 1 to skip the FBE decryption routines (prevents hanging at the Fox logo or Redmi/Mi logo)
-#    - default = 0
-#
-# "OF_OTA_RES_DECRYPT"
-#    - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
-#    - default = 0
-#
-# "OF_NO_TREBLE_COMPATIBILITY_CHECK"
-#    - set to 1 to disable checking for compatibility.zip in ROMs
-#    - default = 0
-#
-# "FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER"
-#    - set to 1 to use the TWRP build system's tools to build the recovery image
-#    - requires patches to "build/core/Makefile" in the build system
-#    - if in doubt, do NOT use this var
-#    - default = 0
-#
-# "FOX_RESET_SETTINGS"
-#    - set to 1 to reset OrangeFox settings to defaults, after installation
-#    - default = 0
-#
-# "FOX_DELETE_AROMAFM"
-#    - set to 1 delete AromaFM from the zip installer (for devices where it doesn't work)
-#    - default = 0
-#
-# ******************************************************************************
-#
+
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
 if [ -n "$4" ]; then
    echo "#########################################################################"
@@ -566,6 +436,13 @@ esac
       echo -e "${GREEN}-- Copying nano editor ...${NC}"
       cp -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
       cp -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/sbin/
+  fi
+
+  # Include "zip" binary ?
+  if [ "$FOX_USE_ZIP_BINARY" = "1" ]; then
+      echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"zip\" binary ...${NC}"
+      cp -af $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/sbin/
+      chmod 0755 $FOX_RAMDISK/sbin/zip
   fi
 
   # Include mmgui
