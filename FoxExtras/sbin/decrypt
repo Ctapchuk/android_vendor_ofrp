@@ -1,0 +1,12 @@
+#!/sbin/sh
+
+[ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] && {
+  echo "Usage =  $0 <pin/password>"
+  exit 1
+}
+
+twrp decrypt $1
+
+# return
+exit 0
+
