@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 1 November 2019
+# Date: 2 November 2019
 #
 # -----------------------------------
 #
@@ -36,11 +36,6 @@
    - default = 0
    - this should NOT be enabled for arm32 devices
 #
-"FOX_REPLACE_BUSYBOX_TAR"
-   - set to 1 to replace the (stripped down) busybox version of the "tar" command
-   - if this is defined, the busybox "tar" command will be replaced by a full version
-   - default = 0
-#
 "FOX_RECOVERY_INSTALL_PARTITION"
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's recovery partition is in a location that is
@@ -57,10 +52,16 @@
    - * your kernel must also have built-in lzma compression support
    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
 #
+"FOX_USE_TAR_BINARY"
+   - set this to 1 if you want the gnu tar binary to be added (/sbin/gnutar)
+   - this must be set in a shell script, or at the command line, before building
+   - this will add about 420kb to the size of the recovery image
+   - default = 0
+#
 "FOX_USE_ZIP_BINARY"
    - set this to 1 if you want an InfoZip zip binary to be added (to create zip archives)
    - this must be set in a shell script, or at the command line, before building
-   - this will add about 300kb to the size of the recovery image
+   - this will add about 275kb to the size of the recovery image
    - default = 0
 #
 "FOX_USE_NANO_EDITOR"
