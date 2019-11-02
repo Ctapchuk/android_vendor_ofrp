@@ -1,11 +1,11 @@
 #!/sbin/sh
 #
-# - /sbin/findmiui.sh
+# - /sbin/foxstart.sh
 # - Custom script for OrangeFox TWRP Recovery
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   6 October 2019
+# - Date:   2 November 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
