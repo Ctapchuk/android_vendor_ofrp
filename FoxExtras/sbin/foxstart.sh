@@ -5,7 +5,7 @@
 # - Copyright (C) 2018-2019 OrangeFox Recovery Project
 #
 # - Author: DarthJabba9
-# - Date:   2 November 2019
+# - Date:   5 November 2019
 #
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
@@ -132,6 +132,11 @@ local S="/tmp_system_rom"
    if [ -z "$tmp2" ]; then
       tmp1="/system/build.prop"
       [ -e "$tmp1" ] && tmp2=$(file_getprop "$tmp1" "ro.build.display.id")
+   fi
+   
+   if [ -n "$tmp2" ]; then
+      local tmp3=$(file_getprop "$tmp1" "ro.build.version.incremental")
+      [ -n "$tmp3" ] && echo "DEBUG: OrangeFox: INCREMENTAL_VERSION=$tmp3" >> $LOG
    fi
 
    # unmount
