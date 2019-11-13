@@ -1,11 +1,12 @@
 #!/sbin/sh
-#
-# LazyFlasher installer backend  -- modified by wzsx150
-# v7.1-20181008
-# - converted by DarthJabba9 to a standalone shell script, 20190609
-# - usage = of_verity_script [keepdmverity] [keepforcedencryption]
-# - arguments = either "false" or "true"
-#
+# -
+# LazyFlasher installer backend  -- modified by wzsx150 (v7.1-20181008)
+# -
+# - Converted by DarthJabba9 to a standalone dm-verity/forced-encryption command
+# - line shell script for OrangeFox Recovery
+# - Version:      V0.3
+# - Last amended: 20191112
+# -
 
 # globals
 FOX_TMP_DIR=/tmp/OF_tmp
@@ -13,9 +14,12 @@ SPLIT_IMG=$FOX_TMP_DIR/split-img
 BOOTIMAGE=$FOX_TMP_DIR/boot.img
 LOGFILE=/tmp/recovery.log
 MAGISKBOOT=/sbin/magiskboot
-[ "$1" = "true" ] && KEEPVERITY=true || KEEPVERITY=false
-[ "$2" = "true" ] && KEEPFORCEENCRYPT=true || KEEPFORCEENCRYPT=false
 
+# defaults - keep dm-verity and forced-encryption enabled
+KEEPVERITY="true"
+KEEPFORCEENCRYPT="true"
+
+# functions
 ui_print() {
    echo "$@"
    echo "$@" >> $LOGFILE
@@ -37,9 +41,54 @@ abort() {
 	exit 1
 }
 
+syntax() {
+   echo "Syntax    = $0 [switch <argument>]"
+   echo "Switches:"
+   echo "            -h|-H|--help              [print this help screen]"
+   echo "            -q|-Q|--quick             [quick operation, with defaults]"
+   echo "            -v|-V|--dm-verity         [dm-verity disable/keep]"
+   echo "            -f|-F|--forced-encryption [forced-encryption disable/keep]"
+   echo "Arguments:  \"disable\"; or \"keep\" [ie, do not change]"
+   echo "Defaults:   -v keep -f keep"
+   echo ""
+   echo "Examples:"
+   echo "            $0 -v disable [disable dm-verity]"
+   echo "            $0 -f disable [disable forced-encryption]"
+   exit 0
+}
+
+process_cmdline() {
+   [ -z "$1" ] && syntax
+   while (( "$#" )); do
+        case "$1" in
+                -q | -Q | --quick)
+                	break;
+                	;;
+                -h | -H | --help)
+                	syntax;
+                	;;
+                -v | -V | --dm-verity)
+                	shift;
+                	[ "$1" = "disable" ] && KEEPVERITY="false";
+                        ;;
+                -f | -F | --forced-encryption)
+                	shift;
+                	[ "$1" = "disable" ] && KEEPFORCEENCRYPT="false";
+                        ;;
+                *)
+                	syntax;
+                	;;
+        esac
+     shift
+   done  #
+}
+
 # start
 OF_welcome() {
-	[ ! -x $MAGISKBOOT ] && abort "- Fatal error! Unable to find the magiskboot executable!"
+       	ui_print "- $0 for OrangeFox Recovery (Date: $(date))"
+       	[ ! -x $MAGISKBOOT ] && abort "- Fatal error! Unable to find the magiskboot executable!"
+       	ui_print "- KEEP_DM-VERITY=$KEEPVERITY"
+       	ui_print "- KEEP_FORCED-ENCRYPTION=$KEEPFORCEENCRYPT"
 }
 
 # Locate the boot block
@@ -210,5 +259,6 @@ Main() {
 #
 
 # main
+process_cmdline "$@"
 Main
 #
