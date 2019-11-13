@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 9 November 2019
+# Date: 13 November 2019
 #
 # -----------------------------------
 #
@@ -91,6 +91,15 @@
    - if this is set, this script will also automatically set OF_USE_MAGISKBOOT to 1
    - default = 0
 #
+"OF_FORCE_MAGISKBOOT_BOOT_PATCH_MIUI"
+   - set to 1 to force the use magiskboot for patching the ROM's boot image when
+   - installing a MIUI ROM, or the OrangeFox zip on a MIUI ROM (regardless of
+   - DM-Verity or Forced-Encryption settings (which will be left alone if that is
+   - what the user has chosen) - this is for the purpose of stopping MIUI from
+   - overwriting OrangeFox with its own stock recovery
+   - "OF_USE_MAGISKBOOT" must also be set to "1" if you want to use this
+   - default = 0
+#
 "OF_DISABLE_UPDATEZIP"
    - set to 1 to disable recovery zip creation
    - default = 0
@@ -138,6 +147,11 @@
 #
 "OF_OTA_RES_DECRYPT"
    - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
+   - default = 0
+#
+"OF_MIUI_OTA_VENDOR_BACKUP"
+   - set to 1 to backup vendor_image when preparing for incremental MIUI OTA (upon flashing a MIUI ROM)
+   - this is required for new (2019+) Xiaomi devices (eg, lavender, violet, raphael, etc)
    - default = 0
 #
 "OF_NO_RELOAD_AFTER_DECRYPTION"
