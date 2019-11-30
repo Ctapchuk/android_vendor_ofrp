@@ -1,15 +1,26 @@
 #!/sbin/sh
 #
 # - Custom script for OrangeFox Recovery
-# - Copyright (C) 2019-2020 OrangeFox Recovery Project
-# - Author: DarthJabba9
-# - Date:   10 October 2019
-#
 # - "fox_pre_flash" script, for lavender/violet/perseus - to mount system on system_root
-#    before flashing zips (apart from ROMs) and unmount after flashing is complete
+# - before flashing zips (apart from ROMs) and unmount after flashing is complete
 #
+# Copyright (C) 2019-2020 OrangeFox Recovery Project
+# This software is licensed under the terms of the GNU General Public
+# License version 2, as published by the Free Software Foundation, and
+# may be copied, distributed, and modified under those terms.
 #
-
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# See <http://www.gnu.org/licenses/>.
+#
+# Please maintain this if you use this script or any part of it
+#
+# * Author: DarthJabba9
+# * Date:   20 November 2019
+#
 LOGFILE=/tmp/recovery.log
 DEBUG=0
 [ "$DEBUG" = "1" ] && set -o xtrace

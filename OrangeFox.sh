@@ -2,8 +2,8 @@
 #
 # Custom build script for OrangeFox Recovery Project
 #
-# Copyright (C) 2018-2019 OrangeFox Recovery Project
-# Date: 01 November 2019
+# Copyright (C) 2018-2020 OrangeFox Recovery Project
+# Date: 29 November 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -13,6 +13,8 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+#
+# See <http://www.gnu.org/licenses/>.
 #
 # Please maintain this if you use this script or any part of it
 #
@@ -85,6 +87,8 @@ fi
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
+
+NEW_MAGISKBOOT_BIN="magiskboot_new"
 
 # whether to print extra debug messages
 DEBUG="0"
@@ -456,6 +460,21 @@ esac
   cp -a $FOX_VENDOR_PATH/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
   cp -a $FOX_VENDOR_PATH/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
   cp -a $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
+
+  # if we haven't copied magiskboot, then delete the new version from the build
+  if [ ! -f $FOX_RAMDISK/sbin/magiskboot ]; then
+     echo -e "${GREEN}-- Not using magiskboot - deleting $NEW_MAGISKBOOT_BIN ...${NC}"
+     rm -f "$FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN"
+  fi
+
+  # if do we want to use the new magiskboot?
+  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+     echo -e "${GREEN}-- Using new magiskboot ...${NC}"
+     mv -f "$FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN" "$FOX_RAMDISK/sbin/magiskboot"
+  else
+     echo -e "${GREEN}-- Removing the new magiskboot binary ($NEW_MAGISKBOOT_BIN) ...${NC}"
+     rm -f "$FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN"
+  fi
 
   # save the build date
   BUILD_DATE=$(date -u "+%c")

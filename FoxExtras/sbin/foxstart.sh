@@ -1,19 +1,30 @@
 #!/sbin/sh
 #
-# - /sbin/foxstart.sh
-# - Custom script for OrangeFox TWRP Recovery
-# - Copyright (C) 2018-2019 OrangeFox Recovery Project
+# /sbin/foxstart.sh
+# Custom script for OrangeFox TWRP Recovery
+# Copyright (C) 2018-2020 OrangeFox Recovery Project
 #
-# - Author: DarthJabba9
-# - Date:   9 November 2019
+# This software is licensed under the terms of the GNU General Public
+# License version 2, as published by the Free Software Foundation, and
+# may be copied, distributed, and modified under those terms.
 #
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# See <http://www.gnu.org/licenses/>.
+#
+# Please maintain this if you use this script or any part of it
+#
+# * Author: DarthJabba9
+# * Date:   29 November 2019
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 # * Identify some hardware components
 # * Do some other sundry stuff
 #
 #
-
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/tmp/orangefox.cfg"
@@ -23,8 +34,10 @@ M=0
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
 SYS_ROOT="0"	  # device with system_root?
+SAR="0"	  	  # SAR set up properly in recovery?
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
+ANDROID_SDK="21"  # assume at least (and no more than) Lollipop in sdk checks
 ROM=""
 
 FOX_DEVICE=$(getprop "ro.product.device")
@@ -110,6 +123,16 @@ has_system_root() {
   [ "$F" = "true" ] && echo "1" || echo "0"
 }
 
+# Is this set up properly as SAR?
+Is_Proper_SAR() {
+  local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
+  [ "$F" != "true" ] && {
+    echo "0"
+    return  
+  }  
+  [ -L "/system" -a -d "/system_root" ] && echo "1" || echo "0"
+}
+
 get_ROM() {
 local S="/tmp_system_rom"
    # mount /system and check
@@ -123,7 +146,7 @@ local S="/tmp_system_rom"
    
    mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
    local tmp1="$S/build.prop"
-   [ ! -e "$tmp1" ] && tmp1="$S/system/build.prop"
+   [ ! -e "$tmp1" ] && tmp1="$S/system/build.prop" # test for SAR
    local tmp2=""
 
    if [ -e "$tmp1" ]; then 
@@ -136,10 +159,21 @@ local S="/tmp_system_rom"
    fi
    
    if [ -n "$tmp2" ]; then
-      local tmp3=$(file_getprop "$tmp1" "ro.build.version.incremental")
+      local tmp3=$(file_getprop "$tmp1" "ro.build.version.sdk")
+      [ -n "$tmp3" ] && {
+         ANDROID_SDK="$tmp3"
+         echo "DEBUG: OrangeFox: ANDROID_SDK=$ANDROID_SDK" >> $LOG
+         echo "ANDROID_SDK=$ANDROID_SDK" >> $CFG 
+      }
+      tmp3=$(file_getprop "$tmp1" "ro.build.version.incremental")
       [ -n "$tmp3" ] && {
         echo "DEBUG: OrangeFox: INCREMENTAL_VERSION=$tmp3" >> $LOG
         echo "INCREMENTAL_VERSION=$tmp3" >> $CFG
+        tmp3=$(file_getprop "$tmp1" "ro.build.flavor")
+        [ -n "$tmp3" ] && {
+           echo "DEBUG: OrangeFox: BUILD_FLAVOR=$tmp3" >> $LOG
+           echo "BUILD_FLAVOR=$tmp3" >> $CFG
+        }
       }
    fi
 
@@ -323,13 +357,16 @@ local OPS=$(getprop "orangefox.postinit.status")
    [ -z "$D" ] && D=$(getprop "ro.build.date")
    OPS=$(uname -r)
    SYS_ROOT=$(has_system_root)
+   [ "$SYS_ROOT" = "1" ] && SAR=$(Is_Proper_SAR)
    echo "KERNEL=$OPS" >> $CFG
    echo "SYSTEM_ROOT=$SYS_ROOT" >> $CFG
+   echo "PROPER_SAR=$SAR" >> $CFG
    echo "FOX_BUILD_DATE=$D" >> $CFG
    echo "FOX_BUILD_DATE=$D" >> $LOG
    echo "DEBUG: OrangeFox: FOX_DEVICE=$FOX_DEVICE" >> $LOG
    echo "DEBUG: OrangeFox: FOX_KERNEL=$OPS" >> $LOG
    echo "DEBUG: OrangeFox: SYSTEM_ROOT=$SYS_ROOT" >> $LOG
+   echo "DEBUG: OrangeFox: PROPER_SAR=$SAR" >> $LOG
    $SETPROP orangefox.postinit.status 1
 }
 
@@ -373,6 +410,12 @@ local KLOG="/tmp/dmesg.log"
    fi
 }
 
+# post-init stuff
+post_init() {
+  local M="/FFiles/magiskboot_new"
+  [ -f $M ] && chmod 0755 $M
+}
+
 ### main() ###
 get_setprop
 
@@ -395,6 +438,9 @@ MIUI_Action
 Get_Display_Panel
 
 # post-init
+post_init
+
+# Leds
 flashlight_Leds_config
 
 exit 0

@@ -32,6 +32,12 @@ OF_AB_DEVICE=""
 # Reset OrangeFox settings to default?
 FOX_RESET_SETTINGS=""
 
+# sundry glodal defaults
+SYS_DIR="/system"
+SYS_ROOT="$SYS_DIR"
+ETC_DIR="$SYS_DIR/etc"
+SAR="0"
+
 # ui_print "<message>" ["<message 2>" ...]
 ui_print() {
   until [ ! "$1" ]; do
@@ -114,43 +120,50 @@ CheckRequirements() {
    fi
 }
 
+# do we have a SAR build?
+is_SAR() {
+  local F=$(getprop "ro.build.system_root_image")
+  [ "$F" != "true" ] && {
+    echo "0"
+    return  
+  }  
+  [ -L "/system" -a -d "/system_root" ] && echo "1" || echo "0"
+}
+
 # mount everything we might need
 MountThemAll() {
-local F=$(is_mounted "/system")
-    	# /system
+local sys="/system"
+	# /system
+    	SAR=$(is_SAR)
+    	[ "$SAR" = "1" ] && sys="/system_root"
+    	SYS_DIR="$sys"
+    	SYS_ROOT="$SYS_DIR"	
+	local F=$(is_mounted "$sys")
     	if [ "$F" = "0" ]; then
-    	   mount "/system" > /dev/null 2>&1
-    	   F=$(is_mounted "/system")
-    	   [ "$F" = "0" ] && mount -t ext4 /dev/block/bootdevice/by-name/system /system
-    	fi
-    	F=$(is_mounted "/system")
-    	[ "$F" = "1" ] && {
-	   mount -o rw,remount /system
-	   mount -o rw,remount /system /system
-    	}
-    	
-    	# /vendor    	
+    	   mount "$sys" > /dev/null 2>&1
+    	   F=$(is_mounted "$sys")
+    	   [ "$F" = "0" ] && mount -t ext4 /dev/block/bootdevice/by-name/system "$sys"
+
+	   # system-as-root stuff
+	   [ -d "$sys/system" ] && SYS_DIR="$sys/system"
+	   [ -d "$sys/system/etc" ] && ETC_DIR="$sys/system/etc"
+	fi
+
+    	# /vendor
     	F=$(is_mounted "/vendor")
     	if [ "$F" = "0" ]; then
-    	   mount "/vendor" > /dev/null 2>&1
+    	   mount "/vendor" > /dev/null 2>&1    	   
     	   F=$(is_mounted "/vendor")
-    	   [ "$F" = "0" ] && mount -t ext4 /dev/block/bootdevice/by-name/vendor /vendor
-    	fi
-    	F=$(is_mounted "/vendor")
-    	[ "$F" = "1" ] && {
-	   mount -o rw,remount /vendor
-	   mount -o rw,remount /vendor /vendor
-    	}
-    	
-    	# /
-	mount -o rw,remount /
-	mount -o rw,remount / /
+    	   [ "$F" = "0" ] && mount -t ext4 /dev/block/bootdevice/by-name/vendor /vendor > /dev/null 2>&1	   
+	fi
 } 
 
 # unmount everything that we mounted
 UnMountThemAll() {
-   umount /system
-   local F=$(is_mounted "/vendor")
+local F=$(is_mounted "$SYS_ROOT")
+   [ "$F" = "1" ] && umount $SYS_ROOT
+   umount /system > /dev/null 2>&1
+   F=$(is_mounted "/vendor")
    [ "$F" = "1" ] && umount /vendor
    F=$(is_mounted "/cache")
    [ "$F" = "1" ] && umount /cache
@@ -172,13 +185,13 @@ local RF=$1
 
 Disable_stock_recovery_overwrites() {
 local ToRename="/system/bin/install-recovery.sh
-/system/etc/install-recovery.sh
-/system/etc/recovery-resource.dat
+$ETC_DIR/install-recovery.sh
+$ETC_DIR/recovery-resource.dat
+$SYS_ROOT/recovery-from-boot.p
+$SYS_DIR/recovery-from-boot.p
 /system/vendor/bin/install-recovery.sh
 /system/vendor/etc/install-recovery.sh
 /system/vendor/etc/recovery-resource.dat
-/system/recovery-from-boot.p
-/system/system/recovery-from-boot.p
 /vendor/bin/install-recovery.sh
 /vendor/etc/install-recovery.sh
 /vendor/etc/recovery-resource.dat"

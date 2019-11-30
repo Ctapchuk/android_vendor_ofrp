@@ -1,11 +1,11 @@
 #!/sbin/sh
 # -
-# LazyFlasher installer backend  -- modified by wzsx150 (v7.1-20181008)
+# LazyFlasher installer backend -- modified by wzsx150 (v7.1-20181008)
 # -
 # - Converted by DarthJabba9 to a standalone dm-verity/forced-encryption command
 # - line shell script for OrangeFox Recovery
-# - Version:      V0.3
-# - Last amended: 20191112
+# - Version:      V0.4
+# - Last amended: 20191129
 # -
 
 # globals
@@ -16,8 +16,22 @@ LOGFILE=/tmp/recovery.log
 MAGISKBOOT=/sbin/magiskboot
 
 # defaults - keep dm-verity and forced-encryption enabled
+OLDMAGISK="1"
+ANDROID_SDK="21"
 KEEPVERITY="true"
 KEEPFORCEENCRYPT="true"
+KEEPQUOTA="true"
+#TWOSTAGEINIT="false"
+
+# other defaults
+SYS_DIR="/system"
+SYS_ROOT="$SYS_DIR"
+BUILD_PROP="$SYS_DIR/build.prop"
+
+# SAR build ?
+SAR="0"
+
+# ---------------------
 
 # functions
 ui_print() {
@@ -41,6 +55,25 @@ abort() {
 	exit 1
 }
 
+is_mounted() {
+  grep -q " `readlink -f $1` " /proc/mounts 2>/dev/null
+  return $?
+}
+
+Old_Magisk() {
+local tmp=/tmp/chk_mgsk.txt
+local F=""
+  $MAGISKBOOT &> $tmp
+  F=$(cat $tmp | grep "dtb-<cmd> <dtb>")
+  rm -f $tmp
+  [ -n "$F" ] && echo "1" || echo "0"
+}
+
+# file_getprop <file> <property>
+file_getprop() {
+  grep "^$2=" "$1" | cut -d= -f2-;
+}
+
 syntax() {
    echo "Syntax    = $0 [switch <argument>]"
    echo "Switches:"
@@ -48,6 +81,7 @@ syntax() {
    echo "            -q|-Q|--quick             [quick operation, with defaults]"
    echo "            -v|-V|--dm-verity         [dm-verity disable/keep]"
    echo "            -f|-F|--forced-encryption [forced-encryption disable/keep]"
+   echo "            --quota                   [quota disable/keep]"
    echo "Arguments:  \"disable\"; or \"keep\" [ie, do not change]"
    echo "Defaults:   -v keep -f keep"
    echo ""
@@ -75,6 +109,10 @@ process_cmdline() {
                 	shift;
                 	[ "$1" = "disable" ] && KEEPFORCEENCRYPT="false";
                         ;;
+                --quota)
+                	shift;
+                	[ "$1" = "disable" ] && KEEPQUOTA="false";
+                        ;;
                 *)
                 	syntax;
                 	;;
@@ -83,12 +121,53 @@ process_cmdline() {
    done  #
 }
 
+# do we have a proper SAR rom?
+is_SAR() {
+  local F=$(getprop "ro.build.system_root_image")
+  [ "$F" != "true" ] && {
+    echo "0"
+    return  
+  }  
+  [ -L "/system" -a -d "/system_root" ] && echo "1" || echo "0"
+}
+
+# try and get the SDK version of the installed ROM
+get_SDK_version() {
+local m1=0
+local sys="/system"
+
+    SAR=$(is_SAR)
+	[ "$SAR" = "1" ] && sys="/system_root"
+	SYS_DIR="$sys"
+	SYS_ROOT="$SYS_DIR"
+
+	is_mounted $sys && m1=1
+	[ "$m1" != "1" ] && {
+		mount -o rw $sys || mount -o rw,remount $sys
+	}
+
+	# system-as-root stuff
+	[ -d "$sys/system" ] && SYS_DIR="$sys/system"
+	[ -f "$sys/system/build.prop" ] && BUILD_PROP="$sys/system/build.prop"
+	
+	local F=$(file_getprop "$BUILD_PROP" "ro.build.version.sdk")	
+	[ -n "$F" ] && ANDROID_SDK="$F"
+	
+	[ "$m1" = "0" ] && umount $sys > /dev/null 2>&1
+}
+
 # start
 OF_welcome() {
-       	ui_print "- $0 for OrangeFox Recovery (Date: $(date))"
-       	[ ! -x $MAGISKBOOT ] && abort "- Fatal error! Unable to find the magiskboot executable!"
-       	ui_print "- KEEP_DM-VERITY=$KEEPVERITY"
-       	ui_print "- KEEP_FORCED-ENCRYPTION=$KEEPFORCEENCRYPT"
+    ui_print "- $0 for OrangeFox Recovery (Date: $(date))"
+    [ ! -x $MAGISKBOOT ] && abort "- Fatal error! Unable to find the magiskboot executable!"
+	
+	get_SDK_version
+
+	OLDMAGISK=$(Old_Magisk)
+	
+	ui_print "- KEEP_DM-VERITY=$KEEPVERITY"
+	ui_print "- KEEP_FORCED-ENCRYPTION=$KEEPFORCEENCRYPT"
+	ui_print "- KEEP_QUOTA=$KEEPQUOTA"
 }
 
 # Locate the boot block
@@ -130,7 +209,7 @@ OF_unpack_boot_image() {
 	[ -f "$BOOTIMAGE" ] || abort "- Unable to read the boot partition"
 
 	cd "$SPLIT_IMG"
-	$MAGISKBOOT --unpack "$BOOTIMAGE"
+	$MAGISKBOOT --unpack -h "$BOOTIMAGE"
 	[ $? = 0 ] || abort "- Unpacking the boot image failed"
 }
 
@@ -139,9 +218,15 @@ OF_patch_boot_image() {
 	ui_print "- Patching the boot image..."
 	if [ "$KEEPVERITY" != "true" ]; then
 		ui_print "- Removing dm-verity"
-  		[ -f dtb ] && $MAGISKBOOT --dtb-patch dtb && print "- Removing dm(avb)-verity in dtb"
-  		[ -f kernel_dtb ] && $MAGISKBOOT --dtb-patch kernel_dtb && print "- Removing dm(avb)-verity in dtb"
-  		[ -f extra ] && $MAGISKBOOT --dtb-patch extra && print "- Removing dm(avb)-verity in extra-dtb"
+		if [ "$OLDMAGISK" = "1" ]; then
+			[ -f dtb ] && $MAGISKBOOT --dtb-patch dtb && ui_print "- Removing dm(avb)-verity in dtb"
+			[ -f kernel_dtb ] && $MAGISKBOOT --dtb-patch kernel_dtb && ui_print "- Removing dm(avb)-verity in dtb"
+			[ -f extra ] && $MAGISKBOOT --dtb-patch extra && ui_print "- Removing dm(avb)-verity in extra-dtb"
+		else
+			[ -f dtb ] && $MAGISKBOOT dtb dtb patch && ui_print "- Removing dm(avb)-verity in dtb"
+			[ -f kernel_dtb ] && $MAGISKBOOT dtb kernel_dtb patch && ui_print "- Removing dm(avb)-verity in dtb"
+			[ -f extra ] && $MAGISKBOOT dtb extra patch && ui_print "- Removing dm(avb)-verity in extra-dtb"
+		fi
 		setprop ro.config.dmverity false > /dev/null 2>&1
 		resetprop ro.config.dmverity false > /dev/null 2>&1
 	fi
@@ -168,60 +253,131 @@ OF_patch_dtbo() {
 
 	# patch the dtbo image
 	if [ ! -z "$dtbopart" ];then
-  		if $MAGISKBOOT --dtb-test "$dtbopart"; then
-    			ui_print "- Backing up stock dtbo image"
-    			$MAGISKBOOT --compress "$dtbopart" /data/stock_dtbo.img.gz
-    			ui_print "- Patching dtbo to remove avb-verity"
-    			$MAGISKBOOT --dtb-patch "$dtbopart"  
-  		fi  
+		if [ "$OLDMAGISK" = "1" ]; then
+  		   if $MAGISKBOOT --dtb-test "$dtbopart"; then
+    		    ui_print "- Backing up stock dtbo image"
+    		    $MAGISKBOOT --compress "$dtbopart" /data/stock_dtbo.img.gz
+    		    ui_print "- Patching dtbo to remove avb-verity"
+    		    $MAGISKBOOT --dtb-patch "$dtbopart"  
+  		   fi
+		else
+    		   ui_print "- Patching dtbo to remove avb-verity"
+    		   $MAGISKBOOT dtb "$dtbopart" patch
+		fi
 	fi
-
 }
 
 # patch system/vendor fstab
 OF_patch_fstab() {
+	m1=0
+	m2=0
+	m3=0
 	ui_print "- Patching the vendor fstab..."
-	[ "$KEEPVERITY" = "true" ] || ui_print "- Removing dm-verity"
-	[ "$KEEPFORCEENCRYPT" = "true" ] || ui_print "- Removing forced encryption"
+	[ "$KEEPVERITY" = "true" ] || ui_print "- Removing dm-verity from fstab"
+	[ "$KEEPFORCEENCRYPT" = "true" ] || ui_print "- Removing forced encryption from fstab"
+	[ "$KEEPQUOTA" = "true" ] || ui_print "- Removing quota from fstab"
 
-	# no_force_encrypt for vendor/etc/fstab
-	mount -o rw /system || mount -o rw,remount /system
-	mount -o rw /system_root > /dev/null 2>&1 || mount -o rw,remount /system_root > /dev/null 2>&1
-	mount -o rw /vendor || mount -o rw,remount /vendor
+	# force_encrypt for vendor/etc/fstab
+	is_mounted /system && m1=1
+	is_mounted /system_root && m2=1
+	is_mounted /vendor && m3=1
+	[ "$m1" != "1" ] && {
+		mount -o rw /system > /dev/null 2>&1 || mount -o rw,remount /system > /dev/null 2>&1
+	}
+	[ "$m2" != "1" ] && {
+		mount -o rw /system_root > /dev/null 2>&1 || mount -o rw,remount /system_root > /dev/null 2>&1
+	}
+	[ "$m3" != "1" ] && {
+		mount -o rw /vendor || mount -o rw,remount /vendor > /dev/null 2>&1
+	}
 	sleep 1
 
 	# /system/vendor/etc/fstab.*
 	# /vendor/etc/fstab.*
-	# /system/system/vendor/etc/fstab.*
-	for fstab in /system/vendor/etc/fstab.* /vendor/etc/fstab.* /system/system/vendor/etc/fstab.*; do
-	  [ -f "$fstab" ] || continue
-	  ui_print "- Found fstab: $fstab"
-	  [ "$KEEPVERITY" = "true" ] || sed -i "
-		s/,verify\b//g
-		s/\bverify,//g
-		s/\bverify\b//g
-		s/,verify,/,/g
-		s/,support_scfs\b//g
-		s/\bsupport_scfs,//g
-		s/\bsupport_scfs\b//g
-		s/,support_scfs,/,/g
-		s/,avb\b//g
-		s/\bavb,//g
-		s/\bavb\b//g
-		s/,avb,/,/g
-	  " "$fstab"
-	
-	  usleep 100
-	
-	  [ "$KEEPFORCEENCRYPT" = "true" ] || sed -i "
-		  s/\b\(forceencrypt\|forcefdeorfbe\)=/encryptable=/g
-		  s/\bfileencryption/encryptable/g
-	  " "$fstab"
+	# /system[_root]/system/vendor/etc/fstab.*
+	local FSTABS=""
+	[ -d /system_root ] && FSTABS="$(find /system_root -type f \( -name "fstab.*" -o -name "*.fstab" \) ! \( -path "./system*" -o -path "./vendor*" \) | sed "s|^./||")"
+	FSTABS="$FSTABS /system/vendor/etc/fstab*"
+	[ -d /vendor/etc ] && FSTABS="$FSTABS /vendor/etc/fstab*"
+	[ -d $SYS_DIR/vendor/etc ] && FSTABS="$FSTABS $SYS_DIR/vendor/etc/fstab*"
 
-	  usleep 1000
+	# Fstab patches
+	if [ $ANDROID_SDK -ge 26 ]; then
+		[ -z "$FSTABS" ] || ui_print "- Patching fstabs:"
+		for i in $FSTABS; do
+			[ -f "$i" ] || continue
+			ui_print "   $i"
+			PERM="$(ls -Z $i | awk '{print $1}')"
+			$KEEPFORCEENCRYPT || sed -i "
+			s/forceencrypt=/=/g
+			s/forcefdeorfbe=/=/g
+			s/fileencryption=/=/g
+			" "$i"
+		
+			$KEEPVERITY || sed -i "
+			s/,verify//g
+			s/verify,//g
+			s/verify\b//g
+			s/,avb//g
+			s/avb,//g
+			s/avb\b//g
+			s/,support_scfs//g
+			s/support_scfs,//g
+			s/support_scfs\b//g
+			" "$i"
+    
+			$KEEPQUOTA || sed -i "
+			s/,quota//g
+			s/quota,//g
+			s/quota\b//g
+			" "$i"
+			chcon $PERM $i
+		done
+	elif [ -e ramdisk.cpio ]; then
+		ui_print "- Disabling dm_verity in default.prop..."
+		$MAGISKBOOT --cpio ramdisk.cpio "extract default.prop default.prop"
+		sed -i "s/ro.config.dmverity=.*/ro.config.dmverity=false/" default.prop
+		$MAGISKBOOT --cpio ramdisk.cpio "add 0644 default.prop default.prop"
+	fi
 	
+	if [ -e ramdisk.cpio ]; then
+		ui_print "- Patching ramdisk..."
+		$MAGISKBOOT --cpio ramdisk.cpio "patch $KEEPVERITY $KEEPFORCEENCRYPT"
+	fi
+
+	# Kernel cmdline patch
+	[ -f header ] && sed -i -e "s/Android:#[a-zA-Z0-9]* //" -e "s/android-verity/linear/" header
+
+	# Dtb patches
+	local DTVB;
+	for dt in dtb kernel_dtb extra recovery_dtbo; do
+		[ -f $dt ] && {
+		   if [ "$OLDMAGISK" = "1" ]; then
+			DTVB=$($MAGISKBOOT --dtb-test "$dt")
+			if [ "$DTVB" = "0" ]; then
+			   ui_print "- Patching fstab in $dt"
+			   $MAGISKBOOT --dtb-patch $dt
+			fi
+		   else
+			ui_print "- Patching fstab in $dt"
+			$MAGISKBOOT dtb $dt patch
+		   fi
+		}
 	done
-	ui_print "- Finished patching the vendor fstab"
+
+	# Samsung patches
+#	if [ -f kernel ]; then
+#		# Remove Samsung RKP
+#		$MAGISKBOOT hexpatch kernel \
+#		49010054011440B93FA00F71E9000054010840B93FA00F7189000054001840B91FA00F7188010054 \
+#		A1020054011440B93FA00F7140020054010840B93FA00F71E0010054001840B91FA00F7181010054
+#
+#		# Remove Samsung defex
+#		$MAGISKBOOT hexpatch kernel 821B8012 E2FF8F12
+#	fi
+
+	#
+	ui_print "- Finished patching fstab file(s)"
 }
 
 # repack boot image
@@ -237,9 +393,9 @@ OF_repack_boot_image() {
 
 	# clean up
 	ui_print "- Cleaning up..."
-	umount /vendor > /dev/null 2>&1
-	umount /system_root > /dev/null 2>&1
-	umount /system > /dev/null 2>&1
+	[ "$m3" = "0" ] && umount /vendor > /dev/null 2>&1
+	[ "$m2" = "0" ] && umount /system_root > /dev/null 2>&1
+	[ "$m1" = "0" ] && umount /system > /dev/null 2>&1
 	$MAGISKBOOT --cleanup > /dev/null 2>&1
 	cleanup
 }
