@@ -1,10 +1,7 @@
 #!/sbin/sh
 #
-# - Custom script for OrangeFox Recovery
-# - "fox_pre_flash" script, for lavender/violet/perseus - to mount system on system_root
-# - before flashing zips (apart from ROMs) and unmount after flashing is complete
-#
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
+#
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
 # may be copied, distributed, and modified under those terms.
@@ -18,15 +15,17 @@
 #
 # Please maintain this if you use this script or any part of it
 #
-# * Author: DarthJabba9
-# * Date:   20 November 2019
+# - Custom script for OrangeFox Recovery
+# - To mount system on system_root before flashing zips (other than ROMs)
+# - Author: DarthJabba9
+# - Date:   6 December 2019
+# - This script should be considered deprecated - it will eventually be removed
 #
 LOGFILE=/tmp/recovery.log
 DEBUG=0
 [ "$DEBUG" = "1" ] && set -o xtrace
 
 DebugMsg() {
-   [ "$DEBUG" != "1" ] && return
    echo "DEBUG - OrangeFox [fox_pre_flash]: $@" >> $LOGFILE
 }
 
@@ -36,73 +35,68 @@ is_mounted() {
   [ "$?" = "1" ] && echo "0" || echo "1"
 }
 
-# check whether the recovery supports SAR, and whether the installed ROM is SAR
-is_True_SAR() {
-local tmp=0
-local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
-   [ "$F" != "true" ] && {
-      echo "0"
-      return
-   }
-   
-   # check whether we can simply mount /system_root
-   mount /system_root > /dev/null 2>&1
-   F=$(is_mounted "/system_root")
-   [ "$F" != "1" ] && {
-      echo "0"
-      return
-   }
-   umount /system_root > /dev/null 2>&1
-   
-   # check for /system/system/
-   F=$(is_mounted "/system")
-   [ "$F" = "1" ] && tmp=1 || mount -o rw /dev/block/bootdevice/by-name/system /system > /dev/null 2>&1
-   F=$(is_mounted "/system")
-   [ "$F" = "1" ] && {
-      [ -d "/system/system/" ] && echo "1" || echo "0"
-      [ "$tmp" = "0" ] && umount /system  > /dev/null 2>&1
-      return
-   }
-   
-   # if we get here, return 0
-   echo "0"
-}
-
 do_mount_system() {
-local F=$(is_True_SAR)
-   [ "$F" != "1" ] && return
+local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
+   [ "$F" != "true" ] && return
+   [ ! -d "/system_root" ] && return
 
-   # Is system already mounted? If so, bail out
    F=$(is_mounted "/system")
    [ "$F" = "1" ] && return
    
-   # mount system - if no success, bail out
+   local SYS_LINK=$(readlink -n "/system" 2>/dev/null)
+   [ -n "$SYS_LINK" ] && {
+      rm -f /system
+      mkdir /system > /dev/null 2>&1
+      setprop "orangefox.system.symlink" "$SYS_LINK"
+   }
+
    mount -o rw /dev/block/bootdevice/by-name/system /system > /dev/null 2>&1
    F=$(is_mounted "/system")
-   [ "$F" != "1" ] && return
+   [ "$F" != "1" ] && {
+     DebugMsg "- Sorry, I am unable to mount /system. Cleaning up and quitting ..."
+     [ -n "$SYS_LINK" ] && {
+       setprop --delete "orangefox.system.symlink"
+       if [ ! -L "/system" ]; then
+          rmdir "/system" > /dev/null 2>&1
+          rm -f "/system" > /dev/null 2>&1
+          ln -s "$SYS_LINK" "/system" > /dev/null 2>&1
+       fi
+     }
+    return
+   }
    
-   # do the stuff
-   DebugMsg "Mounting system on system_root..."
+   DebugMsg "- Mounting system on system_root..."
    mount --move /system /system_root > /dev/null 2>&1
    mount -o bind /system_root/system /system  > /dev/null 2>&1
-   DebugMsg "Finished mounting system on system_root"
+   DebugMsg "- Finished mounting system on system_root"
 }
 
 do_unmount_system() {
-local F=$(is_True_SAR)
-   [ "$F" != "1" ] && return
+local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
+   [ "$F" != "true" ] && return
+   [ ! -d "/system_root" ] && return
 
-   DebugMsg "Unmounting system and system_root..."
-   F=$(is_mounted "/system_root")
-   [ "$F" = "1" ] && {
-      umount /system_root > /dev/null 2>&1
-   }
+   DebugMsg "- Unmounting system on system_root..."
 
    F=$(is_mounted "/system")
-   [ "$F" = "1" ] && {
-      umount /system > /dev/null 2>&1
-   }
-   DebugMsg "Finished unmounting system and system_root"
+   [ "$F" = "1" ] && umount "/system" > /dev/null 2>&1
+
+   F=$(is_mounted "/system_root")
+   [ "$F" = "1" ] && umount "/system_root" > /dev/null 2>&1   
+
+   # check for saved system symlink and restore it
+   # there is often a problem with unmounting /system (it is busy)
+   F=$(getprop "orangefox.system.symlink")
+   if [ -n "$F" ]; then
+      setprop --delete "orangefox.system.symlink"
+      if [ ! -L "/system" ]; then
+         umount "/system" > /dev/null 2>&1
+         rmdir "/system" > /dev/null 2>&1
+         rm -f "/system"
+         ln -s "$F" "/system"
+      fi
+   fi
+   DebugMsg "- Finished unmounting system on system_root"
 }
 
 #
