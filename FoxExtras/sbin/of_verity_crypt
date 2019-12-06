@@ -121,7 +121,7 @@ process_cmdline() {
    done  #
 }
 
-# do we have a proper SAR rom?
+# do we have a proper SAR recovery?
 is_SAR() {
   local F=$(getprop "ro.build.system_root_image")
   [ "$F" != "true" ] && {
