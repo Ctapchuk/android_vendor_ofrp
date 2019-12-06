@@ -18,7 +18,7 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   29 November 2019
+# * Date:   6 December 2019
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 # * Identify some hardware components
@@ -190,6 +190,7 @@ isMIUI() {
    local S="/tmp_system"
    local A="$S/app"
    local E="$S/etc"
+   local S_SAR="$S/system"
    
    # mount /system and check
    if [ -d "$S" ]; then
@@ -211,19 +212,35 @@ isMIUI() {
    if [ -f $S/init.miui.cust.rc ] && [ -f $S/init.miui.rc ]; then
       DebugMsg "First round of miui checks succeeded."
       M="1"
+   else
+      DebugMsg "First round of miui checks returned negative."
    fi
 
-   if [ "$M" != "1" ] && [ -d $A/miui ] && [ -d $A/miuisystem ]; then
-      DebugMsg "Second round of miui checks succeeded."
-      if [ -d $E/cust ] && [ -d $E/miui_feature ] && [ -d $E/precust_theme ]; then
-         DebugMsg "Third round of miui checks succeeded."
+   [ "$M" != "1" ] && {
+      if [ -d $A/miui ] && [ -d $A/miuisystem ]; then
+         DebugMsg "Second round of miui checks succeeded."
          M="1"
+     else
+         DebugMsg "Second round of miui checks returned negative."
+     fi
+   }
+
+
+   [ "$M" != "1" ] && {
+      if [ -d $E/cust ] && [ -d $E/miui_feature ] && [ -d $E/precust_theme ]; then
+      	 DebugMsg "Third round of miui checks succeeded."
+      	 M="1"
       else
-         DebugMsg "Third round of miui checks returned negative."
+      	 DebugMsg "Third round of miui checks returned negative."
+      	 E="$S_SAR/etc"
+      	 if [ -d $E/cust ] && [ -d $E/miui_feature ] && [ -d $E/precust_theme ]; then
+           DebugMsg "Fourth round of miui checks succeeded."
+           M="1"
+      	 else
+           DebugMsg "Fourth round of miui checks returned negative."
+      	 fi
       fi
-   else
-      DebugMsg "Second round of miui checks returned negative."
-   fi
+   }
    
    # unmount
    umount $S > /dev/null 2>&1
