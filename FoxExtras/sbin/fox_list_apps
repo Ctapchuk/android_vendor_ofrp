@@ -1,0 +1,63 @@
+#!/sbin/sh
+#
+# Custom script for OrangeFox TWRP Recovery
+# Copyright (C) 2018-2020 OrangeFox Recovery Project
+#
+# This software is licensed under the terms of the GNU General Public
+# License version 2, as published by the Free Software Foundation, and
+# may be copied, distributed, and modified under those terms.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# See <http://www.gnu.org/licenses/>.
+#
+# Please maintain this if you use this script or any part of it
+#
+
+is_mounted() {
+  [ -z "$1" ] && { echo "0"; return; }
+  grep -q " `readlink -f $1` " /proc/mounts 2>/dev/null
+  [ "$?" = "1" ] && echo "0" || echo "1"
+}
+
+Do_Get_List() {
+local tmp="/tmp/listapps"
+local list="$tmp/list"
+local apps_dir="/data/app"
+local namestr="application-label:'"
+local d_mnt=$(is_mounted "/data")
+
+	[ -d "$list" ] && return	
+	[ "$d_mnt" != "1" ] && mount /data
+	
+	mkdir "$tmp" "$list"
+	cd "$apps_dir"
+	if [ -f "/sbin/aapt" ]; then
+	   for pkgname in * ; do
+	       name=$(aapt dump badging "$pkgname/base.apk" | grep "$namestr" | sed "s/"$namestr"//" | sed "s/'//")
+	       echo "$apps_dir/$pkgname" > "$list/$name"
+	   done
+	else 
+	   for pkgname in * ; do
+	      name="$(echo "$pkgname" | sed 's+-.*++g')"
+	      echo "$apps_dir/$pkgname" > "$list/$name"
+	   done
+	fi
+	
+	exit 0
+}
+
+Do_Cleanup() {
+  exit 0
+}
+
+#
+if [ "$1" = "--cleanup" ]; then
+   Do_Cleanup
+else
+   Do_Get_List
+fi
+#
