@@ -18,7 +18,7 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   6 December 2019
+# * Date:   8 December 2019
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 # * Identify some hardware components
@@ -135,6 +135,8 @@ Is_Proper_SAR() {
 
 get_ROM() {
 local S="/tmp_system_rom"
+local PROP="$S/build.prop"
+
    # mount /system and check
    if [ -d "$S" ]; then
       DebugMsg "$S already exists"
@@ -144,36 +146,46 @@ local S="/tmp_system_rom"
       mkdir -p $S
    fi
    
+   # mount
    mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
-   local tmp1="$S/build.prop"
-   [ ! -e "$tmp1" ] && tmp1="$S/system/build.prop" # test for SAR
-   local tmp2=""
-
-   if [ -e "$tmp1" ]; then 
-      tmp2=$(file_getprop "$tmp1" "ro.build.display.id")
-   fi
    
-   if [ -z "$tmp2" ]; then
-      tmp1="/system/build.prop"
-      [ -e "$tmp1" ] && tmp2=$(file_getprop "$tmp1" "ro.build.display.id")
-   fi
+   # look for build.prop
+   [ ! -e "$PROP" ] && PROP="$S/system/build.prop" # test for SAR
+   
+   # have we found a proper build.prop ?
+   [ ! -e $PROP ] && {
+      umount $S > /dev/null 2>&1
+      rmdir $S
+      echo ""
+      return
+   }
+
+   # query the build.prop
+   local tmp2=""
+   local tmp3=""
+   tmp2=$(file_getprop "$PROP" "ro.build.display.id")
+   [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.build.id")
+   [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.system.build.id")
    
    if [ -n "$tmp2" ]; then
-      local tmp3=$(file_getprop "$tmp1" "ro.build.version.sdk")
+      tmp3=$(file_getprop "$PROP" "ro.build.version.sdk")
       [ -n "$tmp3" ] && {
          ANDROID_SDK="$tmp3"
+         $SETPROP orangefox.rom.sdk "$tmp3" > /dev/null 2>&1
          echo "DEBUG: OrangeFox: ANDROID_SDK=$ANDROID_SDK" >> $LOG
-         echo "ANDROID_SDK=$ANDROID_SDK" >> $CFG 
+         echo "ANDROID_SDK=$ANDROID_SDK" >> $CFG
       }
-      tmp3=$(file_getprop "$tmp1" "ro.build.version.incremental")
+      
+      tmp3=$(file_getprop "$PROP" "ro.build.version.incremental")
       [ -n "$tmp3" ] && {
         echo "DEBUG: OrangeFox: INCREMENTAL_VERSION=$tmp3" >> $LOG
         echo "INCREMENTAL_VERSION=$tmp3" >> $CFG
-        tmp3=$(file_getprop "$tmp1" "ro.build.flavor")
-        [ -n "$tmp3" ] && {
+      }
+      
+      tmp3=$(file_getprop "$PROP" "ro.build.flavor")
+      [ -n "$tmp3" ] && {
            echo "DEBUG: OrangeFox: BUILD_FLAVOR=$tmp3" >> $LOG
            echo "BUILD_FLAVOR=$tmp3" >> $CFG
-        }
       }
    fi
 
@@ -259,7 +271,6 @@ Get_Details() {
 
    # look for installed ROM
    ROM=$(get_ROM)
-   #   
 }
 
 # remove /cust or /vendor from fstab
@@ -408,7 +419,11 @@ local GREP="grep -m 1"
 local pname=""
 local F3=""
 local KLOG="/tmp/dmesg.log"
-   pname=$(cat /sys/class/graphics/fb0/msm_fb_panel_info | grep panel_name) > /dev/null 2>&1
+
+   if [ -e "/sys/class/graphics/fb0/msm_fb_panel_info" ]; then
+      pname=$(cat "/sys/class/graphics/fb0/msm_fb_panel_info" | grep "panel_name") > /dev/null 2>&1
+   fi
+   
    if [ -n "$pname" ]; then
       echo $pname >> $CFG
       return
