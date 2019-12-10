@@ -1,0 +1,7 @@
+- WARNING:
+- Do not rename the "dm_ver_fenc.zip" file, unless you want to change its behaviour
+- The mod alters its default behaviour depending on the name of the zip file
+- As it stands, it will not touch dm-verity or forced-encryption, but will (hopefully) stop MIUI recovery overwriting the custom recovery
+- If the filename includes "verity" (case insensitive) this it will disable dm-verity
+- If the filename includes "crypt" (case insensitive) this it will disable forced-encryption
+-

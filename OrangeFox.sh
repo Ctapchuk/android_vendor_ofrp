@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 29 November 2019
+# Date: 10 December 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -93,6 +93,7 @@ NEW_MAGISKBOOT_BIN="magiskboot_new"
 # whether to print extra debug messages
 DEBUG="0"
 
+
 # FOX_REPLACE_BUSYBOX_PS: default to 0
 if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
    export FOX_REPLACE_BUSYBOX_PS="0"
@@ -123,6 +124,15 @@ export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_lite.img"
 [ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION="0" # by default, build only the full version
 #
+
+# whether this is a system-as-root build
+SAR_BUILD() {
+local F="$FOX_RAMDISK/etc/recovery.fstab"
+local S="$FOX_RAMDISK/system_root/"
+  [ ! -d "$S" ] && { echo "0"; return; }
+  local C=$(cat "$F" | grep ^"/system_root")
+  [ -n "$C" ] && echo "1" || echo "0"
+}
 
 # expand a directory path
 fullpath() {
@@ -476,6 +486,14 @@ esac
      rm -f "$FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN"
   fi
 
+  # perhaps we don't need some "Tools" ?
+  if [ "$(SAR_BUILD)" = "1" ]; then
+     echo -e "${GREEN}-- This is a system-as-root build ...${NC}"     
+  else
+     echo -e "${BLUE}-- This is NOT a system-as-root build - removing the system_sar_mount directory ...${NC}"
+     rm -rf "$FOX_RAMDISK/FFiles/Tools/system_sar_mount/"
+  fi
+
   # save the build date
   BUILD_DATE=$(date -u "+%c")
   echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/etc/fox.cfg
@@ -533,9 +551,9 @@ esac
      	   echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE_2GB
   	fi
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
-    fi
+    fi # end: "GO" version
 fi
-# end: "GO" version
+# end: repack
 
 # create update zip installer
 if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
