@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 30 November 2019
+# Date: 11 December 2019
 #
 # -----------------------------------
 #
@@ -132,15 +132,27 @@
    - the newest Xiaomi devices seem to require this
 #
 "OF_KEEP_DM_VERITY"; 
-   - set to 1 to turn OrangeFox dm-verity settings *OFF* by default 
+   - set to 1 to turn OrangeFox dm-verity settings *OFF* on every bootup
    - default = 0
 #
 "OF_KEEP_FORCED_ENCRYPTION"; 
-   - set to 1 to turn OrangeFox forced-encryption settings *OFF* by default 
+   - set to 1 to turn OrangeFox forced-encryption settings *OFF* on every bootup
    - default = 0 (in lavender, default=1)
 #
 "OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; 
-   - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *OFF* by default 
+   - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *OFF* on every bootup
+   - default = 0
+#
+"OF_DISABLE_DM_VERITY"; 
+   - set to 1 to turn OrangeFox dm-verity settings *ON* on every bootup
+   - default = 0
+#
+"OF_DISABLE_FORCED_ENCRYPTION"; 
+   - set to 1 to turn OrangeFox forced-encryption settings *ON* on every bootup
+   - default = 0
+#
+"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; 
+   - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *ON* on every bootup
    - default = 0
 #
 "OF_CLASSIC_LEDS_FUNCTION"
@@ -155,9 +167,9 @@
    - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
    - default = 0
 #
-"OF_MIUI_OTA_VENDOR_BACKUP"
-   - set to 1 to backup vendor_image when preparing for incremental MIUI OTA (upon flashing a MIUI ROM)
-   - this is required for new (2019+) Xiaomi devices (eg, lavender, violet, raphael, etc)
+"OF_NO_MIUI_OTA_VENDOR_BACKUP"
+   - set to 1 to prevent backing up of vendor_image when preparing for incremental MIUI OTA (upon flashing a MIUI ROM)
+   - such a backup is required for new (2019+) Xiaomi devices (eg, lavender, violet, raphael, ginkgo, etc)
    - default = 0
 #
 "OF_NO_RELOAD_AFTER_DECRYPTION"
