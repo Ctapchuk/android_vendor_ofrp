@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 10 December 2019
+# Date: 11 December 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -124,6 +124,24 @@ export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_lite.img"
 [ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION="0" # by default, build only the full version
 #
+
+# to patch bugged alleged anti-rollback on some ROMs
+Fix_Bugged_ARB_ROM_Build_Date() {
+local DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+local DT="$1"
+local DT2=$(date --date="@$DT")
+   echo -e "${RED}-- Patching $DEFAULT_PROP ...${NC}"
+
+   grep -q '^ro.build.date.utc=' $DEFAULT_PROP && \
+   	sed -i -e "s/ro.build.date.utc=.*/ro.build.date.utc=$DT/g" $DEFAULT_PROP || \
+   	echo "ro.build.date.utc=$DT" >> $DEFAULT_PROP
+
+   grep -q '^ro.bootimage.build.date.utc=' $DEFAULT_PROP && \
+   	sed -i -e "s/ro.bootimage.build.date.utc=.*/ro.bootimage.build.date.utc=$DT/g" $DEFAULT_PROP || \
+   	echo "ro.bootimage.build.date.utc=$DT" >> $DEFAULT_PROP
+
+   echo -e "${RED}-- Finished working around other people's bugs! ${NC}"
+}
 
 # whether this is a system-as-root build
 SAR_BUILD() {
@@ -502,7 +520,12 @@ esac
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
   fi
-  #
+
+  # if we need to work around the bugged aosp alleged anti-rollback protection  
+  if [ -n "$FOX_BUGGED_AOSP_ARB_WORKAROUND" ]; then
+     Fix_Bugged_ARB_ROM_Build_Date "$FOX_BUGGED_AOSP_ARB_WORKAROUND"
+  fi
+  
   # repack
   if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then

@@ -143,15 +143,15 @@
    - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *OFF* on every bootup
    - default = 0
 #
-"OF_DISABLE_DM_VERITY"; 
+"OF_DISABLE_DM_VERITY"; [NEW]
    - set to 1 to turn OrangeFox dm-verity settings *ON* on every bootup
    - default = 0
 #
-"OF_DISABLE_FORCED_ENCRYPTION"; 
+"OF_DISABLE_FORCED_ENCRYPTION"; [NEW]
    - set to 1 to turn OrangeFox forced-encryption settings *ON* on every bootup
    - default = 0
 #
-"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; 
+"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
    - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *ON* on every bootup
    - default = 0
 #
@@ -267,4 +267,10 @@
   - these will be in .zip format; users might need to clear them out periodically
   - enable this to turn off this feature (meaning that lastrecoverylog.log will be overwritten each time the recovery is rebooted)
   - default = 0
+#
+"FOX_BUGGED_AOSP_ARB_WORKAROUND" [NEW]
+ - Use this to set an old UTC time for the build, to work around bugged alleged
+ - anti-rollback protection in some ROMs
+ - example: export FOX_BUGGED_AOSP_ARB_WORKAROUND="1546300800" [for Tue Jan 1 2019 00:00:00 GMT]
+ - default = nothing
 # -----------------------------------
