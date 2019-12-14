@@ -63,6 +63,7 @@ else
 	FOX_RAMDISK="$FOX_WORK/ramdisk"
 fi
 
+# device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
 # build_type
@@ -88,6 +89,10 @@ RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
 
+# did we export tmp directory for OrangeFox ports?
+[ -n "$FOX_PORTS_TMP" ] && OF_WORKING_DIR="$FOX_PORTS_TMP" || OF_WORKING_DIR="$FOX_VENDOR_PATH/tmp"
+
+# new magiskboot binary
 NEW_MAGISKBOOT_BIN="magiskboot_new"
 
 # whether to print extra debug messages
@@ -143,6 +148,15 @@ local DT2=$(date --date="@$DT")
    echo -e "${RED}-- Finished working around other people's bugs! ${NC}"
 }
 
+# if there is an ALT device. cater for it in update-binary
+Add_Target_Alt() {
+local D="$OF_WORKING_DIR"
+local F="$D/META-INF/com/google/android/update-binary"
+   if [ -n "$TARGET_DEVICE_ALT" ]; then
+      sed -i -e "s/TARGET_DEVICE_ALT=.*/TARGET_DEVICE_ALT=\"$TARGET_DEVICE_ALT\"/" $F
+   fi
+}
+
 # whether this is a system-as-root build
 SAR_BUILD() {
 local F="$FOX_RAMDISK/etc/recovery.fstab"
@@ -178,27 +192,23 @@ expand_vendor_path() {
 
 # create zip file
 do_create_update_zip() {
-local WORK_DIR=""
 local TDT=$(date "+%d %B %Y")
   echo -e "${BLUE}-- Creating update.zip${NC}"
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
   
-  # did we export tmp directory for OrangeFox ports?
-  [ -n "$FOX_PORTS_TMP" ] && WORK_DIR="$FOX_PORTS_TMP" || WORK_DIR="$FOX_VENDOR_PATH/tmp"
-
   # names of output zip file(s)
   ZIP_FILE=$OUT/$FOX_OUT_NAME.zip
   ZIP_FILE_GO=$OUT/$FOX_OUT_NAME"_lite.zip"
   echo "- Creating $ZIP_FILE for deployment ..."
   
   # clean any existing files
-  rm -rf $WORK_DIR
+  rm -rf $OF_WORKING_DIR
   rm -f $ZIP_FILE_GO $ZIP_FILE
 
   # recreate dir
-  mkdir -p $WORK_DIR
-  cd $WORK_DIR
+  mkdir -p $OF_WORKING_DIR
+  cd $OF_WORKING_DIR
 
   # copy recovery image
   cp -a $RECOVERY_IMAGE ./recovery.img
@@ -216,7 +226,7 @@ local TDT=$(date "+%d %B %Y")
   
   # patch update-binary (which is a script) to run only for the current device 
   # (mido is the default)
-  local F="$WORK_DIR/META-INF/com/google/android/update-binary"
+  local F="$OF_WORKING_DIR/META-INF/com/google/android/update-binary"
   sed -i -e "s/mido/$FOX_DEVICE/g" $F     
   sed -i -e "s/ALT_DEVICE/$FOX_DEVICE_ALT/g" $F     
 
@@ -229,7 +239,7 @@ local TDT=$(date "+%d %B %Y")
   # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
   # "--last-call" = just before creating the OrangeFox update zip file
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$WORK_DIR" "--last-call"
+     $FOX_LOCAL_CALLBACK_SCRIPT "$OF_WORKING_DIR" "--last-call"
   fi
 
   # embed the recovery partition
@@ -255,7 +265,13 @@ local TDT=$(date "+%d %B %Y")
   # omit AromaFM ?
   if [ "$FOX_DELETE_AROMAFM" = "1" ]; then
      echo -e "${GREEN}-- Deleting AromaFM ...${NC}"
-     rm -rf $WORK_DIR/sdcard/Fox/FoxFiles/AromaFM
+     rm -rf $OF_WORKING_DIR/sdcard/Fox/FoxFiles/AromaFM
+  fi
+
+  # alternative/additional device codename? (eg, "kate" (for kenzo); "willow" (for ginkgo))
+  if [ -n "$TARGET_DEVICE_ALT" ]; then
+     echo -e "${GREEN}-- Adding the alternative device codename: \"$TARGET_DEVICE_ALT\" ${NC}"
+     Add_Target_Alt;
   fi
 
   # create update zip
@@ -309,7 +325,7 @@ local TDT=$(date "+%d %B %Y")
   	echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
   fi	
   
-  rm -rf $WORK_DIR # delete OF Working dir 
+  rm -rf $OF_WORKING_DIR # delete OF Working dir 
 } # function
 
 

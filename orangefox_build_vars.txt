@@ -273,4 +273,12 @@
  - anti-rollback protection in some ROMs
  - example: export FOX_BUGGED_AOSP_ARB_WORKAROUND="1546300800" [for Tue Jan 1 2019 00:00:00 GMT]
  - default = nothing
+#
+"TARGET_DEVICE_ALT" [NEW]
+ - Use this if the device has more than one code name, so that the OrangeFox zip
+ - installer can support the alternative code name without just bombing out
+ - eg, export TARGET_DEVICE_ALT="kate" (for kenzo/kate)
+ -     export TARGET_DEVICE_ALT=willow" (for ginkgo/willow)
+ - default = nothing
+#
 # -----------------------------------
