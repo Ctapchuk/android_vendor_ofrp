@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 11 December 2019
+# Date: 16 December 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -48,7 +48,7 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${RED}Building OrangeFox...${NC}"
+[ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
 
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 
@@ -62,6 +62,10 @@ else
 	FOX_WORK=$OUT/FOX_AIK
 	FOX_RAMDISK="$FOX_WORK/ramdisk"
 fi
+
+# default prop
+DEFAULT_PROP="$FOX_RAMDISK/prop.default"
+DEFAULT_PROP_ROOT="$TARGET_RECOVERY_ROOT_OUT/../../root/default.prop"
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
@@ -131,21 +135,17 @@ RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_lite.img"
 #
 
 # to patch bugged alleged anti-rollback on some ROMs
-Fix_Bugged_ARB_ROM_Build_Date() {
-local DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+Save_Build_Date() {
 local DT="$1"
-local DT2=$(date --date="@$DT")
-   echo -e "${RED}-- Patching $DEFAULT_PROP ...${NC}"
+local F="$DEFAULT_PROP_ROOT"
+   [ ! -f  "$F" ] && F="$DEFAULT_PROP"
+   grep -q "ro.build.date.utc=" $F && \
+   	sed -i -e "s/ro.build.date.utc=.*/ro.build.date.utc=$DT/g" $F || \
+   	echo "ro.build.date.utc=$DT" >> $F
 
-   grep -q '^ro.build.date.utc=' $DEFAULT_PROP && \
-   	sed -i -e "s/ro.build.date.utc=.*/ro.build.date.utc=$DT/g" $DEFAULT_PROP || \
-   	echo "ro.build.date.utc=$DT" >> $DEFAULT_PROP
-
-   grep -q '^ro.bootimage.build.date.utc=' $DEFAULT_PROP && \
-   	sed -i -e "s/ro.bootimage.build.date.utc=.*/ro.bootimage.build.date.utc=$DT/g" $DEFAULT_PROP || \
-   	echo "ro.bootimage.build.date.utc=$DT" >> $DEFAULT_PROP
-
-   echo -e "${RED}-- Finished working around other people's bugs! ${NC}"
+   grep -q "ro.bootimage.build.date.utc=" $F && \
+   	sed -i -e "s/ro.bootimage.build.date.utc=.*/ro.bootimage.build.date.utc=$DT/g" $F || \
+   	echo "ro.bootimage.build.date.utc=$DT" >> $F
 }
 
 # if there is an ALT device. cater for it in update-binary
@@ -370,40 +370,42 @@ if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
    bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 fi
 
-# copy stuff to the ramdisk
-echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
+###############################################################
+# copy stuff to the ramdisk and do all necessary patches
+if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
+   echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
 
-if [ -z "$TARGET_ARCH" ]; then
-  echo "Arch not detected, use arm64"
-  TARGET_ARCH="arm64"
-fi
+   if [ -z "$TARGET_ARCH" ]; then
+     echo "Arch not detected, use arm64"
+     TARGET_ARCH="arm64"
+   fi
 
-case "$TARGET_ARCH" in
- "arm")
+  case "$TARGET_ARCH" in
+  "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
       cp "$FOX_VENDOR_PATH/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
- "arm64")
+  "arm64")
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/resetprop" "$FOX_RAMDISK/sbin"
       ;;
- "x86")
+  "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
       cp "$FOX_VENDOR_PATH/prebuilt/x86/mkbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/x86/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
- "x86_64")
+  "x86_64")
       echo -e "${GREEN}-- x86_64 arch detected. Copying x86_64 binaries${NC}"
       cp "$FOX_VENDOR_PATH/prebuilt/x86_64/mkbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/x86_64/unpackbootimg" "$FOX_RAMDISK/sbin"
       ;;
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
-esac
+  esac
 
-# build standard (3GB) version
+  # build standard (3GB) version
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
@@ -436,7 +438,6 @@ esac
 
   # replace busybox lzma (and "xz") with our own 
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
-  #if [ "$FOX_USE_LZMA_COMPRESSION" = "1" ]; then
   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" ]; then
      echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
      rm -f $FOX_RAMDISK/sbin/lzma
@@ -528,22 +529,45 @@ esac
      rm -rf "$FOX_RAMDISK/FFiles/Tools/system_sar_mount/"
   fi
 
-  # save the build date
-  BUILD_DATE=$(date -u "+%c")
-  echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/etc/fox.cfg
-  
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
   fi
 
+  # save the build date
+  BUILD_DATE=$(date -u "+%c")
+  BUILD_DATE_UTC=$(date "+%s")
+  [ ! -e "$DEFAULT_PROP" ] && DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+
   # if we need to work around the bugged aosp alleged anti-rollback protection  
   if [ -n "$FOX_BUGGED_AOSP_ARB_WORKAROUND" ]; then
-     Fix_Bugged_ARB_ROM_Build_Date "$FOX_BUGGED_AOSP_ARB_WORKAROUND"
+     Save_Build_Date "$FOX_BUGGED_AOSP_ARB_WORKAROUND"
+  else
+     Save_Build_Date "$BUILD_DATE_UTC"
   fi
-  
-  # repack
-  if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+
+  # ensure that we have a proper record of the actual build date/time	
+  grep -q '^ro.build.date.utc_fox=' $DEFAULT_PROP_ROOT && \
+  	sed -i -e "s/ro.build.date.utc_fox=.*/ro.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP_ROOT || \
+  	echo "ro.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP_ROOT
+	
+  grep -q '^ro.bootimage.build.date.utc_fox=' $DEFAULT_PROP_ROOT && \
+  	sed -i -e "s/ro.bootimage.build.date.utc_fox=.*/ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP_ROOT || \
+  	echo "ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP_ROOT
+
+  #  save also to /etc/fox.cfg
+  echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/etc/fox.cfg
+  echo "ro.build.date.utc_fox=$BUILD_DATE_UTC" >> $FOX_RAMDISK/etc/fox.cfg
+  echo "ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC" >> $FOX_RAMDISK/etc/fox.cfg
+
+  # let's be clear where we are ...
+  if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+     echo -e "${RED}-- Building the recovery image, using the official TWRP recovery image builder ...${NC}"
+  fi
+fi
+
+# repack the recovery image
+if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
   	echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
         cp -af "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
@@ -551,7 +575,7 @@ esac
      else
   	echo -e "${BLUE}-- Repacking and copying recovery${NC}"
   	[ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
-  	SAMSUNG_DEVICE=$(file_getprop "$FOX_WORK/ramdisk/prop.default" "ro.product.manufacturer")
+  	SAMSUNG_DEVICE=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.product.manufacturer")
   	if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
      	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $FOX_WORK/kernel ${NC}"
      	   [ -e "$FOX_WORK/kernel" ] && echo -n "SEANDROIDENFORCE" >> "$FOX_WORK/kernel"
@@ -565,8 +589,8 @@ esac
      fi
      # end: standard version
 
-     #: build "lite" (2GB) version (virtually obsolete now) #
-      if [ "$BUILD_2GB_VERSION" = "1" ] && [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" != "1" ]; then
+    #: build "lite" (2GB) version (virtually obsolete now) #
+    if [ "$BUILD_2GB_VERSION" = "1" ] && [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" != "1" ]; then
 	echo -e "${BLUE}-- Repacking and copying the \"lite\" version of recovery${NC}"
 	FFil="$FOX_RAMDISK/FFiles"
 	rm -rf $FFil/OF_initd
@@ -591,17 +615,15 @@ esac
   	fi
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
     fi # end: "GO" version
-fi
-# end: repack
 
-# create update zip installer
-if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+   # create update zip installer
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
-      do_create_update_zip
-      # create old theme zip file
-      do_create_old_theme_zip
+      	do_create_update_zip
+      	
+      	# create old theme zip file
+      	do_create_old_theme_zip
    else
-	   echo -e "${RED}-- Skip creating recovery zip${NC}"
+	echo -e "${RED}-- Skip creating recovery zip${NC}"
    fi
 
    #Info
