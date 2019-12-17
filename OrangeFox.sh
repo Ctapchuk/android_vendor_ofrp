@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 16 December 2019
+# Date: 17 December 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -58,14 +58,15 @@ FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
 if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
 	FOX_WORK="$TARGET_RECOVERY_ROOT_OUT"
 	FOX_RAMDISK="$TARGET_RECOVERY_ROOT_OUT"
+	DEFAULT_PROP_ROOT="$TARGET_RECOVERY_ROOT_OUT/../../root/default.prop"
 else
 	FOX_WORK=$OUT/FOX_AIK
 	FOX_RAMDISK="$FOX_WORK/ramdisk"
+	DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
 fi
 
 # default prop
 DEFAULT_PROP="$FOX_RAMDISK/prop.default"
-DEFAULT_PROP_ROOT="$TARGET_RECOVERY_ROOT_OUT/../../root/default.prop"
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
@@ -538,6 +539,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   BUILD_DATE=$(date -u "+%c")
   BUILD_DATE_UTC=$(date "+%s")
   [ ! -e "$DEFAULT_PROP" ] && DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+  [ ! -e "$DEFAULT_PROP_ROOT" ] && DEFAULT_PROP_ROOT="$DEFAULT_PROP"
 
   # if we need to work around the bugged aosp alleged anti-rollback protection  
   if [ -n "$FOX_BUGGED_AOSP_ARB_WORKAROUND" ]; then
@@ -547,11 +549,11 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   fi
 
   # ensure that we have a proper record of the actual build date/time	
-  grep -q '^ro.build.date.utc_fox=' $DEFAULT_PROP_ROOT && \
+  grep -q "ro.build.date.utc_fox=" $DEFAULT_PROP_ROOT && \
   	sed -i -e "s/ro.build.date.utc_fox=.*/ro.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP_ROOT || \
   	echo "ro.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP_ROOT
-	
-  grep -q '^ro.bootimage.build.date.utc_fox=' $DEFAULT_PROP_ROOT && \
+
+  grep -q "ro.bootimage.build.date.utc_fox=" $DEFAULT_PROP_ROOT && \
   	sed -i -e "s/ro.bootimage.build.date.utc_fox=.*/ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP_ROOT || \
   	echo "ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP_ROOT
 
