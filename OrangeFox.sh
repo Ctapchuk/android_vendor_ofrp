@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 17 December 2019
+# Date: 20 December 2019
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -42,18 +42,31 @@ else
    fi
 fi
 #
-#
+
+# some colour codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+GREY='\033[0;37m'
+LIGHTGREY='\033[0;38m'
+WHITEONBLACK='\033[0;40m'
+WHITEONRED='\033[0;41m'
+WHITEONGREEN='\033[0;42m'
+WHITEONORANGE='\033[0;43m'
+WHITEONBLUE='\033[0;44m'
+WHITEONPURPLE='\033[0;46m'
 NC='\033[0m'
 
-[ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
-
-echo -e "${BLUE}-- Setting up environment variables${NC}"
-
+#
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
+
+# 
+[ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
+echo -e "${BLUE}-- Setting up environment variables${NC}"
 
 if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
 	FOX_WORK="$TARGET_RECOVERY_ROOT_OUT"
@@ -94,15 +107,11 @@ RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
 
-# did we export tmp directory for OrangeFox ports?
-[ -n "$FOX_PORTS_TMP" ] && OF_WORKING_DIR="$FOX_PORTS_TMP" || OF_WORKING_DIR="$FOX_VENDOR_PATH/tmp"
-
 # new magiskboot binary
 NEW_MAGISKBOOT_BIN="magiskboot_new"
 
 # whether to print extra debug messages
 DEBUG="0"
-
 
 # FOX_REPLACE_BUSYBOX_PS: default to 0
 if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
@@ -124,18 +133,21 @@ if [ "$OF_AB_DEVICE" = "1" ]; then
    fi
 fi
 
-# exports
-export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
-
 # copy recovery.img
 [ -f $OUT/recovery.img ] && cp -r $OUT/recovery.img $RECOVERY_IMAGE
 
 # 2GB version
 RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_lite.img"
 [ -z "$BUILD_2GB_VERSION" ] && BUILD_2GB_VERSION="0" # by default, build only the full version
-#
 
-# to patch bugged alleged anti-rollback on some ROMs
+# exports
+export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
+
+# ****************************************************
+# --- embedded functions
+# ****************************************************
+
+# to saved the build date, and (if desired) patch bugged alleged anti-rollback on some ROMs
 Save_Build_Date() {
 local DT="$1"
 local F="$DEFAULT_PROP_ROOT"
@@ -144,12 +156,13 @@ local F="$DEFAULT_PROP_ROOT"
    	sed -i -e "s/ro.build.date.utc=.*/ro.build.date.utc=$DT/g" $F || \
    	echo "ro.build.date.utc=$DT" >> $F
 
+   [ -n "$2" ] && DT="$2" # don't change the true bootimage build date
    grep -q "ro.bootimage.build.date.utc=" $F && \
    	sed -i -e "s/ro.bootimage.build.date.utc=.*/ro.bootimage.build.date.utc=$DT/g" $F || \
    	echo "ro.bootimage.build.date.utc=$DT" >> $F
 }
 
-# if there is an ALT device. cater for it in update-binary
+# if there is an ALT device, cater for it in update-binary
 Add_Target_Alt() {
 local D="$OF_WORKING_DIR"
 local F="$D/META-INF/com/google/android/update-binary"
@@ -360,6 +373,9 @@ file_getprop() {
 # get the full FOX_VENDOR_PATH
 expand_vendor_path
 
+# did we export tmp directory for OrangeFox ports?
+[ -n "$FOX_PORTS_TMP" ] && OF_WORKING_DIR="$FOX_PORTS_TMP" || OF_WORKING_DIR="$FOX_VENDOR_PATH/tmp"
+
 # is the working directory still there from a previous build? If so, remove it
 if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
    if [ -d "$FOX_WORK" ]; then
@@ -435,6 +451,13 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   	   ln -s /FFiles/ps $FOX_RAMDISK/sbin/ps
         fi
      fi
+  fi
+
+  # Replace the toolbox "getprop" with "resetprop" ?
+  if [ "$FOX_REPLACE_TOOLBOX_GETPROP" = "1" -a -f $FOX_RAMDISK/sbin/resetprop ]; then
+     echo -e "${GREEN}-- Replacing the toolbox \"getprop\" command with a fuller version ...${NC}"
+     rm -f $FOX_RAMDISK/sbin/getprop
+     ln -s /sbin/resetprop $FOX_RAMDISK/sbin/getprop
   fi
 
   # replace busybox lzma (and "xz") with our own 
@@ -543,7 +566,8 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
 
   # if we need to work around the bugged aosp alleged anti-rollback protection  
   if [ -n "$FOX_BUGGED_AOSP_ARB_WORKAROUND" ]; then
-     Save_Build_Date "$FOX_BUGGED_AOSP_ARB_WORKAROUND"
+     echo -e "${WHITEONGREEN}-- Dealing with bugged AOSP alleged anti-ARB: setting build date to \"$FOX_BUGGED_AOSP_ARB_WORKAROUND\" (instead of the true date: \"$BUILD_DATE_UTC\") ...${NC}"
+     Save_Build_Date "$FOX_BUGGED_AOSP_ARB_WORKAROUND" "$BUILD_DATE_UTC"
   else
      Save_Build_Date "$BUILD_DATE_UTC"
   fi

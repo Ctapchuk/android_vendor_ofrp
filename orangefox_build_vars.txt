@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 11 December 2019
+# Date: 20 December 2019
 #
 # -----------------------------------
 #
@@ -33,6 +33,12 @@
 "FOX_REPLACE_BUSYBOX_PS"
    - set to 1 to replace the (stripped down) busybox version of the "ps" command
    - if this is defined, the busybox "ps" command will be replaced by a fuller (arm64) version
+   - default = 0
+   - this should NOT be enabled for arm32 devices
+#
+"FOX_REPLACE_TOOLBOX_GETPROP"
+   - set to 1 to replace the (stripped down) toolbox version of the "getprop" command
+   - if this is defined, the toolbox "getprop" command will be replaced by a fuller (arm64) version
    - default = 0
    - this should NOT be enabled for arm32 devices
 #
