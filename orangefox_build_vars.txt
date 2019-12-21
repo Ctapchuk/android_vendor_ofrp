@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 20 December 2019
+# Date: 21 December 2019
 #
 # -----------------------------------
 #
@@ -286,5 +286,10 @@
  - eg, export TARGET_DEVICE_ALT="kate" (for kenzo/kate)
  -     export TARGET_DEVICE_ALT=willow" (for ginkgo/willow)
  - default = nothing
+#
+"OF_SKIP_ORANGEFOX_PROCESS" [NEW]
+ - Use this to 1 to skip the dm-verity/forced-encryption/boot images patches
+ - If this is enabled, then "OF_DONT_PATCH_ON_FRESH_INSTALLATION" is also enabled automatically
+ - Default = 0
 #
 # -----------------------------------
