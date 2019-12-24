@@ -18,7 +18,7 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   8 December 2019
+# * Date:   24 December 2019
 # * Detect whether the device has a MIUI ROM
 # * Detect whether the device has a Treble ROM
 # * Identify some hardware components
@@ -189,10 +189,30 @@ local PROP="$S/build.prop"
       }
    fi
 
+   # check for ROM fingerprint
+   [ -n "$tmp2" ] && {
+      tmp3=""
+      [ -d "/vendor" ] && {
+         local PROP2="/vendor/build.prop"
+         mount -r /vendor > /dev/null 2>&1
+         [ -e "$PROP2" ] && {
+           tmp3=$(file_getprop "$PROP2" "ro.vendor.build.fingerprint")
+           [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP2" "ro.build.fingerprint")
+         }
+         umount /vendor > /dev/null 2>&1
+      }
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.build.fingerprint")
+      [ -n "$tmp3" ] && {
+           echo "DEBUG: OrangeFox: ROM_FINGERPRINT=$tmp3" >> $LOG
+           echo "ROM_FINGERPRINT=$tmp3" >> $CFG
+      }
+   }
+   
    # unmount
    umount $S > /dev/null 2>&1
    rmdir $S
-
+   
+   # return
    echo "$tmp2"
 }
 
