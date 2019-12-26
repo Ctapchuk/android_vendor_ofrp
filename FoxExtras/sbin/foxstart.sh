@@ -18,10 +18,8 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   24 December 2019
-# * Detect whether the device has a MIUI ROM
-# * Detect whether the device has a Treble ROM
-# * Identify some hardware components
+# * Date:   26 December 2019
+# * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
@@ -29,8 +27,6 @@ C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/tmp/orangefox.cfg"
 FS="/etc/recovery.fstab"
-T=0
-M=0
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
 SYS_ROOT="0"	  # device with system_root?
@@ -38,10 +34,12 @@ SAR="0"	  	  # SAR set up properly in recovery?
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 ANDROID_SDK="21"  # assume at least (and no more than) Lollipop in sdk checks
-ROM=""
-
+MOUNT_CMD="mount -r" # only mount in readonly mode
 FOX_DEVICE=$(getprop "ro.product.device")
 SETPROP=/sbin/setprop
+T=0
+M=0
+ROM=""
 
 # verbose logging?
 if [ "$VERBOSE_DEBUG" = "1" ]; then
@@ -86,7 +84,7 @@ local V=/dev/block/bootdevice/by-name/vendor
     return
   }
   mkdir -p $CC > /dev/null 2>&1
-  mount -t ext4 $V $CC > /dev/null 2>&1
+  $MOUNT_CMD -t ext4 $V $CC > /dev/null 2>&1
   local R=$(Has_Treble_Dirs $CC)
   umount $CC > /dev/null 2>&1
   rmdir $CC > /dev/null 2>&1
@@ -108,7 +106,7 @@ local TT=$(realTreble)
   # try /cust
 local C="/tmp_cust"
   mkdir -p $C > /dev/null 2>&1
-  mount -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
+  $MOUNT_CMD -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
   T=$(Has_Treble_Dirs $C)
   DebugDirList "$C/"
   DebugDirList "$C/app/"
@@ -136,6 +134,7 @@ Is_Proper_SAR() {
 get_ROM() {
 local S="/tmp_system_rom"
 local PROP="$S/build.prop"
+local slot=$(getprop "ro.boot.slot_suffix")
 
    # mount /system and check
    if [ -d "$S" ]; then
@@ -147,7 +146,7 @@ local PROP="$S/build.prop"
    fi
    
    # mount
-   mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
+   $MOUNT_CMD -t ext4 /dev/block/bootdevice/by-name/system"$slot" $S > /dev/null 2>&1
    
    # look for build.prop
    [ ! -e "$PROP" ] && PROP="$S/system/build.prop" # test for SAR
@@ -189,24 +188,27 @@ local PROP="$S/build.prop"
       }
    fi
 
-   # check for ROM fingerprint
-   [ -n "$tmp2" ] && {
-      tmp3=""
-      [ -d "/vendor" ] && {
-         local PROP2="/vendor/build.prop"
-         mount -r /vendor > /dev/null 2>&1
-         [ -e "$PROP2" ] && {
-           tmp3=$(file_getprop "$PROP2" "ro.vendor.build.fingerprint")
-           [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP2" "ro.build.fingerprint")
-         }
-         umount /vendor > /dev/null 2>&1
+   # check for ROM fingerprints
+   if [ -n "$tmp2" ]; 
+   then
+      local FP=$(file_getprop "$PROP" "ro.build.fingerprint")
+      if [ -z "$FP" ]; then
+      	 PROP="/vendor/build.prop"
+      	 [ ! -d "/vendor" ] && mkdir -p /vendor > /dev/null 2>&1
+      	 [ -d "/vendor" ] && {
+            $MOUNT_CMD /vendor > /dev/null 2>&1
+            FP=$(file_getprop "$PROP" "ro.vendor.build.fingerprint")
+            umount /vendor > /dev/null 2>&1
+      	 }     
+      fi
+      
+      [ -n "$FP" ] && {
+           echo "ROM_FINGERPRINT=$FP" >> $CFG
+           echo "DEBUG: OrangeFox: ROM_FINGERPRINT=$FP" >> $LOG
+           # echo "ro.build.fingerprint=$FP" >> $LOG
+           # [ -x "/sbin/resetprop" ] && resetprop "ro.build.fingerprint" "$FP"      
       }
-      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.build.fingerprint")
-      [ -n "$tmp3" ] && {
-           echo "DEBUG: OrangeFox: ROM_FINGERPRINT=$tmp3" >> $LOG
-           echo "ROM_FINGERPRINT=$tmp3" >> $CFG
-      }
-   }
+   fi # check for ROM fingerprints
    
    # unmount
    umount $S > /dev/null 2>&1
@@ -223,6 +225,7 @@ isMIUI() {
    local A="$S/app"
    local E="$S/etc"
    local S_SAR="$S/system"
+   local slot=$(getprop "ro.boot.slot_suffix")
    
    # mount /system and check
    if [ -d "$S" ]; then
@@ -233,7 +236,7 @@ isMIUI() {
       mkdir -p $S
    fi
 
-   mount -t ext4 /dev/block/bootdevice/by-name/system $S > /dev/null 2>&1
+   $MOUNT_CMD -t ext4 /dev/block/bootdevice/by-name/system"$slot" $S > /dev/null 2>&1
    
    DebugDirList "$S/"
    DebugDirList "$S/vendor"
@@ -256,7 +259,6 @@ isMIUI() {
          DebugMsg "Second round of miui checks returned negative."
      fi
    }
-
 
    [ "$M" != "1" ] && {
       if [ -d $E/cust ] && [ -d $E/miui_feature ] && [ -d $E/precust_theme ]; then
