@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 21 December 2019
+# Date: 27 December 2019
 #
 # -----------------------------------
 #
@@ -149,16 +149,28 @@
    - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *OFF* on every bootup
    - default = 0
 #
-"OF_DISABLE_DM_VERITY"; [NEW]
+"OF_FORCE_DISABLE_DM_VERITY"; [NEW]
    - set to 1 to turn OrangeFox dm-verity settings *ON* on every bootup
    - default = 0
 #
-"OF_DISABLE_FORCED_ENCRYPTION"; [NEW]
+"OF_FORCE_DISABLE_FORCED_ENCRYPTION"; [NEW]
    - set to 1 to turn OrangeFox forced-encryption settings *ON* on every bootup
    - default = 0
 #
-"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
+"OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
    - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *ON* on every bootup
+   - default = 0
+#
+"OF_DISABLE_DM_VERITY"; [NEW]
+   - set to 1 to turn OrangeFox dm-verity settings on by default (on fresh installation)
+   - default = 0 (should be set to "1" for older Xiaomi devices like kenzo, libra, mido)
+#
+"OF_DISABLE_FORCED_ENCRYPTION"; [NEW]
+   - set to 1 to turn OrangeFox forced-encryption settings on by default (on fresh installation)
+   - default = 0
+#
+"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
+   - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings on by default (on fresh installation)
    - default = 0
 #
 "OF_CLASSIC_LEDS_FUNCTION"
@@ -290,6 +302,6 @@
 "OF_SKIP_ORANGEFOX_PROCESS" [NEW]
  - Use this to 1 to skip the dm-verity/forced-encryption/boot images patches
  - If this is enabled, then "OF_DONT_PATCH_ON_FRESH_INSTALLATION" is also enabled automatically
- - Default = 0
+ - default = 0
 #
 # -----------------------------------
