@@ -27,3 +27,5 @@ Spanish:
 Turkish:
 - yanikyigit59
 - Metin Arslan
+Vietnamese:
+- Viet Hoang
