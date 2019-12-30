@@ -4,14 +4,14 @@ OrangeFox R10.1 Changelog
 * Save historic logs (compressed zips) - 
     to the /sdcard/Fox/logs/ folder
 * Now all logs will be placed in /sdcard/Fox/logs/
-* Added support for incremental MIUI OTA on newer devices
+* Added support for incremental MIUI OTA on new devices
 * Better support for system-as-root
 * Improved support for Android 10
 * Improved support for MIUI 11
 * Changed default MIUI OTA settings
 * The Magisk addon has been updated (now Magisk v20.1)
 * Handle "Android Rescue Party" messages
-* Detailed information is now provided about the installed ROM
+* Detailed information is now provided about the ROM
 * Harmonise some sources with stock twrp 
 * Encryption: don't try wrapped key if not needed
 * Encryption: cryptfs: add support for keymaster 2
