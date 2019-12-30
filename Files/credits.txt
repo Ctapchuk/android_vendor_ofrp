@@ -10,7 +10,6 @@ OrangeFox Credits
   describe everything he did.
 * @VnukovD aka fordownloads - Developed amazing
   OrangeFox theme
-* @F1a5H - Donated server for OrangeFox
 * GitLab team - supported us by Gold status
 
 == Guys who help moderate OrangeFox chats ==
