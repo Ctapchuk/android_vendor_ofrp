@@ -2,30 +2,49 @@ OrangeFox Translators
 ---------------------
 
 Chinese Simplified:
-- qetxdc
+* qetxdc
+* ZhangJun
+Chinese Traditional:
+* Xiao_Le
 German:
-- Fabian
+* Fabian
+* sandmann79
 Greek:
-- spkprs
+* spkprs
 Hungarian:
-- MKAdam
+* MKAdam
 Italian:
-- Filippo Giovannini
+* Filippo Giovannini
+* Sebastiano Barezzi
+* Giova
+French:
+* Picard Romuald
+* senchi
+* park
 Indonesian:
-- Lazuardi Elki
-- Ninja_14
-- muhajaya
+* Lazuardi Elki
+* Ninja_14
+* muhajaya
+* LunaricX Plus
 Polish:
-- makstrix
+* makstrix
+* Michał Kucharski
+* Daviteusz
 Romanian:
-- Igor Sorocean
+* Igor Sorocean
 Russian:
-- MrYacha
-- fordownloads
+* MrYacha
+* fordownloads
 Spanish:
-- Jimgsey
+* Jimgsey
 Turkish:
-- yanikyigit59
-- Metin Arslan
+* yanikyigit59
+* Metin Arslan
+* Murat Kozan
+* trkzmn
 Vietnamese:
-- Viet Hoang
+* Viet Hoang
+* Tran Dan
+Ukrainian:
+* Алексей Дрыганов
+* Olexzp

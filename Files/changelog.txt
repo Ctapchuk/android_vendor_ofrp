@@ -1,71 +1,22 @@
-OrangeFox R10 Changelog
+OrangeFox R10.1 Changelog
 -----------------------
 
-* Fully refreshed design to Material Design 2 Guidelines
-* OrangeFox team rethought logic of recovery
-* Merged latest TWRP 3.3.1 commits
-* Magisk updated to v19.3
-* Added inbuilt ROM app manager
-* Added inbuilt Magisk Manger 
-  (No more bootloops by wrong modules!)
-* Flashlight code updated to support more devices
-* Added Quick backup option
-  (to backup essential partitions with one click)
-* Added support for OTA of non-MIUI devices
-* MIUI OTA updated with many fixes
-* Added PIN Code security option
-* Added Gesture key security option
-* Significantly increased the persistence of OrangeFox
-  protection. The password will not reset
-  even after reinstalling OrangeFox.
-* Added ability to block ADB on startup.
-* Significant upgrades to the built-in File Manager
-* File manager supports the "back" key to go into the
-  parent directories
-* Installing ZIPs merged with File Manager
-* Added ZIP, IMG files sort in File Manager
-* To see the available actions for a file, long press it
-* File Manager shows path to current directory
-* Added search in File Manager
-* Added txt files read ability in File Manager
-* Added ability to Compress/Unpack in File Manager
-* Added Checksum checker in File Manager
-* Added Information page in file action
-* Added ability to set premissions in File Manager
-* Added hardware navigation key support
-* Vol+ and power key for enable flashlight
-* Added EDL reboot option
-* Removed hard coded MIUI OTA, we can build OrangeFox 
-  without it for non-Xiaomi devices
-* Added tons of customisation, new themes, colors,
-  settings, battery styles, navbar settings,
-  and many more.
-* Themes now apply MUCH faster and keep after
-  OrangeFox reinstallation
-* Format data and partition SD merged to the new
-  "Manage Partitions" page.
-* The "Wipe" menu contains only wipe
-  actions, and no more.
-* To launch AromaFM you need click twice
-  (mo more accidental opening of AromaFM)
-* Backups and Restores merged in one page
-  (to add backups, click on the '+' button)
-* Settings page redesigned to rainbow icons list
-  (as in Android Pie)
-* Added "Fox Addons" page for OrangeFox's ZIP
-  \installer addons
-* Added new beautiful page, if backups are not found
-* Changed welcome message in log
-* Fixed slider unlocking in lockscreen and
-  changed to default
-* We support now deep notches, statusbar
-  will stretch as MIUI
-* Added support for big round corners
-  (Hello Poco)
-* We maked optimisation to reduce lagging pages,
-  keyboards and dialogs
-* Default vibrations was reduced
-* Also huge number of other changes and bug fixes
-* Translations have been updated from our Crowdin page.
-
-Old translation have been removed.
+* Save historic logs (compressed zips) - 
+    to the /sdcard/Fox/logs/ folder
+* Now all logs will be placed in /sdcard/Fox/logs/
+* Added support for incremental MIUI OTA on newer devices
+* Better support for system-as-root
+* Improved support for Android 10
+* Improved support for MIUI 11
+* Changed default MIUI OTA settings
+* The Magisk addon has been updated (now Magisk v20.1)
+* Handle "Android Rescue Party" messages
+* Detailed information is now provided about the installed ROM
+* Harmonise some sources with stock twrp 
+* Encryption: don't try wrapped key if not needed
+* Encryption: cryptfs: add support for keymaster 2
+* Fixed issues with app manager
+* Disabled some unnecessary warnings for custom roms
+* Added Ukrainian, French and Vietnamese languages
+* Updated all other languages
+* Lots of little fixes
