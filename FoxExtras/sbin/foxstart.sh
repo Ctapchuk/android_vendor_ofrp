@@ -18,7 +18,7 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   26 December 2019
+# * Date:   06 January 2020
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
@@ -127,8 +127,13 @@ Is_Proper_SAR() {
   [ "$F" != "true" ] && {
     echo "0"
     return  
-  }  
-  [ -L "/system" -a -d "/system_root" ] && echo "1" || echo "0"
+  }
+  [ -L "/system" -a -d "/system_root" ] && {
+    echo "1"
+    return
+  }
+  F=$(grep -s "/system_root" "/proc/mounts")
+  [ -n "$F" ] && echo "1" || echo "0"
 }
 
 get_ROM() {
