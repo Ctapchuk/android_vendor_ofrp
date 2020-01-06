@@ -4,8 +4,8 @@
 # -
 # - Converted by DarthJabba9 to a standalone dm-verity/forced-encryption command
 # - line shell script for OrangeFox Recovery
-# - Version:      V0.4
-# - Last amended: 20191129
+# - Version:      V0.5
+# - Last amended: 20200105
 # -
 
 # globals
@@ -128,7 +128,12 @@ is_SAR() {
     echo "0"
     return  
   }  
-  [ -L "/system" -a -d "/system_root" ] && echo "1" || echo "0"
+  [ -L "/system" -a -d "/system_root" ] && {
+    echo "1"
+    return
+  }
+  F=$(grep -s "/system_root" "/proc/mounts")
+  [ -n "$F" ] && echo "1" || echo "0"
 }
 
 # try and get the SDK version of the installed ROM
@@ -164,7 +169,8 @@ OF_welcome() {
 	get_SDK_version
 
 	OLDMAGISK=$(Old_Magisk)
-	
+
+	ui_print "- OLDMAGISK=$OLDMAGISK"	
 	ui_print "- KEEP_DM-VERITY=$KEEPVERITY"
 	ui_print "- KEEP_FORCED-ENCRYPTION=$KEEPFORCEENCRYPT"
 	ui_print "- KEEP_QUOTA=$KEEPQUOTA"
@@ -301,6 +307,13 @@ OF_patch_fstab() {
 	[ -d /vendor/etc ] && FSTABS="$FSTABS /vendor/etc/fstab*"
 	[ -d $SYS_DIR/vendor/etc ] && FSTABS="$FSTABS $SYS_DIR/vendor/etc/fstab*"
 
+	#for i in odm nvdata; do
+  	#    if [ "$(find /dev/block -iname $i | head -n 1)" ]; then
+    	#	mount_part $i
+    	#	[ "$i" == "nvdata" ] && FSTABS="$FSTABS/$i/fstab*" || FSTABS="$FSTABS/$i/etc/fstab*"
+  	#   fi
+	#done
+
 	# Fstab patches
 	if [ $ANDROID_SDK -ge 26 ]; then
 		[ -z "$FSTABS" ] || ui_print "- Patching fstabs:"
@@ -366,15 +379,17 @@ OF_patch_fstab() {
 	done
 
 	# Samsung patches
-#	if [ -f kernel ]; then
-#		# Remove Samsung RKP
-#		$MAGISKBOOT hexpatch kernel \
-#		49010054011440B93FA00F71E9000054010840B93FA00F7189000054001840B91FA00F7188010054 \
-#		A1020054011440B93FA00F7140020054010840B93FA00F71E0010054001840B91FA00F7181010054
-#
-#		# Remove Samsung defex
-#		$MAGISKBOOT hexpatch kernel 821B8012 E2FF8F12
-#	fi
+	if [ -f kernel ]; then
+		# Remove Samsung RKP
+		$MAGISKBOOT hexpatch kernel \
+		49010054011440B93FA00F71E9000054010840B93FA00F7189000054001840B91FA00F7188010054 \
+		A1020054011440B93FA00F7140020054010840B93FA00F71E0010054001840B91FA00F7181010054
+
+		# Remove Samsung defex
+  		# Before: [mov w2, #-221]   (-__NR_execve)
+  		# After:  [mov w2, #-32768]
+		$MAGISKBOOT hexpatch kernel 821B8012 E2FF8F12
+	fi
 
 	#
 	ui_print "- Finished patching fstab file(s)"
@@ -406,8 +421,8 @@ Main() {
 	OF_locate_boot
 	OF_unpack_boot_image
 	OF_patch_boot_image
-	OF_patch_dtbo
 	OF_patch_fstab
+	$KEEPVERITY || OF_patch_dtbo
 	OF_repack_boot_image
 	ui_print "- Done!"
 	exit 0
@@ -416,5 +431,8 @@ Main() {
 
 # main
 process_cmdline "$@"
+export KEEPVERITY
+export KEEPFORCEENCRYPT
+export KEEPQUOTA
 Main
 #
