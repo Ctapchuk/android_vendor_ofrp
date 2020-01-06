@@ -111,9 +111,10 @@ CheckRequirements() {
        if [ -z "$TARGET_DEVICE_ALT" ]; then
           abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
        fi
-       F=$(echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE_ALT")
+       #F=$(echo "$PRODUCT_DEVICE" | grep "$TARGET_DEVICE_ALT")
+       F=$(echo "$TARGET_DEVICE_ALT" | grep -w "$PRODUCT_DEVICE")
        if [ -n "$F" ]; then
-          ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE_ALT ..."
+          ui_print "- OrangeFox (RELEASE_VER) for $PRODUCT_DEVICE ..."
        else
           abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
        fi
@@ -126,8 +127,13 @@ is_SAR() {
   [ "$F" != "true" ] && {
     echo "0"
     return  
-  }  
-  [ -L "/system" -a -d "/system_root" ] && echo "1" || echo "0"
+  }
+  [ -L "/system" -a -d "/system_root" ] && {
+    echo "1"
+    return
+  }
+  F=$(grep -s "/system_root" "/proc/mounts")
+  [ -n "$F" ] && echo "1" || echo "0"
 }
 
 # mount everything we might need
