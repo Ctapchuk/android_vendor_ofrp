@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 20 December 2019
+# Date: 06 January 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -173,11 +173,11 @@ local F="$D/META-INF/com/google/android/update-binary"
 
 # whether this is a system-as-root build
 SAR_BUILD() {
-local F="$FOX_RAMDISK/etc/recovery.fstab"
-local S="$FOX_RAMDISK/system_root/"
-  [ ! -d "$S" ] && { echo "0"; return; }
-  local C=$(cat "$F" | grep ^"/system_root")
-  [ -n "$C" ] && echo "1" || echo "0"
+  [ ! -d "$FOX_RAMDISK/system_root/" ] && { echo "0"; return; }
+  local C=$(cat "$FOX_RAMDISK/etc/recovery.fstab" | grep -s ^"/system_root")
+  [ -z "$C" ] && { echo "0"; return; }
+  C=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.system_root_image")
+  [ "$C" = "true" ] && echo "1" || echo "0"
 }
 
 # expand a directory path
@@ -282,6 +282,16 @@ local TDT=$(date "+%d %B %Y")
      rm -rf $OF_WORKING_DIR/sdcard/Fox/FoxFiles/AromaFM
   fi
 
+  # SAR
+  if [ "$(SAR_BUILD)" = "1" ]; then
+     echo -e "${GREEN}-- This is a system-as-root build - adjusting OF_initd zip ...${NC}"
+     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
+     mv $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
+  else
+     echo -e "${GREEN}-- This is not a system-as-root build - removing OF_initd-ak3 zip ...${NC}"
+     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
+  fi
+  
   # alternative/additional device codename? (eg, "kate" (for kenzo); "willow" (for ginkgo))
   if [ -n "$TARGET_DEVICE_ALT" ]; then
      echo -e "${GREEN}-- Adding the alternative device codename: \"$TARGET_DEVICE_ALT\" ${NC}"
@@ -485,14 +495,23 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      cp -a $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/sbin/bash
      cp -a $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/etc/bash.bashrc
      chmod 0755 $FOX_RAMDISK/sbin/bash
+     if [ "$FOX_ASH_IS_BASH" = "1" ]; then
+        export FOX_USE_BASH_SHELL="1"     
+     fi
   fi
   
   # replace busybox "sh" with bash ?
   if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
      if [ -f "$FOX_RAMDISK/sbin/sh" ]; then
-        echo -e "${GREEN}-- Replacing the busybox \"sh\" command with bash ...${NC}"
+        echo -e "${GREEN}-- Replacing the busybox \"sh\" applet with bash ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/sh
   	ln -s bash $FOX_RAMDISK/sbin/sh
+  	# do the same for "ash"?
+        if [ "$FOX_ASH_IS_BASH" = "1" ]; then
+           echo -e "${GREEN}-- Replacing the busybox \"ash\" applet with bash ...${NC}"
+  	   rm -f $FOX_RAMDISK/sbin/ash
+  	   ln -s bash $FOX_RAMDISK/sbin/ash
+  	fi
      fi
   fi
 
@@ -627,10 +646,16 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
 	rm -f $FOX_RAMDISK/sbin/aapt
 	rm -f $FOX_RAMDISK/etc/bash.bashrc
   	if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
-     	   if [ -h "$FOX_RAMDISK/sbin/sh" ]; then
+     	   if [ -L "$FOX_RAMDISK/sbin/sh" ]; then
               echo -e "${GREEN}-- Replacing bash 'sh' with busybox 'sh' ...${NC}"
   	      rm -f $FOX_RAMDISK/sbin/sh
   	      ln -s busybox $FOX_RAMDISK/sbin/sh
+  	      # do the same for "ash"?
+  	      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
+  	         echo -e "${GREEN}-- Replacing bash 'ash' with busybox 'ash' ...${NC}"
+  	         rm -f $FOX_RAMDISK/sbin/ash
+  	         ln -s busybox $FOX_RAMDISK/sbin/ash
+  	      fi
      	   fi
  	fi
 	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"

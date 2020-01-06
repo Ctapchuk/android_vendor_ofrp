@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 27 December 2019
+# Date: 05 January 2020
 #
 # -----------------------------------
 #
@@ -80,6 +80,11 @@
    - set this to 1 if you the bash shell to replace the busybox "sh"
    - default = 0
    - if not set, bash will still be copied, but it will not replace "sh"
+#
+"FOX_ASH_IS_BASH"
+   - set this to 1 if you the bash shell to replace the busybox "ash"
+   - default = 0
+   - if not set, bash will still be copied, but it will not replace "ash"
 #
 "FOX_REMOVE_BASH"
    - set this to 1 if you want to remove bash completely from the recovery
@@ -296,7 +301,8 @@
  - Use this if the device has more than one code name, so that the OrangeFox zip
  - installer can support the alternative code name without just bombing out
  - eg, export TARGET_DEVICE_ALT="kate" (for kenzo/kate)
- -     export TARGET_DEVICE_ALT=willow" (for ginkgo/willow)
+ -     export TARGET_DEVICE_ALT="willow" (for ginkgo/willow)
+ -     export TARGET_DEVICE_ALT="blue, green, yellow, orange" (for multiple alt devices)
  - default = nothing
 #
 "OF_SKIP_ORANGEFOX_PROCESS" [NEW]
