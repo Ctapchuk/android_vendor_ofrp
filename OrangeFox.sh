@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 06 January 2020
+# Date: 07 January 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -282,13 +282,13 @@ local TDT=$(date "+%d %B %Y")
      rm -rf $OF_WORKING_DIR/sdcard/Fox/FoxFiles/AromaFM
   fi
 
-  # SAR
-  if [ "$(SAR_BUILD)" = "1" ]; then
-     echo -e "${GREEN}-- This is a system-as-root build - adjusting OF_initd zip ...${NC}"
+  # SAR or new magiskboot - use anykernel3 version of OF_initd
+  if [ "$(SAR_BUILD)" = "1" -o "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+     echo -e "${GREEN}-- System-as-root - or new magiskboot. Using OF_initd-ak3 zip ...${NC}"
      rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
      mv $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
   else
-     echo -e "${GREEN}-- This is not a system-as-root build - removing OF_initd-ak3 zip ...${NC}"
+     echo -e "${GREEN}-- Not system-as-root - plus old magiskboot. Removing OF_initd-ak3 zip ...${NC}"
      rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
   fi
   
@@ -568,7 +568,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   if [ "$(SAR_BUILD)" = "1" ]; then
      echo -e "${GREEN}-- This is a system-as-root build ...${NC}"     
   else
-     echo -e "${BLUE}-- This is NOT a system-as-root build - removing the system_sar_mount directory ...${NC}"
+     echo -e "${GREEN}-- This is NOT a system-as-root build - removing the system_sar_mount directory ...${NC}"
      rm -rf "$FOX_RAMDISK/FFiles/Tools/system_sar_mount/"
   fi
 
