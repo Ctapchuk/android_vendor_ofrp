@@ -54,6 +54,34 @@ is_mounted() {
   esac;
 }
 
+# mount a partition, if not mounted already
+# mount_part <partition>
+mount_part() {
+  if [ -z "$1" ]; then
+     return
+  fi
+
+  local F=$(is_mounted "$1")
+  if [ "$F" = "1" ]; then
+     return
+  fi
+
+  mount $1
+}
+
+# unmount a partition, if mounted
+# umount_part <partition>
+umount_part() {
+  if [ -z "$1" ]; then
+     return
+  fi
+
+  local F=$(is_mounted "$1")
+  if [ "$F" = "1" ]; then
+     umount "$1"
+  fi
+}
+
 # package_extract_file <file> <destination_file>
 old_package_extract_file() { 
    mkdir -p "$(dirname "$2")"
@@ -166,17 +194,12 @@ local sys="/system"
 
 # unmount everything that we mounted
 UnMountThemAll() {
-local F=$(is_mounted "$SYS_ROOT")
-   [ "$F" = "1" ] && umount $SYS_ROOT
-   umount /system > /dev/null 2>&1
-   F=$(is_mounted "/vendor")
-   [ "$F" = "1" ] && umount /vendor
-   F=$(is_mounted "/cache")
-   [ "$F" = "1" ] && umount /cache
-   F=$(is_mounted "/persist")
-   [ "$F" = "1" ] && umount /persist
-   F=$(is_mounted "/data")
-   [ "$F" = "1" ] && umount /data
+   umount_part "$SYS_ROOT"
+   umount_part "/system" > /dev/null 2>&1
+   umount_part "/vendor"
+   umount_part "/cache"
+   umount_part "/persist"
+   umount_part "/data"
 }
 
 Process_StockRecovery() {
@@ -218,8 +241,7 @@ local P="/persist/cache/"
  if [ "$OF_AB_DEVICE" = "1" ]; then
     [ -e $AB ] && { echo "$AB"; return; }
     [ -e $P ] && { echo "$P"; return; }
-    F=$(is_mounted "/data")
-    [ "$F" != "1" ] && mount /data
+    mount_part "/data"
     echo "$AB"
     return
  fi
@@ -235,8 +257,7 @@ local cache_dir=$(GetCacheDir)
 local F="0"
 
   if [ "$cache_dir" = "/cache/" ]; then
-     F=$(is_mounted "/cache")
-     [ "$F" != "1" ] && mount /cache
+     mount_part "/cache"
      F=$(is_mounted "/cache")
      [ "$F" != "1" ] && {
        ui_print "- Error mounting /cache; the post-install patches will not be processed."
@@ -244,8 +265,7 @@ local F="0"
      }
  else
      if [ "$cache_dir" = "/persist/cache/" ]; then
-     	F=$(is_mounted "/persist")
-     	[ "$F" != "1" ] && mount /persist
+     	mount_part "/persist"
      	F=$(is_mounted "/persist")
      	[ "$F" != "1" ] && {
      	  ui_print "- Error mounting the cache directory ($cache_dir); the post-install patches will not be processed."
@@ -362,9 +382,9 @@ local F="$1"
 	[ -z "$F" ] && F=/sdcard
 	ui_print "- Removing old OrangeFox configuration files ..."
 	rm -f $F/Fox/.foxs
-	mount /persist
+	mount_part "/persist"
 	rm -f /persist/.foxs
-	umount /persist
+	umount_part /persist
 }
 
 # main function
@@ -393,13 +413,12 @@ Main() {
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."
 	local internal_SD="/sdcard"
-	local F=$(is_mounted "$internal_SD")
-	[ "$F" = "0" ] && mount $internal_SD
+	mount_part "$internal_SD"
 	F=$(is_mounted "$internal_SD")
 	[ "$F" = "0" ] && {
 	   internal_SD="$EXTERNAL_STORAGE"
 	   [ -z "$internal_SD" ] && internal_SD="/data/media/0"
-	   mount $internal_SD
+	   mount_part "$internal_SD"
 	}
 	F=$(is_mounted "$internal_SD")
 	[ "$F" = "1" ] && {	
@@ -427,7 +446,7 @@ Main() {
     	mkdir -p $internal_SD/Fox/logs
     	ui_print "- Backing up recovery.log to $internal_SD/Fox/logs/install.log ..."
 	cp -a /tmp/recovery.log $internal_SD/Fox/logs/install.log
-   	[ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
+   	[ "$internal_SD" = "/sdcard" ] &&  umount_part "$internal_SD"
 
 # umount
 	UnMountThemAll
