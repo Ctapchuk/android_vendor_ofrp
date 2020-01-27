@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 05 January 2020
+# Date: 15 January 2020
 #
 # -----------------------------------
 #
@@ -232,11 +232,6 @@
 "OF_FL_PATH1" and "OF_FL_PATH2"
   - set custom flashlight path (if flashlight isn't working)
   - eg. OF_FL_PATH1="/sys/class/leds/led_torch_2"
-#
-"FOX_KEEP_BUSYBOX_PS"
-  - wehther to keep the (stripped down) busybox version of the "ps" command
-  - if this is not defined, the busybox "ps" command will be replaced by a fuller version
-  - default is "0"
 #
 "TW_DEVICE_VERSION"
   - the version number of the release
