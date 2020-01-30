@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 07 January 2020
+# Date: 30 January 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -127,7 +127,10 @@ fi
 if [ "$OF_AB_DEVICE" = "1" ]; then
    if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" ] || [ "$OF_USE_MAGISKBOOT" != "1" ]; then
       echo -e "${RED}-- ************************************************************************************************${NC}"
-      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - A/B device - but other necessary vars not set. Quitting now ... ${NC}"
+      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - A/B device - but other necessary vars not set. ${NC}"
+      echo "-- You must do this - \"export OF_USE_MAGISKBOOT=1\" "
+      echo "-- And this         - \"export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1\" "
+      echo -e "${RED}-- Quitting now ... ${NC}"
       echo -e "${RED}-- ************************************************************************************************${NC}"
       exit 200
    fi
