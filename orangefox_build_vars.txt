@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 15 January 2020
+# Date: 8 February 2020
 #
 # -----------------------------------
 #
@@ -303,6 +303,14 @@
 "OF_SKIP_ORANGEFOX_PROCESS" [NEW]
  - Use this to 1 to skip the dm-verity/forced-encryption/boot images patches
  - If this is enabled, then "OF_DONT_PATCH_ON_FRESH_INSTALLATION" is also enabled automatically
+ - default = 0
+#
+"OF_VANILLA_BUILD" [NEW]
+ - Use this to 1 to make a plain build that skips all the OrangeFox patches
+ - If this is enabled, a whole lot of other variables are also enabled automatically to disable various
+ - OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/Android.mk for details)
+ - With this enabled, it is very possible (even likely) that OrangeFox will be overwritten by stock recovery, so the
+ - user may well need to flash some kind of "fcrypt" zip and/or magisk
  - default = 0
 #
 # -----------------------------------
