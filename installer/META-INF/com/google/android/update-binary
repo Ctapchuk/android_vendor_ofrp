@@ -32,6 +32,9 @@ OF_AB_DEVICE=""
 # Reset OrangeFox settings to default?
 FOX_RESET_SETTINGS=""
 
+# build a vanilla version that skips all OrangeFox patches?
+OF_VANILLA_BUILD=0
+  
 # sundry glodal defaults
 SYS_DIR="/system"
 SYS_ROOT="$SYS_DIR"
@@ -164,6 +167,17 @@ is_SAR() {
   [ -n "$F" ] && echo "1" || echo "0"
 }
 
+# file/directory/block exists
+Exists() {
+  [ -z "$1" ] && { echo "0"; return; } # error
+  [ -d "$1" ] && { echo "1"; return; } # directory
+  [ -f "$1" ] && { echo "2"; return; } # file
+  [ -h "$1" ] && { echo "3"; return; } # link
+  [ -e "$1" ] && { echo "4"; return; } # other kind of file  
+  stat "$1" > /dev/null 2>&1;
+  [ "$?" = "0" ] && echo "5" || echo "0"; # 5 = what kind of file is this?
+}
+
 # mount everything we might need
 MountThemAll() {
 local sys="/system"
@@ -233,12 +247,23 @@ $SYS_DIR/recovery-from-boot.p
    done
 }
 
+# Whether this is really a proper A/B device
+Is_AB_Device() {
+local S=$(getprop "ro.boot.slot_suffix")
+local U=$(getprop "ro.build.ab_update")
+   if [ -n "$S" -a "$U" = "true" ]; then
+      echo "1"
+   else
+      echo "0"
+   fi
+}
+
 # get the cache dir
 GetCacheDir() {
 local C="/cache/" 
 local AB="/data/cache/"
 local P="/persist/cache/"
- if [ "$OF_AB_DEVICE" = "1" ]; then
+ if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
     [ -e $AB ] && { echo "$AB"; return; }
     [ -e $P ] && { echo "$P"; return; }
     mount_part "/data"
@@ -293,34 +318,43 @@ Unzip_Installer_Package() {
 
 # routine for flashing on A/B devices
 AB_Install_Recovery() {
-local toolname="/magiskboot"
-local tool="$EX_DIR$toolname"
-local targetfile="/boot.img"
-local target="$EX_DIR$targetfile"
+local tool="$EX_DIR"/magiskboot
+local target="$EX_DIR"/boot.img
+local slot
 
-	cd "$EX_DIR"
-	chmod 0755 "$tool"
+   cd "$EX_DIR"
+   chmod 0755 "$tool"
+   
+   ui_print "- Extracting the OrangeFox ramdisk ..."
+   "$tool" unpack recovery.img > /dev/null 2>&1
+   rm -f kernel dtb
+   mv -f ramdisk.cpio ramdisk-ofrp.cpio
+   
+   for slot in a b; do
+  	ui_print "Running boot image patcher on slot $slot...";
+	dd if=/dev/block/bootdevice/by-name/boot_"$slot" of=$target;
+	"$tool" unpack -h boot.img > /dev/null 2>&1;
+	
+  	# kernel string want_initramfs -> skip_initramfs (Magisk)
+  	"$tool" hexpatch kernel 77616E745F696E697472616D6673 736B69705F696E697472616D6673;
+  	
+  	# kernel string trip_initramfs -> skip_initramfs (SuperSU)
+  	"$tool" hexpatch kernel 747269705F696E697472616D6673 736B69705F696E697472616D6673;
 
-	ui_print "- Extracting the ramdisk ..."
-	"$tool" --unpack recovery.img > /dev/null 2>&1
-	rm -f kernel dtb
-	mv -f ramdisk.cpio ramdisk-ofrp.cpio
+  	# boot.img header cmdline remove skip_override (flar2 patch)
+  	sed -i "s|$(grep '^cmdline=' header | cut -d= -f2-)|$(grep '^cmdline=' header | cut -d= -f2- | sed -e 's/skip_override//' -e 's/  */ /g' -e 's/[ \t]*$//')|" header;
 
-	ui_print "- Running boot image patcher on slot A..."
-	dd if=/dev/block/bootdevice/by-name/boot_a "of=$target"
-	"$tool" --unpack boot.img > /dev/null 2>&1
-	cp -f ramdisk-ofrp.cpio ramdisk.cpio
-	"$tool" --repack boot.img > /dev/null 2>&1
-	dd if=new-boot.img of=/dev/block/bootdevice/by-name/boot_a
-	rm -f boot.img dtb kernel new-boot.img ramdisk.cpio
-
-	ui_print "- Running boot image patcher on slot B..."
-	dd if=/dev/block/bootdevice/by-name/boot_b "of=$target"
-	"$tool" --unpack boot.img > /dev/null 2>&1
-	cp -f ramdisk-ofrp.cpio ramdisk.cpio
-	"$tool" --repack boot.img > /dev/null 2>&1
-	dd if=new-boot.img of=/dev/block/bootdevice/by-name/boot_b
-	rm -f boot.img dtb kernel new-boot.img ramdisk.cpio ramdisk-ofrp.cpio
+	cp -f ramdisk-ofrp.cpio ramdisk.cpio;
+	"$tool" repack boot.img > /dev/null 2>&1;
+	dd if=new-boot.img of=/dev/block/bootdevice/by-name/boot_"$slot";
+	rm -f boot.img dtb kernel new-boot.img ramdisk.cpio header;
+   done
+   
+   rm -f ramdisk-ofrp.cpio
+   "$tool" cleanup
+   cd /tmp
+   ui_print " ";
+   ui_print "*** NOTE: You are now unrooted! ***";   
 }
 
 # print the size of a file
@@ -335,9 +369,19 @@ FileSize() {
 # install the recovery
 Install_Recovery() {
 local PART=$(readlink -f $RECOVERY_PARTITION)
-  [ -z "$PART" ] && PART=$RECOVERY_PARTITION
+local ttmp=$PART
 
-  [ "$OF_AB_DEVICE" != "1" ] && {
+    [ -z "$PART" ] && PART=$RECOVERY_PARTITION
+
+    # either we've been told that it is A/B, or, it really is A/B
+    [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ] && {
+       [ -z "$ttmp" ] && {
+          AB_Install_Recovery
+          return
+       }
+       # if we get here, it is A/B, but it has a recovery partition!
+    }
+
     local bak="/tmp/org_recovery.img"
     dd if="$PART" of=$bak > /dev/null 2>&1
     local oldF=$(FileSize $bak)
@@ -370,10 +414,6 @@ local PART=$(readlink -f $RECOVERY_PARTITION)
     fi
     rm -f $bak
     return
-  }
-  # this is declared to be an A/B device
-  ui_print "- A/B device ... "
-  AB_Install_Recovery
 }
 
 # reset settings to default
@@ -431,11 +471,14 @@ Main() {
    	} 
 
 # Prevent the stock recovery from replacing this recovery
-	ui_print "- Disabling stock recovery overwrites"
-	
 	MountThemAll
 	
-	Disable_stock_recovery_overwrites
+	if [ "$OF_VANILLA_BUILD" = "1" ]; then
+	   ui_print "- Not disabling stock recovery overwrites!"	
+	else
+	   ui_print "- Disabling stock recovery overwrites..."
+	   Disable_stock_recovery_overwrites
+	fi
 	
 	LogFreshInstall
 	
@@ -467,6 +510,7 @@ Main() {
 	sleep 1
 	ui_print "-1s."
 	sleep 1
+	
 	ui_print " "
 	ui_print "- Rebooting to Recovery now ..."
 	reboot recovery

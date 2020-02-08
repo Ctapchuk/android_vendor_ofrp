@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 30 January 2020
+# Date: 8 February 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -269,7 +269,8 @@ local TDT=$(date "+%d %B %Y")
   # A/B devices
   if [ "$OF_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
-     cp -a $FOX_RAMDISK/sbin/magiskboot .
+     # cp -af $FOX_RAMDISK/sbin/magiskboot .
+     cp -af $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ./magiskboot
      sed -i -e "s|^OF_AB_DEVICE=.*|OF_AB_DEVICE=\"1\"|" $F
   fi
 
@@ -277,6 +278,12 @@ local TDT=$(date "+%d %B %Y")
   if [ "$FOX_RESET_SETTINGS" = "1" ]; then
      echo -e "${RED}-- Instructing zip installer to reset OrangeFox settings ... ${NC}"
      sed -i -e "s|^FOX_RESET_SETTINGS=.*|FOX_RESET_SETTINGS=\"1\"|" $F
+  fi
+
+  # skip all patches ?
+  if [ "$OF_VANILLA_BUILD" = "1" ]; then
+     echo -e "${RED}-- This build will skip all OrangeFox patches ... ${NC}"
+     sed -i -e "s|^OF_VANILLA_BUILD=.*|OF_VANILLA_BUILD=\"1\"|" $F
   fi
 
   # omit AromaFM ?
