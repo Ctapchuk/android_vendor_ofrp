@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 8 February 2020
+# Date: 14 February 2020
 #
 # -----------------------------------
 #
@@ -306,11 +306,17 @@
  - default = 0
 #
 "OF_VANILLA_BUILD" [NEW]
- - Use this to 1 to make a plain build that skips all the OrangeFox patches
+ - Set this to 1 to make a plain build that skips all the OrangeFox patches
  - If this is enabled, a whole lot of other variables are also enabled automatically to disable various
  - OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/Android.mk for details)
  - With this enabled, it is very possible (even likely) that OrangeFox will be overwritten by stock recovery, so the
  - user may well need to flash some kind of "fcrypt" zip and/or magisk
+ - default = 0
+#
+"OF_SUPPORT_OZIP_DECRYPTION" [NEW]
+ - Set this to 1 to enable support for Realme oZip decryption
+ - do not use this unless you know what you are doing (see below)
+ - if this is enabled, you must also set "TW_OZIP_DECRYPT_KEY"
  - default = 0
 #
 # -----------------------------------
