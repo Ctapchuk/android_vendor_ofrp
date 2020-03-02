@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 14 February 2020
+# Date: 2 March 2020
 #
 # -----------------------------------
 #
@@ -317,6 +317,17 @@
  - Set this to 1 to enable support for Realme oZip decryption
  - do not use this unless you know what you are doing (see below)
  - if this is enabled, you must also set "TW_OZIP_DECRYPT_KEY"
+ - default = 0
+#
+"FOX_REMOVE_AAPT" [NEW]
+ - Set this to 1 to remove the aapt binary from the build
+ - This binary is 1.7mb in size, and using this variable is useful for reducing the size of the recovery
+ - default = 0
+#
+"FOX_DRASTIC_SIZE_REDUCTION" [NEW] [EXPERIMENTAL!]
+ - Set this to 1 for some really drastic attempts to reduce the size of the recovery image
+ - This will remove source large files (including some fonts) from the build; don't worry if you see some
+ - resource error messages in the recovery's debug screen
  - default = 0
 #
 # -----------------------------------

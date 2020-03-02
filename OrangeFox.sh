@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 8 February 2020
+# Date: 2 March 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -386,6 +386,76 @@ file_getprop() {
   grep "^$2=" "$1" | cut -d= -f2
 }
 
+# try to trim the ramdisk for really small recovery partitions
+reduce_ramdisk_size() {
+local big_xml=$FOX_RAMDISK/twres/pages/customization.xml
+local small_xml=$FOX_RAMDISK/twres/pages/smaller_size.txt
+local C=""
+local D=""
+local F=""
+local REMOVE_THEME_COLORS="1"
+
+      echo "- Pruning the ramdisk to reduce the size..."
+
+      # remove some theme colours
+      if [ "$REMOVE_THEME_COLORS" = "1" ]; then
+         echo -e "${GREEN}-- Removing some theme colours ... ${NC}"
+      	 declare -a fColors=("Amber" "Brown" "Pink" "Purple")
+         local image_xml=$FOX_RAMDISK/twres/resources/images.xml
+         for i in "${fColors[@]}"
+         do
+       		F=$FOX_RAMDISK/twres/images/$i
+       		[ -d $F ] && rm -rf $F
+       		C="Color"$i
+       		
+       		#D=$C"_deleted_"
+       		#sed -i -e "s/$C/$D/" $image_xml
+       		
+       		# don't load it in the UI
+       		sed -i -e "/$C/d" $image_xml
+         done
+      fi
+
+      # remove some fonts? (only do so if we have a working "small" xml to cover the situation)
+      echo -e "${GREEN}-- Removing some fonts ... ${NC}"
+      declare -a FontFiles=("Amatic" "AngryBirds" "Bender" "Cooljazz" "Chococooky")
+         
+      # delete the font (*.ttf) tiles
+      for i in "${FontFiles[@]}"
+      do
+     	   C=$i".ttf"
+     	   F=$FOX_RAMDISK/twres/fonts/$C
+     	   rm -f $F
+     	   # remove references to them in images.xml 
+     	   sed -i "/$C/d" $image_xml
+      done
+
+      # remove references to them in customization.xml, using their font numbers
+      # the the matching line plus the next 2 lines
+      for i in {5..9}; do
+    	   F="font"$i
+     	   sed -i "/$F/I,+2 d" $big_xml
+      done
+      
+      # remove other large files
+      echo -e "${GREEN}-- Removing some large files ... ${NC}"
+      local FFil="$FOX_RAMDISK/FFiles"
+      rm -rf $FFil/OF_initd
+      rm -rf $FFil/AromaFM
+      rm -rf $FFil/nano
+      rm -f $FOX_RAMDISK/sbin/aapt
+      rm -f $FOX_RAMDISK/sbin/zip
+      rm -f $FOX_RAMDISK/sbin/nano
+      if [ "$FOX_USE_BASH_SHELL" = "1" -o "$FOX_ASH_IS_BASH" = "1" ]; then
+     	 echo -e "${WHITEONRED}-- ERROR!!! Never use \"FOX_USE_BASH_SHELL=1\" together with \"FOX_DRASTIC_SIZE_REDUCTION\" !!!${NC}"
+     	 #exit 255
+      else
+         rm -f $FOX_RAMDISK/sbin/bash
+         rm -f $FOX_RAMDISK/etc/bash.bashrc
+      fi
+      #
+}
+
 # ****************************************************
 # *** now the real work starts!
 # ****************************************************
@@ -500,6 +570,9 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
      export FOX_USE_BASH_SHELL="0"
+     # remove bash if it is there from a previous build
+     rm -f $FOX_RAMDISK/sbin/bash
+     rm -f $FOX_RAMDISK/etc/bash.bashrc
   else
      echo -e "${GREEN}-- Copying bash ...${NC}"
      cp -a $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/sbin/bash
@@ -550,9 +623,15 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   cp -a $FOX_VENDOR_PATH/Files/mmgui $FOX_RAMDISK/sbin/mmgui
   chmod 0755 $FOX_RAMDISK/sbin/mmgui
 
-  # Include aapt
-  cp -a $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/sbin/aapt
-  chmod 0755 $FOX_RAMDISK/sbin/aapt
+  # Include aapt (1.7mb!) ?
+  if [ "$FOX_REMOVE_AAPT" = "1" ]; then
+     echo -e "${GREEN}-- Omitting the aapt binary ...${NC}"
+     # remove aapt if it is there from a previous build
+     rm -f $FOX_RAMDISK/sbin/aapt
+  else
+     cp -a $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/sbin/aapt
+     chmod 0755 $FOX_RAMDISK/sbin/aapt
+  fi
 
   # Include text files
   cp -a $FOX_VENDOR_PATH/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
@@ -585,6 +664,13 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
+  fi
+
+  # reduce ramdisk size drastically?
+  if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
+     echo -e "${WHITEONRED}-- Going to do some drastic size reductions! ${NC}"
+     echo -e "${WHITEONRED}-- Don't worry if you see some resource errors in the recovery's debug screen. ${NC}"
+     reduce_ramdisk_size;
   fi
 
   # save the build date
