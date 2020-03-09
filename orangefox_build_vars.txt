@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 2 March 2020
+# Date: 9 March 2020
 #
 # -----------------------------------
 #
@@ -328,6 +328,17 @@
  - Set this to 1 for some really drastic attempts to reduce the size of the recovery image
  - This will remove source large files (including some fonts) from the build; don't worry if you see some
  - resource error messages in the recovery's debug screen
+ - default = 0
+#
+"OF_CHECK_OVERWRITE_ATTEMPTS" [NEW]
+ - Set this to 1 to check for attempts by a ROM's installer to overwrite OrangeFox with another recovery
+ - If this is enabled, then OrangeFox will give users a 40-second countdown, to enable
+ - them to reboot OrangeFox to stop the ROM installation, if they want
+ - default = 0
+#
+"OF_FBE_METADATA_MOUNT_IGNORE" [NEW]
+ - Set this to 1 if you are supporting FBE metadata encryption in your fstab, but don't want the user to be
+ - spammed with metadata mount errors in ROMs that don't use metadata encryption
  - default = 0
 #
 # -----------------------------------
