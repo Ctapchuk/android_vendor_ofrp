@@ -6,11 +6,16 @@ Chinese Simplified:
 * ZhangJun
 Chinese Traditional:
 * Xiao_Le
+* Hs0
+* rubyyang323
+* Nobiewhaty
 German:
 * Fabian
 * sandmann79
+* Henry2o1o
 Greek:
 * spkprs
+* Geop
 Hungarian:
 * MKAdam
 Italian:
@@ -26,25 +31,33 @@ Indonesian:
 * Ninja_14
 * muhajaya
 * LunaricX Plus
+* iKhan17
 Polish:
 * makstrix
 * Michał Kucharski
 * Daviteusz
 Romanian:
 * Igor Sorocean
+* sorocean.igor
 Russian:
 * MrYacha
 * fordownloads
 Spanish:
 * Jimgsey
+* FacuM
 Turkish:
 * yanikyigit59
 * Metin Arslan
 * Murat Kozan
 * trkzmn
+* n3teller
 Vietnamese:
 * Viet Hoang
 * Tran Dan
+* viethoang246.duong
 Ukrainian:
-* Алексей Дрыганов
+* Alexey Dryganov
 * Olexzp
+* Gho5t
+* AlexPechkin
+* MrYacha
