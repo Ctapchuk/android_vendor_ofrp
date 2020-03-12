@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 9 March 2020
+# Date: 11 March 2020
 #
 # -----------------------------------
 #
@@ -111,7 +111,7 @@
    - "OF_USE_MAGISKBOOT" must also be set to "1" if you want to use this
    - default = 0
 #
-"OF_USE_NEW_MAGISKBOOT"
+"OF_USE_NEW_MAGISKBOOT" [ **OBSOLETE** - only v20.x magiskboot is now used]
    - set to 1 to use the new (v20.x) magiskboot binary instead of the v1.93 binary
    - do NOT set this, unless you are ABSOLUTELY sure that your device will NEVER
    - have an Android version that is less than Oreo (ie, no less than SDK 26)

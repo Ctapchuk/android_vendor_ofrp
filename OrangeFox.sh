@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 2 March 2020
+# Date: 11 March 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -106,9 +106,6 @@ fi
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
-
-# new magiskboot binary
-NEW_MAGISKBOOT_BIN="magiskboot_new"
 
 # whether to print extra debug messages
 DEBUG="0"
@@ -269,8 +266,7 @@ local TDT=$(date "+%d %B %Y")
   # A/B devices
   if [ "$OF_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
-     # cp -af $FOX_RAMDISK/sbin/magiskboot .
-     cp -af $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ./magiskboot
+     cp -af $FOX_RAMDISK/sbin/magiskboot .
      sed -i -e "s|^OF_AB_DEVICE=.*|OF_AB_DEVICE=\"1\"|" $F
   fi
 
@@ -292,15 +288,10 @@ local TDT=$(date "+%d %B %Y")
      rm -rf $OF_WORKING_DIR/sdcard/Fox/FoxFiles/AromaFM
   fi
 
-  # SAR or new magiskboot - use anykernel3 version of OF_initd
-  if [ "$(SAR_BUILD)" = "1" -o "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-     echo -e "${GREEN}-- System-as-root - or new magiskboot. Using OF_initd-ak3 zip ...${NC}"
-     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
-     mv $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
-  else
-     echo -e "${GREEN}-- Not system-as-root - plus old magiskboot. Removing OF_initd-ak3 zip ...${NC}"
-     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
-  fi
+  # use anykernel3 version of OF_initd
+  echo -e "${GREEN}-- Using OF_initd-ak3 zip ...${NC}"
+  rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
+  mv $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
   
   # alternative/additional device codename? (eg, "kate" (for kenzo); "willow" (for ginkgo))
   if [ -n "$TARGET_DEVICE_ALT" ]; then
@@ -637,21 +628,6 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   cp -a $FOX_VENDOR_PATH/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
   cp -a $FOX_VENDOR_PATH/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
   cp -a $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
-
-  # if we haven't copied magiskboot, then delete the new version from the build
-  if [ ! -f $FOX_RAMDISK/sbin/magiskboot ]; then
-     echo -e "${GREEN}-- Not using magiskboot - deleting $NEW_MAGISKBOOT_BIN ...${NC}"
-     rm -f "$FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN"
-  fi
-
-  # if do we want to use the new magiskboot?
-  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-     echo -e "${GREEN}-- Using new magiskboot ...${NC}"
-     mv -f "$FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN" "$FOX_RAMDISK/sbin/magiskboot"
-  else
-     echo -e "${GREEN}-- Removing the new magiskboot binary ($NEW_MAGISKBOOT_BIN) ...${NC}"
-     rm -f "$FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN"
-  fi
 
   # perhaps we don't need some "Tools" ?
   if [ "$(SAR_BUILD)" = "1" ]; then
