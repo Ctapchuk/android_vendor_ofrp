@@ -18,14 +18,14 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   06 January 2020
+# * Date:   20 March 2020
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
-CFG="/tmp/orangefox.cfg"
+CFG="/etc/orangefox.cfg"
 FS="/etc/recovery.fstab"
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
