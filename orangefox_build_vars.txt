@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 17 March 2020
+# Date: 23 March 2020
 #
 # -----------------------------------
 #
@@ -344,6 +344,11 @@
 "OF_FIX_OTA_UPDATE_MANUAL_FLASH_ERROR" [NEW]
 - Set this to 1 to try to recover from error situations where people flash incremental block-based OTA zips manually
 - An error will still be displayed, but OrangeFox will reboot itself into "Ors" mode and attempt to apply the OTA update (this is not guaranteed to always work)
+- default = 0
+#
+"OF_PATCH_AVB20" [NEW]
+- Set this to 1 to try patch AVB 2.0 so that OrangeFox is not replaced by stock recovery
+- This requires magiskboot
 - default = 0
 #
 # -----------------------------------
