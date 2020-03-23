@@ -370,16 +370,20 @@ FileSize() {
 Install_Recovery() {
 local PART=$(readlink -f $RECOVERY_PARTITION)
 local ttmp=$PART
+local Is_ABD="0"
 
     [ -z "$PART" ] && PART=$RECOVERY_PARTITION
 
     # either we've been told that it is A/B, or, it really is A/B
-    [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ] && {
+    [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ] && Is_ABD="1"
+    [ "$Is_ABD" = "1" ] && {
+       ui_print "- The device is an A/B device."
        [ -z "$ttmp" ] && {
           AB_Install_Recovery
           return
        }
        # if we get here, it is A/B, but it has a recovery partition!
+       ui_print "- But it also has a recovery partition!"
     }
 
     local bak="/tmp/org_recovery.img"
@@ -389,6 +393,12 @@ local ttmp=$PART
     ui_print "- Partition_Size=$oldF bytes; Recovery_Size=$newF bytes"
     [  $newF -gt $oldF ] && {
        rm -f $bak
+       [ "$Is_ABD" = "1" -a "$oldF" = "0" ] && {
+          ui_print "- Hmmm ... an A/B device with a zero byte recovery partition!"
+          ui_print "- Resorting to the A/B installation procedure..."
+          AB_Install_Recovery
+          return
+       }
        abort "The recovery image ($newF bytes) is bigger than your recovery partition ($oldF bytes)! Quitting."
     }
     
