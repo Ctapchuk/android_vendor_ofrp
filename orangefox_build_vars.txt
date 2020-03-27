@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 23 March 2020
+# Date: 27 March 2020
 #
 # -----------------------------------
 #
@@ -350,5 +350,10 @@
 - Set this to 1 to try patch AVB 2.0 so that OrangeFox is not replaced by stock recovery
 - This requires magiskboot
 - default = 0
+#
+"OF_SKIP_MULTIUSER_FOLDERS_BACKUP" [NEW]
+- Set this to 1 to avoid parallel/dual apps or multi-user backup issues (error 255)
+- This adds the relevant directories to the list of backup exclusions
+- default = 0 (but you really *should* enable it on devices using FBE encryption)
 #
 # -----------------------------------
