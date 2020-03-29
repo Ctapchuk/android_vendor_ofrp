@@ -356,4 +356,9 @@
 - This adds the relevant directories to the list of backup exclusions
 - default = 0 (but you really *should* enable it on devices using FBE encryption)
 #
+"OF_USE_SYSTEM_FINGERPRINT" [NEW] [EXPERIMENTAL!]
+- Set this to 1 to use the system (installed ROM's) fingerprint as the recovery's fingerprint
+- Use with care, since it may cause issues with some ROM installs/OTA updates
+- default = 0
+#
 # -----------------------------------
