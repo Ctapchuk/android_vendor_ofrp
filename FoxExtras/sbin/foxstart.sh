@@ -18,11 +18,12 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   20 March 2020
+# * Date:   20200329
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
+SCRIPT_LASTMOD_DATE="20200329"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
@@ -64,6 +65,12 @@ DebugDirList() {
 DebugMsg() {
    [ ! "$DEBUG" = "1" ] && return
    echo "DEBUG: OrangeFox: $@" >> $LOG
+}
+
+# is the directory mounted?
+is_mounted() {
+  grep -q " `readlink -f $1` " /proc/mounts 2>/dev/null
+  return $?
 }
 
 # is it a treble ROM ?
@@ -136,6 +143,7 @@ Is_Proper_SAR() {
   [ -n "$F" ] && echo "1" || echo "0"
 }
 
+# try to identify the installed ROM, and some ROM information
 get_ROM() {
 local S="/tmp_system_rom"
 local PROP="$S/build.prop"
@@ -160,19 +168,49 @@ local slot=$(getprop "ro.boot.slot_suffix")
    [ ! -e $PROP ] && {
       umount $S > /dev/null 2>&1
       rmdir $S
+      echo "DEBUG: OrangeFox: error - I cannot find the system build.prop" >> $LOG
       echo ""
       return
    }
 
    # query the build.prop
+   local mv1=0
+   local mv2=0
    local tmp2=""
    local tmp3=""
    tmp2=$(file_getprop "$PROP" "ro.build.display.id")
    [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.build.id")
    [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.system.build.id")
    
-   if [ -n "$tmp2" ]; then
+   # ROM not found?
+   if [ -z "$tmp2" ]; 
+   then
+      umount $S > /dev/null 2>&1
+      [ -d "$S" ] && rmdir $S > /dev/null 2>&1
+      echo "DEBUG: OrangeFox: I cannot find the ROM information in the system build.prop. Trying vendor ..." >> $LOG
+      PROP="/vendor/build.prop"
+      [ ! -d "/vendor" ] && mkdir -p /vendor > /dev/null 2>&1
+      if [ -d "/vendor" ]; then
+         !is_mounted /vendor && {
+            $MOUNT_CMD /vendor > /dev/null 2>&1
+            is_mounted /vendor && mv1=1
+         }
+   	 [ -e $PROP ] && tmp2=$(file_getprop "$PROP" "ro.vendor.build.id")
+      fi
+      [ ! -e $PROP -o -z "$tmp2" ] && {
+           [ "$mv1" = "1" ] && umount /vendor > /dev/null 2>&1
+      	   echo "DEBUG: OrangeFox: error - no joy with the vendor build.prop either" >> $LOG
+      	   echo ""
+      	   return
+      }
+  fi
+   
+   # we have a ROM - get SDK, etc
+   if [ -n "$tmp2" ]; 
+   then
       tmp3=$(file_getprop "$PROP" "ro.build.version.sdk")
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.system.build.version.sdk")
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.vendor.build.version.sdk")
       [ -n "$tmp3" ] && {
          ANDROID_SDK="$tmp3"
          $SETPROP orangefox.rom.sdk "$tmp3" > /dev/null 2>&1
@@ -180,12 +218,16 @@ local slot=$(getprop "ro.boot.slot_suffix")
          echo "ANDROID_SDK=$ANDROID_SDK" >> $CFG
       }
       
+      # get incremental version
       tmp3=$(file_getprop "$PROP" "ro.build.version.incremental")
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.system.build.version.incremental")
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.vendor.build.version.incremental")
       [ -n "$tmp3" ] && {
         echo "DEBUG: OrangeFox: INCREMENTAL_VERSION=$tmp3" >> $LOG
         echo "INCREMENTAL_VERSION=$tmp3" >> $CFG
       }
       
+      # and other stuff
       tmp3=$(file_getprop "$PROP" "ro.build.flavor")
       [ -n "$tmp3" ] && {
            echo "DEBUG: OrangeFox: BUILD_FLAVOR=$tmp3" >> $LOG
@@ -197,13 +239,18 @@ local slot=$(getprop "ro.boot.slot_suffix")
    if [ -n "$tmp2" ]; 
    then
       local FP=$(file_getprop "$PROP" "ro.build.fingerprint")
-      if [ -z "$FP" ]; then
+      [ -z "$FP" ] && FP=$(file_getprop "$PROP" "ro.system.build.fingerprint")
+      [ -z "$FP" ] && FP=$(file_getprop "$PROP" "ro.vendor.build.fingerprint")
+      if [ -z "$FP" ]; 
+      then
       	 PROP="/vendor/build.prop"
       	 [ ! -d "/vendor" ] && mkdir -p /vendor > /dev/null 2>&1
       	 [ -d "/vendor" ] && {
-            $MOUNT_CMD /vendor > /dev/null 2>&1
+            !is_mounted /vendor && {
+               $MOUNT_CMD /vendor > /dev/null 2>&1
+               is_mounted /vendor && mv2=1
+            }
             FP=$(file_getprop "$PROP" "ro.vendor.build.fingerprint")
-            umount /vendor > /dev/null 2>&1
       	 }     
       fi
       
@@ -216,8 +263,9 @@ local slot=$(getprop "ro.boot.slot_suffix")
    fi # check for ROM fingerprints
    
    # unmount
-   umount $S > /dev/null 2>&1
-   rmdir $S
+   is_mounted $S && umount $S > /dev/null 2>&1
+   [ -d "$S" ] && rmdir $S > /dev/null 2>&1
+   [ "$mv1" = "1" -o "$mv2" = "1"  ] && umount /vendor > /dev/null 2>&1
    
    # return
    echo "$tmp2"
@@ -422,7 +470,11 @@ local OPS=$(getprop "orangefox.postinit.status")
    echo "DEBUG: OrangeFox: FOX_KERNEL=$OPS" >> $LOG
    echo "DEBUG: OrangeFox: SYSTEM_ROOT=$SYS_ROOT" >> $LOG
    echo "DEBUG: OrangeFox: PROPER_SAR=$SAR" >> $LOG
+   echo "DEBUG: OrangeFox: FOX_SCRIPT_DATE=$SCRIPT_LASTMOD_DATE" >> $LOG
    $SETPROP orangefox.postinit.status 1
+   
+   # if someone is still using old recovery sources
+   ln -s $CFG /tmp/orangefox.cfg
 }
 
 # cater for situations where setprop is a dead symlinked applet
