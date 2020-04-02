@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 27 March 2020
+# Date: 02 April 2020
 #
 # -----------------------------------
 #
@@ -233,7 +233,7 @@
   - set custom flashlight path (if flashlight isn't working)
   - eg. OF_FL_PATH1="/sys/class/leds/led_torch_2"
 #
-"TW_DEVICE_VERSION"
+"FOX_VERSION"
   - the version number of the release
 #
 "OF_MAINTAINER"

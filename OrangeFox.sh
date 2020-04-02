@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 11 March 2020
+# Date: 02 April 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -89,11 +89,11 @@ if [ -z "$BUILD_TYPE" ]; then
    export BUILD_TYPE=Unofficial
 fi
 
-# tw_device_version && fox_build
-if [ -z "$TW_DEVICE_VERSION" ]; then
+# fox_version && fox_build
+if [ -z "$FOX_VERSION" ]; then
    FOX_BUILD=Unofficial
 else
-   FOX_BUILD=$TW_DEVICE_VERSION
+   FOX_BUILD=$FOX_VERSION
 fi
 
 # sort out the out_name
