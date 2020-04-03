@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 02 April 2020
+# Date: 03 April 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -463,9 +463,19 @@ if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
       echo -e "${BLUE}-- Working folder found in OUT. Cleaning up${NC}"
       rm -rf "$FOX_WORK"
    fi
+
    # unpack recovery image into working directory
    echo -e "${BLUE}-- Unpacking recovery image${NC}"
    bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
+
+  # perhaps we don't need some "Tools" ?
+  if [ "$(SAR_BUILD)" = "1" ]; then
+     echo -e "${GREEN}-- This is a system-as-root build ...${NC}"
+  else
+     echo -e "${GREEN}-- This is NOT a system-as-root build - removing the system_sar_mount directory ...${NC}"
+     rm -rf "$FOX_RAMDISK/FFiles/Tools/system_sar_mount/"
+  fi
+
 fi
 
 ###############################################################
@@ -628,14 +638,6 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   cp -a $FOX_VENDOR_PATH/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
   cp -a $FOX_VENDOR_PATH/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
   cp -a $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
-
-  # perhaps we don't need some "Tools" ?
-  if [ "$(SAR_BUILD)" = "1" ]; then
-     echo -e "${GREEN}-- This is a system-as-root build ...${NC}"     
-  else
-     echo -e "${GREEN}-- This is NOT a system-as-root build - removing the system_sar_mount directory ...${NC}"
-     rm -rf "$FOX_RAMDISK/FFiles/Tools/system_sar_mount/"
-  fi
 
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
