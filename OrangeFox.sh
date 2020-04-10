@@ -3,7 +3,7 @@
 # Custom build script for OrangeFox Recovery Project
 #
 # Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 03 April 2020
+# Date: 10 April 2020
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -85,8 +85,8 @@ DEFAULT_PROP="$FOX_RAMDISK/prop.default"
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
 # build_type
-if [ -z "$BUILD_TYPE" ]; then 
-   export BUILD_TYPE=Unofficial
+if [ -z "$FOX_BUILD_TYPE" ]; then 
+   export FOX_BUILD_TYPE=Unofficial
 fi
 
 # fox_version && fox_build
@@ -97,10 +97,10 @@ else
 fi
 
 # sort out the out_name
-if [ "$BUILD_TYPE" = "Unofficial" ] && [ "$FOX_BUILD" = "Unofficial" ]; then
+if [ "$FOX_BUILD_TYPE" = "Unofficial" ] && [ "$FOX_BUILD" = "Unofficial" ]; then
    FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
 else
-   FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$BUILD_TYPE-$FOX_DEVICE
+   FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_BUILD_TYPE-$FOX_DEVICE
 fi
 
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
