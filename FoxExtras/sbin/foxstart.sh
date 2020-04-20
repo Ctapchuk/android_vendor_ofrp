@@ -18,12 +18,12 @@
 # Please maintain this if you use this script or any part of it
 #
 # * Author: DarthJabba9
-# * Date:   20200329
+# * Date:   20200420
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200329"
+SCRIPT_LASTMOD_DATE="20200420"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
@@ -399,6 +399,7 @@ MIUI_Action() {
    fi
   echo $D >> $LOG
   echo "MIUI=$M" >> $CFG
+  $SETPROP orangefox.miui.rom "$M" > /dev/null 2>&1
 }
 
 # backup (or restore) fstab
@@ -410,29 +411,11 @@ backup_restore_FS() {
    fi
 }
 
-# set up Leds for charging 
-charging_Leds() {
-  echo battery-charging > /sys/class/leds/blue/trigger
-  echo battery-full > /sys/class/leds/green/trigger
-}
-
 # fix yellow flashlight on mido/vince/kenzo and configure Leds on others
 flashlight_Leds_config() {
-local LED=""
    case "$FOX_DEVICE" in
-       kenzo | kate)
-       		LED="/sys/devices/soc.0/qpnp-flash-led-23";
-       		charging_Leds;
-       	;;
-       	mido)
-       		LED="/sys/devices/soc/qpnp-flash-led-25";
-       		echo 0 > /proc/touchpanel/capacitive_keys_disable;
-       		charging_Leds;
-       		echo bkl-trigger > /sys/class/leds/button-backlight/trigger;
-            	echo 5 > /sys/class/leds/button-backlight/brightness; # Enable keys by default.
-       	;;
        vince)
-       		LED="/sys/devices/soc/qpnp-flash-led-24";
+   		echo "0" > /sys/devices/soc/qpnp-flash-led-24/leds/led:torch_1/max_brightness;
        	;;
        riva)
             	echo 1 > /sys/class/leds/flashlight/max_brightness;
@@ -443,7 +426,6 @@ local LED=""
        	;;
    esac
 
-   echo "0" > /$LED/leds/led:torch_1/max_brightness
    echo "0" > /sys/class/leds/led:torch_1/max_brightness
    echo "0" > /sys/class/leds/torch-light1/max_brightness
    echo "0" > /sys/class/leds/led:flash_1/max_brightness
