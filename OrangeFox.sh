@@ -1,25 +1,26 @@
 #!/bin/bash
 #
-# Custom build script for OrangeFox Recovery Project
+#	This file is part of the OrangeFox Recovery Project
+# 	Copyright (C) 2018-2020 The OrangeFox Recovery Project
 #
-# Copyright (C) 2018-2020 OrangeFox Recovery Project
-# Date: 10 April 2020
+#	OrangeFox is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	any later version.
 #
-# This software is licensed under the terms of the GNU General Public
-# License version 2, as published by the Free Software Foundation, and
-# may be copied, distributed, and modified under those terms.
+#	OrangeFox is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# 	This software is released under GPL version 3 or any later version.
+#	See <http://www.gnu.org/licenses/>.
 #
-# See <http://www.gnu.org/licenses/>.
-#
-# Please maintain this if you use this script or any part of it
-#
+# 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
+# 29 April 2020
+#
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
 #
@@ -224,6 +225,9 @@ local TDT=$(date "+%d %B %Y")
   mkdir -p $OF_WORKING_DIR
   cd $OF_WORKING_DIR
 
+  # copy documentation
+  cp -a $FOX_VENDOR_PATH/Files/INSTALL.txt .
+  
   # copy recovery image
   cp -a $RECOVERY_IMAGE ./recovery.img
    
