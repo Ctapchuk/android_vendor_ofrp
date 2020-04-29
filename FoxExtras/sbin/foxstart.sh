@@ -1,29 +1,34 @@
 #!/sbin/sh
 #
-# /sbin/foxstart.sh
-# Custom script for OrangeFox TWRP Recovery
-# Copyright (C) 2018-2020 OrangeFox Recovery Project
+# 	/sbin/foxstart.sh
+# 	Custom script for OrangeFox Recovery
 #
-# This software is licensed under the terms of the GNU General Public
-# License version 2, as published by the Free Software Foundation, and
-# may be copied, distributed, and modified under those terms.
+#	This file is part of the OrangeFox Recovery Project
+# 	Copyright (C) 2018-2020 The OrangeFox Recovery Project
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#	OrangeFox is free software: you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation, either version 3 of the License, or
+#	any later version.
 #
-# See <http://www.gnu.org/licenses/>.
+#	OrangeFox is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
 #
-# Please maintain this if you use this script or any part of it
+# 	This software is released under GPL version 3 or any later version.
+#	See <http://www.gnu.org/licenses/>.
+#
+# 	Please maintain this if you use this script or any part of it
+#
 #
 # * Author: DarthJabba9
-# * Date:   20200420
+# * Date:   20200425
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200420"
+SCRIPT_LASTMOD_DATE="20200425"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
