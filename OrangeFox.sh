@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 29 April 2020
+# 08 May 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -133,6 +133,9 @@ if [ "$OF_AB_DEVICE" = "1" ]; then
       exit 200
    fi
 fi
+
+# alternative devices
+[ -n "$OF_TARGET_DEVICES" -a -z "$TARGET_DEVICE_ALT" ] && export TARGET_DEVICE_ALT="$OF_TARGET_DEVICES"
 
 # copy recovery.img
 [ -f $OUT/recovery.img ] && cp -r $OUT/recovery.img $RECOVERY_IMAGE

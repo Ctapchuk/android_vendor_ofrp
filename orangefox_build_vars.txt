@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 02 April 2020
+# Date: 08 May 2020
 #
 # -----------------------------------
 #
@@ -50,11 +50,9 @@
 #
 "FOX_USE_LZMA_COMPRESSION"
    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
-   - if set to 1, it will replace the busybox "lzma" and "xz" applets with a full version
    - * this requires you to have an up-to-date lzma binary in your build system, and 
-   - * set these in your BoardConfig: 
+   - * set this in your BoardConfig (it will be set automatically if you don't set it yourself):
    -     LZMA_RAMDISK_TARGETS := recovery
-   -     BOARD_NEEDS_LZMA_MINIGZIP := true
    - * your kernel must also have built-in lzma compression support
    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
 #
@@ -98,7 +96,7 @@
 #
 "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES"
    - set to 1 to use magiskboot for all patching of boot images *and* recovery images
-   - this means that mkbootimg/unpackbootimg/lzma will be deleted
+   - this means that mkbootimg/unpackbootimg will be deleted
    - if this is set, this script will also automatically set OF_USE_MAGISKBOOT to 1
    - default = 0
 #
@@ -300,6 +298,22 @@
  -     export TARGET_DEVICE_ALT="blue, green, yellow, orange" (for multiple alt devices)
  - default = nothing
 #
+"OF_TARGET_DEVICES" [NEW]
+- Use this if the device has more than one code name, but ROMs and other zip installers
+- never check for all code names, therefore always causing "E3004 error 7" problems (eg, raphael/raphaelin)
+- What this does is to cause OrangeFox to temporarily switch devices names if this E3004 error 7 happens
+- then the user will be invited to flash the zip again, and it should work.
+- Note that this is temporary work-around that lasts until the recovery is rebooted. It should not be used
+- to flash MIUI OTA updates by pressing the "Reboot" button in MIUI after it has downloaded the OTA zip.
+- You should list all the valid code names for the device
+- eg, export OF_TARGET_DEVICES="raphaelin,raphael"
+-
+- NOTE: the purpose of this is quite different from TARGET_DEVICE_ALT (which only impacts on the creation of
+- the OrangeFox zip installer). This variable actually impacts on the operation of OrangeFox while flashing
+- a zip with OrangeFox. This is why it is mapped out to a separate build variable. It is deliberate done,
+- so that it can trigger all these impacts in the live recovery session. You should only deploy a
+- build using this variable after plenty of testing in all possible scenarios
+#
 "OF_SKIP_ORANGEFOX_PROCESS" [NEW]
  - Use this to 1 to skip the dm-verity/forced-encryption/boot images patches
  - If this is enabled, then "OF_DONT_PATCH_ON_FRESH_INSTALLATION" is also enabled automatically
@@ -361,4 +375,9 @@
 - Use with care, since it may cause issues with some ROM installs/OTA updates
 - default = 0
 #
+"OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [NEW]
+- Set this to 1 to create a backup of the boot.img from the ROM's zip during the OTA_BAK process when installing a ROM
+- default = 0
+
+
 # -----------------------------------
