@@ -23,7 +23,7 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200425
+# * Date:   20200512
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
@@ -508,10 +508,25 @@ local KLOG="/tmp/dmesg.log"
    fi
 }
 
+# whether there is file-based encryption
+isFB_Encrypted() {
+  [ -e "/data/unencrypted/key/version" ] && echo "1" || echo "0"
+}
+
+# whether there is full-disk encryption
+isFD_Encrypted() {
+  local F=$(mount | grep "dm-")
+  [ -n "$F" ] && echo "1" || echo "0"
+}
+
 # post-init stuff
 post_init() {
   local M="/FFiles/magiskboot_new"
   [ -f $M ] && chmod 0755 $M
+
+  # FBE - remove the "del_pass" addon
+  M=$(isFB_Encrypted)
+  [ "$M" = "1" ] && rm -rf "/FFiles/OF_DelPass/"
 }
 
 ### main() ###
@@ -541,5 +556,6 @@ post_init
 # Leds
 flashlight_Leds_config
 
+#
 exit 0
 ### end main ###
