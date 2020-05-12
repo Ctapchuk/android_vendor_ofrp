@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 08 May 2020
+# Date: 12 May 2020
 #
 # -----------------------------------
 #
@@ -301,11 +301,9 @@
 "OF_TARGET_DEVICES" [NEW]
 - Use this if the device has more than one code name, but ROMs and other zip installers
 - never check for all code names, therefore always causing "E3004 error 7" problems (eg, raphael/raphaelin)
-- What this does is to cause OrangeFox to temporarily switch devices names if this E3004 error 7 happens
-- then the user will be invited to flash the zip again, and it should work.
-- Note that this is temporary work-around that lasts until the recovery is rebooted. It should not be used
-- to flash MIUI OTA updates by pressing the "Reboot" button in MIUI after it has downloaded the OTA zip.
-- You should list all the valid code names for the device
+- What this does is to cause OrangeFox to temporarily switch devices names to prevent error 7 from happening
+- Note that this is temporary work-around that lasts until the recovery is rebooted.
+- You should list all the valid code names for the device.
 - eg, export OF_TARGET_DEVICES="raphaelin,raphael"
 -
 - NOTE: the purpose of this is quite different from TARGET_DEVICE_ALT (which only impacts on the creation of
