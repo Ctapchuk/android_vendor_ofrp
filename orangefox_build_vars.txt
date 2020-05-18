@@ -376,6 +376,10 @@
 "OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [NEW]
 - Set this to 1 to create a backup of the boot.img from the ROM's zip during the OTA_BAK process when installing a ROM
 - default = 0
+#
+"FOX_DISABLE_MIUI_OTA_BY_DEFAULT" [NEW]
+- Set this to 1 to disabled MIUI OTA by default
+- default = 0
 
 
 # -----------------------------------
