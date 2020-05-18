@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200512
+# * Date:   20200518
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200425"
+SCRIPT_LASTMOD_DATE="20200518"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
@@ -524,9 +524,12 @@ post_init() {
   local M="/FFiles/magiskboot_new"
   [ -f $M ] && chmod 0755 $M
 
-  # FBE - remove the "del_pass" addon
+  # FBE - remove the "del_pass" addon, but keep a copy in /FFiles/Tools/
   M=$(isFB_Encrypted)
-  [ "$M" = "1" ] && rm -rf "/FFiles/OF_DelPass/"
+  [ "$M" = "1" ] && {
+    cp -a /FFiles/OF_DelPass/OF_DelPass.zip /FFiles/Tools/
+    rm -rf "/FFiles/OF_DelPass/"
+  }
 }
 
 ### main() ###
