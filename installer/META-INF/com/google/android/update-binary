@@ -431,6 +431,8 @@ local F="$1"
 	[ -z "$F" ] && F=/sdcard
 	ui_print "- Removing old OrangeFox configuration files ..."
 	rm -f $F/Fox/.foxs
+	rm -rf $F/Fox/.theme
+	rm -rf $F/Fox/.navbar
 	mount_part "/persist"
 	rm -f /persist/.foxs
 	umount_part /persist
