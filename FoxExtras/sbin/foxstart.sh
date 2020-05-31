@@ -23,19 +23,19 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200518
+# * Date:   20200531
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200518"
+SCRIPT_LASTMOD_DATE="20200531"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
 FS="/etc/recovery.fstab"
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
-SYS_ROOT="0"	  # device with system_root?
+SYS_ROOT="0"	  # do we have system_root?
 SAR="0"	  	  # SAR set up properly in recovery?
 ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
@@ -127,16 +127,17 @@ local C="/tmp_cust"
   echo "$T"
 }
 
-# does this device have system_root?
+# do we have system_root?
 has_system_root() {
   local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
-  [ "$F" = "true" ] && echo "1" || echo "0"
+  local F2=$(getprop "ro.twrp.sar" 2>/dev/null)
+  [ "$F" = "true" -o "$F2" = "true" ] && echo "1" || echo "0"
 }
 
 # Is this set up properly as SAR?
-Is_Proper_SAR() {
-  local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
-  [ "$F" != "true" ] && {
+is_SAR() {
+  local F=$(has_system_root)
+  [ "$F" != "1" ] && {
     echo "0"
     return  
   }
@@ -447,7 +448,7 @@ local OPS=$(getprop "orangefox.postinit.status")
    [ -z "$D" ] && D=$(getprop "ro.build.date")
    OPS=$(uname -r)
    SYS_ROOT=$(has_system_root)
-   [ "$SYS_ROOT" = "1" ] && SAR=$(Is_Proper_SAR)
+   [ "$SYS_ROOT" = "1" ] && SAR=$(is_SAR)
    echo "KERNEL=$OPS" >> $CFG
    echo "SYSTEM_ROOT=$SYS_ROOT" >> $CFG
    echo "PROPER_SAR=$SAR" >> $CFG

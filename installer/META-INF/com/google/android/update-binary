@@ -154,7 +154,7 @@ CheckRequirements() {
 # do we have a SAR build?
 is_SAR() {
   local F=$(getprop "ro.build.system_root_image")
-  [ "$F" != "true" ] && {
+  [ "$F" != "true" -a "$(getprop ro.twrp.sar)" != "true" ] && {
     echo "0"
     return  
   }

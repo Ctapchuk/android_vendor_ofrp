@@ -18,7 +18,7 @@
 # - Custom script for OrangeFox Recovery
 # - To mount system on system_root before flashing zips (other than ROMs)
 # - Author: DarthJabba9
-# - Date:   6 December 2019
+# - Date:   31 May 2020
 # - This script should be considered deprecated - it will eventually be removed
 #
 LOGFILE=/tmp/recovery.log
@@ -35,9 +35,16 @@ is_mounted() {
   [ "$?" = "1" ] && echo "0" || echo "1"
 }
 
+# do we have system_root?
+has_system_root() {
+  local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
+  local F2=$(getprop "ro.twrp.sar" 2>/dev/null)
+  [ "$F" = "true" -o "$F2" = "true" ] && echo "1" || echo "0"
+}
+
 do_mount_system() {
-local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
-   [ "$F" != "true" ] && return
+local F=$(has_system_root)
+   [ "$F" != "1" ] && return
    [ ! -d "/system_root" ] && return
 
    F=$(is_mounted "/system")
@@ -72,8 +79,8 @@ local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
 }
 
 do_unmount_system() {
-local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
-   [ "$F" != "true" ] && return
+local F=$(has_system_root)
+   [ "$F" != "1" ] && return
    [ ! -d "/system_root" ] && return
 
    DebugMsg "- Unmounting system on system_root..."
