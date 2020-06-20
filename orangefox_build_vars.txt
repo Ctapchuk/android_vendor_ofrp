@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 18 May 2020
+# Date: 20 June 2020
 #
 # -----------------------------------
 #
@@ -391,4 +391,7 @@
 - Set this to 1 to disable the OTA settings by default, meaning that users have to enable OTA manually
 - default = 0
 #
+"OF_USE_TWRP_SAR_DETECT" [NEW] [R11 only]
+- Set this to 1 to enable the new TWRP auto-detection of system-as-root in the installed ROM
+- default = 0
 # -----------------------------------
