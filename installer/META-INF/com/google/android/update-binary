@@ -34,6 +34,12 @@ FOX_RESET_SETTINGS=""
 
 # build a vanilla version that skips all OrangeFox patches?
 OF_VANILLA_BUILD=0
+
+# R11?
+FOX_R11=0
+
+# last_modified
+MOD_DATE="20200622"
   
 # sundry glodal defaults
 SYS_DIR="/system"
@@ -257,8 +263,8 @@ local U=$(getprop "ro.build.ab_update")
    fi
 }
 
-# get the cache dir
-GetCacheDir() {
+# get the R10 cache dir
+Fox_R10_GetCacheDir() {
 local C="/cache/" 
 local AB="/data/cache/"
 local P="/persist/cache/"
@@ -275,6 +281,29 @@ local P="/persist/cache/"
  echo "$C"
 }
 
+# get the cache dir
+GetCacheDir() {
+local C="/cache/" 
+local D="/data/"
+local P="/persist/"
+local AB="/data/cache/"
+local PP="/persist/cache/"
+
+  if [ "$FOX_R11" != "1" ]; then
+    C=$(Fox_R10_GetCacheDir)
+    echo "$C"
+    return
+  fi
+
+ [ -e $C ] && { echo "$C"; return; }
+ [ -e $D ] && { mount_part "/data"; echo "$D"; return; }
+ [ -e $P ] && { echo "$P"; return; }
+ [ -e $AB ] && { echo "$AB"; return; }
+ [ -e $PP ] && { echo "$PP"; return; }
+
+ echo "$C"
+}
+
 # log this install
 LogFreshInstall() { 
 local cache_dir=$(GetCacheDir)
@@ -288,7 +317,7 @@ local F="0"
        return
      }
  else
-     if [ "$cache_dir" = "/persist/cache/" ]; then
+     if [ "$cache_dir" = "/persist/cache/" -o "$cache_dir" = "/persist/" ]; then
      	mount_part "/persist"
      	F=$(is_mounted "/persist")
      	[ "$F" != "1" ] && {

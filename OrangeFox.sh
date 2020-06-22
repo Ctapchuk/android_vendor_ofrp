@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 08 May 2020
+# 22 June 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -281,6 +281,12 @@ local TDT=$(date "+%d %B %Y")
   if [ "$FOX_RESET_SETTINGS" = "1" ]; then
      echo -e "${RED}-- Instructing zip installer to reset OrangeFox settings ... ${NC}"
      sed -i -e "s|^FOX_RESET_SETTINGS=.*|FOX_RESET_SETTINGS=\"1\"|" $F
+  fi
+
+  # R11 
+  if [ "$FOX_R11" = "1" ]; then
+     echo -e "${RED}-- Preparing zip installer for OrangeFox R11 ... ${NC}"
+     sed -i -e "s|^FOX_R11=.*|FOX_R11=\"1\"|" $F
   fi
 
   # skip all patches ?

@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 20 June 2020
+# Date: 22 June 2020
 #
 # -----------------------------------
 #
@@ -393,5 +393,11 @@
 #
 "OF_USE_TWRP_SAR_DETECT" [NEW] [R11 only]
 - Set this to 1 to enable the new TWRP auto-detection of system-as-root in the installed ROM
+- default = 0
+#
+"FOX_R11" [NEW] [R11 only]
+- Set this to 1 if you are building R11
+- If enabled, it makes some necessary changes to the updater script in zip installer, to trigger the correct cache paths for cache
+- Do NOT enable this, unless you are building the latest R11 sources, and have pulled the latest commits to the vendor tree
 - default = 0
 # -----------------------------------
