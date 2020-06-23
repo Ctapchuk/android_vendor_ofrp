@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 22 June 2020
+# Date: 23 June 2020
 #
 # -----------------------------------
 #
@@ -400,4 +400,11 @@
 - If enabled, it makes some necessary changes to the updater script in zip installer, to trigger the correct cache paths for cache
 - Do NOT enable this, unless you are building the latest R11 sources, and have pulled the latest commits to the vendor tree
 - default = 0
+#
+"OF_QUICK_BACKUP_LIST" [NEW] [R11 only]
+- Use this to specify the desired default list of partitions selected for "Quick Backup"
+- Note: only specify a partition if you mount it in your fstab, else an error will be generated
+- The partitions should be separated by a semi-colon, and the list should end with a semi-colon
+- Example: export OF_QUICK_BACKUP_LIST="/data;/storage;/persist;"
+#
 # -----------------------------------
