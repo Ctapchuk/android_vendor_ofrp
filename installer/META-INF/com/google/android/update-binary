@@ -39,7 +39,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200622"
+MOD_DATE="20200626"
   
 # sundry glodal defaults
 SYS_DIR="/system"
@@ -344,45 +344,65 @@ Unzip_Installer_Package() {
    unzip -o "$ZIPFILE"
 }
 
-# routine for flashing on A/B devices
+# routine for flashing on A/B devices (credits: osm0sis)
 AB_Install_Recovery() {
 local tool="$EX_DIR"/magiskboot
 local target="$EX_DIR"/boot.img
 local slot
+local name
 
-   cd "$EX_DIR"
-   chmod 0755 "$tool"
-   
-   ui_print "- Extracting the OrangeFox ramdisk ..."
-   "$tool" unpack recovery.img > /dev/null 2>&1
-   rm -f kernel dtb
-   mv -f ramdisk.cpio ramdisk-ofrp.cpio
-   
-   for slot in a b; do
-  	ui_print "Running boot image patcher on slot $slot...";
-	dd if=/dev/block/bootdevice/by-name/boot_"$slot" of=$target;
-	"$tool" unpack -h boot.img > /dev/null 2>&1;
-	
-  	# kernel string want_initramfs -> skip_initramfs (Magisk)
-  	"$tool" hexpatch kernel 77616E745F696E697472616D6673 736B69705F696E697472616D6673;
-  	
-  	# kernel string trip_initramfs -> skip_initramfs (SuperSU)
-  	"$tool" hexpatch kernel 747269705F696E697472616D6673 736B69705F696E697472616D6673;
+   	cd "$EX_DIR"
+   	chmod 0755 "$tool"
 
-  	# boot.img header cmdline remove skip_override (flar2 patch)
-  	sed -i "s|$(grep '^cmdline=' header | cut -d= -f2-)|$(grep '^cmdline=' header | cut -d= -f2- | sed -e 's/skip_override//' -e 's/  */ /g' -e 's/[ \t]*$//')|" header;
+   	# extract the ramdisk from the OrangeFox image
+   	ui_print "- Extracting the OrangeFox ramdisk ..."
+   	"$tool" unpack recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
+   	rm -f kernel dtb kernel_dtb
+   	cp -f ramdisk.cpio ramdisk-ofrp.cpio
+   	rm -f ramdisk.cpio
 
-	cp -f ramdisk-ofrp.cpio ramdisk.cpio;
-	"$tool" repack boot.img > /dev/null 2>&1;
-	dd if=new-boot.img of=/dev/block/bootdevice/by-name/boot_"$slot";
-	rm -f boot.img dtb kernel new-boot.img ramdisk.cpio header;
-   done
-   
-   rm -f ramdisk-ofrp.cpio
-   "$tool" cleanup
-   cd /tmp
-   ui_print " ";
-   ui_print "*** NOTE: You are now unrooted! ***";   
+	# target partition without the slot suffix
+	if [ -e /dev/block/bootdevice/by-name/recovery_b ]; then
+		target=/dev/block/bootdevice/by-name/recovery
+	else
+		target=/dev/block/bootdevice/by-name/boot
+	fi
+	name=$(basename $target)
+
+	# deal with both slots
+	for slot in _a _b; do
+		ui_print "- Running boot image patcher on slot $name$slot..."
+
+		# dump the partition and unpack
+		dd bs=1048576 if=$target$slot of=boot.img || abort "- I cannot dump the $name$slot image."
+		"$tool" unpack -h boot.img || abort "- I cannot unpack the $name$slot image."
+
+		# kernel string want_initramfs -> skip_initramfs (Magisk)
+		"$tool" hexpatch kernel 77616E745F696E697472616D6673 736B69705F696E697472616D6673
+
+		# kernel string trip_initramfs -> skip_initramfs (SuperSU)
+		"$tool" hexpatch kernel 747269705F696E697472616D6673 736B69705F696E697472616D6673
+
+		# boot.img header cmdline remove skip_override (flar2 patch)
+		sed -i "s|$(grep '^cmdline=' header | cut -d= -f2-)|$(grep '^cmdline=' header | cut -d= -f2- | sed -e 's/skip_override//' -e 's/  */ /g' -e 's/[ \t]*$//')|" header
+
+		cp -f ramdisk-ofrp.cpio ramdisk.cpio
+		"$tool" repack boot.img || abort "- I cannot repack the $name$slot image!"
+
+		cat new-boot.img /dev/zero > $target$slot 2>/dev/null || true
+		rm -f boot.img dtb kernel new-boot.img ramdisk.cpio header
+		"$tool" cleanup
+	done
+
+	# tidy up
+	rm -f ramdisk-ofrp.cpio
+	"$tool" cleanup
+
+	cd /tmp
+	if [ "$name" != "recovery" ]; then
+	   ui_print " "
+	   ui_print "*** NOTE: You are now unrooted! ***"
+	fi
 }
 
 # print the size of a file
