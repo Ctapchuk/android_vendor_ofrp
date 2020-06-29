@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 23 June 2020
+# Date: 29 June 2020
 #
 # -----------------------------------
 #
@@ -178,7 +178,7 @@
 #
 "OF_CLASSIC_LEDS_FUNCTION"
    - set to 1 to use the old R9.x Leds function
-   - default = 0 (in polaris, oxygen, dipper and dipper, default=1)
+   - default = 0
 #
 "OF_SKIP_FBE_DECRYPTION" 
    - set to 1 to skip the FBE decryption routines (prevents hanging at the Fox logo or Redmi/Mi logo)
@@ -272,10 +272,10 @@
   - if OF_ALLOW_DISABLE_NAVBAR is set to 0 user can't hide on-screen navbar
   - default = 1
 # 
-"OF_USE_LEGACY_CRYPTO"
+"OF_USE_LEGACY_CRYPTO" [OBSOLESCENT]
   - set to 1 if there is a need to use the legacy "lollipop" crypto code
   - only try this as a last resort (if the normal decryption code does not work after all efforts)
-  - default = 0 (1 for lavender, polaris, dipper)
+  - default = 0
 #
 "OF_DONT_KEEP_LOG_HISTORY" [NEW]
   - Time-stamped copies of the recovery.log (in .zip format) will now be kept (in /sdcard/Fox/logs/)
