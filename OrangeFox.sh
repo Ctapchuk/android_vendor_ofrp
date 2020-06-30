@@ -647,6 +647,11 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      chmod 0755 $FOX_RAMDISK/sbin/aapt
   fi
 
+  # Get Magisk version
+  MAGISK_VER=$(unzip -c $FOX_VENDOR_PATH/FoxFiles/Magisk.zip common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
+  echo -e "${GREEN}-- Detected Magisk version: ${MAGISK_VER}${NC}"
+  sed -i -E "s+\"magisk_ver\" value=\"(.*)\"+\"magisk_ver\" value=\"$MAGISK_VER\"+" $FOX_RAMDISK/twres/ui.xml
+
   # Include text files
   cp -a $FOX_VENDOR_PATH/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
   cp -a $FOX_VENDOR_PATH/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
