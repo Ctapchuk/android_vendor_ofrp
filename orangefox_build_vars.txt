@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 29 June 2020
+# Date: 01 July 2020
 #
 # -----------------------------------
 #
@@ -406,5 +406,10 @@
 - Note: only specify a partition if you mount it in your fstab, else an error will be generated
 - The partitions should be separated by a semi-colon, and the list should end with a semi-colon
 - Example: export OF_QUICK_BACKUP_LIST="/data;/storage;/persist;"
+#
+"OF_USE_LOCKSCREEN_BUTTON" [NEW] [R11 only]
+- Set this to 1 to replace the "Swipe up" lockscreen screen with a button
+- This is especially useful (for the time being) for 720p screens
+- default = 0
 #
 # -----------------------------------
