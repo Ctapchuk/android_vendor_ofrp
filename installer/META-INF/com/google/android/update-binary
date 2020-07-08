@@ -146,20 +146,21 @@ local F=/prop.default
 
    if [ ! -e $F ]; then
       F=/default.prop
-	  [ ! -e $F ] || F=/tmp/recovery.log
+      [ ! -e $F ] || F=/tmp/recovery.log
    fi
 
    if [ ! -L $GREP ]; then
      GREP=""
      if [ -x /sbin/busybox ]; then
         GREP="/sbin/busybox grep"
-	    $GREP -q build $F > /dev/null 2>&1 || GREP=""
+	$GREP -q build $F > /dev/null 2>&1 || GREP=""
+     fi
+     
+     if [ -z "$GREP" -a -x /sbin/toybox ]; then
+        GREP="/sbin/toybox grep"
+        $GREP -q build $F > /dev/null 2>&1 || GREP=""
      fi
 
-	 if [ -z "$GREP" -a -x /sbin/toybox ]; then
-        GREP="/sbin/toybox grep"
-	    $GREP -q build $F > /dev/null 2>&1 || GREP=""
-     fi
      [ -z "$GREP" ] && GREP=/sbin/grep
    fi
 
