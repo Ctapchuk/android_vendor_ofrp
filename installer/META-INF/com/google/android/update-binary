@@ -39,7 +39,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200630"
+MOD_DATE="20200708"
   
 # sundry glodal defaults
 SYS_DIR="/system"
@@ -139,16 +139,44 @@ abort() {
    exit 1
 }
 
+# avoid the standalone BSD grep, which segfaults on "grep -w"
+find_grep() {
+local GREP=/sbin/grep
+local F=/prop.default
+
+   if [ ! -e $F ]; then
+      F=/default.prop
+	  [ ! -e $F ] || F=/tmp/recovery.log
+   fi
+
+   if [ ! -L $GREP ]; then
+     GREP=""
+     if [ -x /sbin/busybox ]; then
+        GREP="/sbin/busybox grep"
+	    $GREP -q build $F > /dev/null 2>&1 || GREP=""
+     fi
+
+	 if [ -z "$GREP" -a -x /sbin/toybox ]; then
+        GREP="/sbin/toybox grep"
+	    $GREP -q build $F > /dev/null 2>&1 || GREP=""
+     fi
+     [ -z "$GREP" ] && GREP=/sbin/grep
+   fi
+
+ echo "$GREP"
+}
+
 # check if we have specified a target device and whether this is it
 CheckRequirements() {
-   local F=$(echo "$PRODUCT_DEVICE" | grep -w "$TARGET_DEVICE")
+   local GREP=$(find_grep)
+   local F=$(echo "$PRODUCT_DEVICE" | $GREP -w "$TARGET_DEVICE")
    if [ -n "$F" ]; then
        ui_print "- OrangeFox (RELEASE_VER) for $TARGET_DEVICE ..."
    else
        if [ -z "$TARGET_DEVICE_ALT" ]; then
           abort "E3004: This package is for $TARGET_DEVICE. This device ($PRODUCT_DEVICE) is not supported."
        fi
-       F=$(echo "$TARGET_DEVICE_ALT" | grep -w "$PRODUCT_DEVICE")
+       F=$(echo "$TARGET_DEVICE_ALT" | $GREP -w "$PRODUCT_DEVICE")
        if [ -n "$F" ]; then
           ui_print "- OrangeFox (RELEASE_VER) for $PRODUCT_DEVICE ..."
        else
