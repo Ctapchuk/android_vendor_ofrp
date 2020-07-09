@@ -39,7 +39,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200708"
+MOD_DATE="20200709"
   
 # sundry glodal defaults
 SYS_DIR="/system"
@@ -146,7 +146,7 @@ local F=/prop.default
 
    if [ ! -e $F ]; then
       F=/default.prop
-      [ ! -e $F ] || F=/tmp/recovery.log
+      [ ! -e $F ] && F=/tmp/recovery.log
    fi
 
    if [ ! -L $GREP ]; then
