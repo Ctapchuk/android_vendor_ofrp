@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 22 June 2020
+# 09 July 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -545,8 +545,9 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   fi
 
   # replace busybox ps with our own ?
-  if [ "$TW_USE_TOOLBOX" = "true" ]; then # if using toybox, then we don't need this
+  if [ "$(readlink $FOX_RAMDISK/sbin/ps)" = "toybox" ]; then # if using toybox, then we don't need this
      rm -f "$FOX_RAMDISK/FFiles/ps"
+     echo -e "${GREEN}-- The \"ps\" command is symlinked to \"toybox\". NOT replacing it...${NC}"
   else
      if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
         if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
