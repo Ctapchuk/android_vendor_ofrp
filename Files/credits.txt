@@ -1,16 +1,8 @@
-OrangeFox Credits
------------------
+OrangeFox Recovery Credits
+--------------------------
 
 * KMP Design - for amazing splash
 * TWRP Team - for base recovery
-* PBRP - nice guys, we used some of their trees
-* z31s1g - for his Materialized theme
-* @DarthJabba9 - this man was a breath of 
-  fresh air for us, impossible to
-  describe everything he did.
-* @VnukovD aka fordownloads - Developed amazing
-  OrangeFox theme
-* GitLab team - supported us by Gold status
 
 == Guys who help moderate OrangeFox chats ==
 * @zakaryan2004
@@ -18,12 +10,19 @@ OrangeFox Credits
 * @Steamrev
 * @N1mu3h
 * @Palmbeach05
+* @Diodelvento
+
+== People that protecting our chats against spammers ==
+* @SitiSchu
 * @brombinmirko
-* @SitiSchu - Also thanks for his Federation
+* @GodOfOwls
+* @Felenov
 
 == For donating ==
-* Packet.net for donating servers
-* @Riyazx for donating DO instance and hosting website
+* @GodOfOwls
+* GitLab.com team
+* Packet.net team
+* ua-hosting.company
 
 * Our maintainers
 * Our testers which test many builds per day

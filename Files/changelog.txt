@@ -1,28 +1,57 @@
-OrangeFox R11 Changelog
------------------------
+OrangeFox Recovery R11 Changelog
+--------------------------------
 
-See https://wiki.orangefox.tech
+== R11 ==
+Merged R10.2 changes
+Merged latest TWRP changes
+Match Android Q design guidelines
+Gesture navigation
+Multiselection: supports copying, moving, 
+    deleting multiple files
+View size and date of files in file explorer
+Show backup size when selecting partitions 
+    and predicted average time of backup
+Tap on title in file manager to open storage menu
+Tap 3-dot icon to access multiselection and 
+    file manager settings
+Gray theme replaced with theme from Google Clock
+New fonts: MI LanPro (MIUI), Euclid, Fira Code, Exo 2
+Font weight customization
+Full screen console
+Add brightness slider and flashlight to console
+Quickly add Magisk when installing ZIPs
+Use checkboxes to input chmod permissions 
+    like in Android file managers
+Splash redesign, simple splash customizator
+Fancy decryption page
+Better UX while searching
+Generate digests after backup
+Advanced security: ADB and MTP unaccessible 
+    during boot (on some devices)
+Ability to flash ramdisk/kernel and fix 
+    recovery bootloop (for AB devices)
+Magisk improvements, removed Magisk v18 support
+Added hints
+Many others UI/UX fixes and improvements
 
 
-OrangeFox R10.1 Changelog
------------------------
-
-* Save historic logs (compressed zips) - 
+== R10.1 ==
+Save historic logs (compressed zips) - 
     to the /sdcard/Fox/logs/ folder
-* Now all logs will be placed in /sdcard/Fox/logs/
-* Added support for incremental MIUI OTA on new devices
-* Better support for system-as-root
-* Improved support for Android 10
-* Improved support for MIUI 11
-* Changed default MIUI OTA settings
-* The Magisk addon has been updated (now Magisk v20.1)
-* Handle "Android Rescue Party" messages
-* Detailed information is now provided about the ROM
-* Harmonise some sources with stock twrp 
-* Encryption: don't try wrapped key if not needed
-* Encryption: cryptfs: add support for keymaster 2
-* Fixed issues with app manager
-* Disabled some unnecessary warnings for custom roms
-* Added Ukrainian, French and Vietnamese languages
-* Updated all other languages
-* Lots of little fixes
+Now all logs will be placed in /sdcard/Fox/logs/
+Added support for incremental MIUI OTA on new devices
+Better support for system-as-root
+Improved support for Android 10
+Improved support for MIUI 11
+Changed default MIUI OTA settings
+The Magisk addon has been updated (now Magisk v20.1)
+Handle "Android Rescue Party" messages
+Detailed information is now provided about the ROM
+Harmonise some sources with stock twrp 
+Encryption: don't try wrapped key if not needed
+Encryption: cryptfs: add support for keymaster 2
+Fixed issues with app manager
+Disabled some unnecessary warnings for custom roms
+Added Ukrainian, French and Vietnamese languages
+Updated all other languages
+Lots of little fixes
