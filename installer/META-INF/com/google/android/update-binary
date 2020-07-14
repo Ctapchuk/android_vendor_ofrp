@@ -30,7 +30,7 @@ ERROR_CODE=0
 OF_AB_DEVICE=""
 
 # Reset OrangeFox settings to default?
-FOX_RESET_SETTINGS=""
+FOX_RESET_SETTINGS="1"
 
 # build a vanilla version that skips all OrangeFox patches?
 OF_VANILLA_BUILD=0
@@ -39,7 +39,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200709"
+MOD_DATE="20200714"
   
 # sundry glodal defaults
 SYS_DIR="/system"
@@ -572,7 +572,7 @@ Main() {
 	
 	LogFreshInstall
 	
-	[ "$FOX_RESET_SETTINGS" = "1" ] && Reset_Settings "$internal_SD"
+	[ "$FOX_RESET_SETTINGS" != "disabled" ] && Reset_Settings "$internal_SD"
 
 # backup recovery.log -> Fox/logs/install.log
     	ui_print "- Finished."

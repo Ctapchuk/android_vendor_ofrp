@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 09 July 2020
+# 14 July 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -278,9 +278,9 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # Reset Settings
-  if [ "$FOX_RESET_SETTINGS" = "1" ]; then
-     echo -e "${RED}-- Instructing zip installer to reset OrangeFox settings ... ${NC}"
-     sed -i -e "s|^FOX_RESET_SETTINGS=.*|FOX_RESET_SETTINGS=\"1\"|" $F
+  if [ "$FOX_RESET_SETTINGS" = "disabled" ]; then
+     echo -e "${WHITEONRED}-- Instructing the zip installer to NOT reset OrangeFox settings (NOT recommended!) ... ${NC}"
+     sed -i -e "s|^FOX_RESET_SETTINGS=.*|FOX_RESET_SETTINGS=\"disabled\"|" $F
   fi
 
   # R11 
