@@ -1,9 +1,12 @@
 Installation of OrangeFox
 -------------------------
 
-If you already have OrangeFox or a compatible TWRP recovery, you can just flash 
-the OrangeFox zip as a normal zip, without any wipes.
+If you already have OrangeFox or a 
+compatible TWRP recovery, you can 
+just flash the OrangeFox zip as a 
+normal zip, without any wipes.
 
-For detailed information on how to install OrangeFox, go here:
+For detailed information on how to
+install OrangeFox, go here: 
 https://wiki.orangefox.tech/en/guides
 
