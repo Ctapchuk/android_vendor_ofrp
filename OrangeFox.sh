@@ -634,6 +634,14 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       chmod 0755 $FOX_RAMDISK/sbin/zip
   fi
 
+  # Include "unzip" binary ?
+  if [ "$FOX_USE_UNZIP_BINARY" = "1" -a -x $FOX_VENDOR_PATH/Files/unzip ]; then
+      echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"unzip\" binary ...${NC}"
+      rm -f $FOX_RAMDISK/sbin/unzip
+      cp -af $FOX_VENDOR_PATH/Files/unzip $FOX_RAMDISK/sbin/
+      chmod 0755 $FOX_RAMDISK/sbin/unzip
+  fi
+
   # Include mmgui
   cp -a $FOX_VENDOR_PATH/Files/mmgui $FOX_RAMDISK/sbin/mmgui
   chmod 0755 $FOX_RAMDISK/sbin/mmgui

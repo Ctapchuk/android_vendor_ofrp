@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 14 July 2020
+# Date: 20 July 2020
 #
 # -----------------------------------
 #
@@ -413,4 +413,8 @@
 - This is especially useful (for the time being) for 720p screens
 - default = 0
 #
+"$FOX_USE_UNZIP_BINARY" [NEW]
+- Set this to 1 to replace the busybox/toolbox unzip with a full InfoZip unzip binary
+- Use with care, and ensure that it works as you expect
+- default = 0
 # -----------------------------------
