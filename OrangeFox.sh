@@ -334,7 +334,7 @@ local TDT=$(date "+%d %B %Y")
   	cp -a $RECOVERY_IMAGE_2GB ./recovery.img
   	ZIP_CMD="zip --exclude=*.git* --exclude=OrangeFox*.zip* -r9 $ZIP_FILE_GO ."
   	echo "- Running ZIP command: $ZIP_CMD"
-  	$ZIP_CMD
+  	$ZIP_CMD -z <$FOX_VENDOR_PATH/Files/INSTALL.txt
   	#  sign zip installer ("lite" version)
   	# if [ -f $ZIP_FILE_GO ]; then
    #  	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
