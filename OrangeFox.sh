@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 14 July 2020
+# 20 July 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -315,7 +315,7 @@ local TDT=$(date "+%d %B %Y")
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
-  $ZIP_CMD
+  $ZIP_CMD -z <$FOX_VENDOR_PATH/Files/INSTALL.txt
    
   #  sign zip installer
   #if [ -f $ZIP_FILE ]; then
