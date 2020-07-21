@@ -39,7 +39,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200714"
+MOD_DATE="20200721"
   
 # sundry glodal defaults
 SYS_DIR="/system"
@@ -554,8 +554,6 @@ Main() {
 	[ "$F" = "1" ] && {	
 	   ui_print "- internal_SD=$internal_SD"
 	   rm -rf "$internal_SD/Fox/FoxFiles"
-   	   rm -rf "$internal_SD/Fox/.theme"
-   	   rm -rf "$internal_SD/Fox/.navbar"
    	   rm -f "$internal_SD/Fox/.wolfs"
    	   package_extract_dir "sdcard" "$internal_SD"
    	} 
