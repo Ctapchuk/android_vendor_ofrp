@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 20 July 2020
+# Date: 23 July 2020
 #
 # -----------------------------------
 #
@@ -62,11 +62,7 @@
    - this will add about 420kb to the size of the recovery image
    - default = 0
 #
-"FOX_USE_ZIP_BINARY"
-   - set this to 1 if you want an InfoZip zip binary to be added (to create zip archives)
-   - this must be set in a shell script, or at the command line, before building
-   - this will add about 275kb to the size of the recovery image
-   - default = 0
+"FOX_USE_ZIP_BINARY" [As of 20200723, this is now OBSOLETE]
 #
 "FOX_USE_NANO_EDITOR"
    - set this to 1 if you want the nano editor to be added
@@ -413,8 +409,15 @@
 - This is especially useful (for the time being) for 720p screens
 - default = 0
 #
-"$FOX_USE_UNZIP_BINARY" [NEW]
+"FOX_USE_UNZIP_BINARY" [NEW]
 - Set this to 1 to replace the busybox/toolbox unzip with a full InfoZip unzip binary
 - Use with care, and ensure that it works as you expect
 - default = 0
+#
+"FOX_REMOVE_ZIP_BINARY" [NEW]
+   - set this to 1 if you do NOT want the InfoZip zip binary to be added (to create zip archives)
+   - this must be set in a shell script, or at the command line, before building
+   - the binary will add about 275kb to the size of the recovery image
+   - default = 0
+#
 # -----------------------------------

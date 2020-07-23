@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 20 July 2020
+# 23 July 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -627,19 +627,24 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       chmod 0755 $FOX_RAMDISK/sbin/gnutar
   fi
 
-  # Include "zip" binary ?
-  if [ "$FOX_USE_ZIP_BINARY" = "1" ]; then
-      echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"zip\" binary ...${NC}"
-      cp -af $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/sbin/
-      chmod 0755 $FOX_RAMDISK/sbin/zip
-  fi
-
   # Include "unzip" binary ?
   if [ "$FOX_USE_UNZIP_BINARY" = "1" -a -x $FOX_VENDOR_PATH/Files/unzip ]; then
       echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"unzip\" binary ...${NC}"
       rm -f $FOX_RAMDISK/sbin/unzip
       cp -af $FOX_VENDOR_PATH/Files/unzip $FOX_RAMDISK/sbin/
       chmod 0755 $FOX_RAMDISK/sbin/unzip
+  fi
+
+  # Include "zip" binary ?
+  if [ "$FOX_REMOVE_ZIP_BINARY" = "1" ]; then
+      [ -e $FOX_RAMDISK/sbin/zip ] && {
+         echo -e "${RED}-- Removing the OrangeFox InfoZip \"zip\" binary ...${NC}"
+         rm -f $FOX_RAMDISK/sbin/zip
+      }
+  else
+      echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"zip\" binary ...${NC}"
+      cp -af $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/sbin/
+      chmod 0755 $FOX_RAMDISK/sbin/zip
   fi
 
   # Include mmgui
