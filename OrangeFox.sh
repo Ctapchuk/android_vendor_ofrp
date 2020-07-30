@@ -70,12 +70,12 @@ if [ -n "$4" ]; then
    export "$@"
    if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       echo "# - save the vars that we might need later - " &> $TMP_SCRATCH
-      echo "MKBOOTFS=$MKBOOTFS" >>  $TMP_SCRATCH
-      echo "TARGET_OUT=$TARGET_OUT" >>  $TMP_SCRATCH
-      echo "TARGET_RECOVERY_ROOT_OUT=$TARGET_RECOVERY_ROOT_OUT" >>  $TMP_SCRATCH
-      echo "RECOVERY_RAMDISK_COMPRESSOR=$RECOVERY_RAMDISK_COMPRESSOR" >>  $TMP_SCRATCH
+      echo "MKBOOTFS=\"$MKBOOTFS\"" >>  $TMP_SCRATCH
+      echo "TARGET_OUT=\"$TARGET_OUT\"" >>  $TMP_SCRATCH
+      echo "TARGET_RECOVERY_ROOT_OUT=\"$TARGET_RECOVERY_ROOT_OUT\"" >>  $TMP_SCRATCH
+      echo "RECOVERY_RAMDISK_COMPRESSOR=\"$RECOVERY_RAMDISK_COMPRESSOR\"" >>  $TMP_SCRATCH
       echo "INTERNAL_KERNEL_CMDLINE=\"$INTERNAL_KERNEL_CMDLINE\"" >>  $TMP_SCRATCH
-      echo "recovery_ramdisk=$recovery_ramdisk" >>  $TMP_SCRATCH
+      echo "recovery_ramdisk=\"$recovery_ramdisk\"" >>  $TMP_SCRATCH
       echo "INTERNAL_RECOVERYIMAGE_ARGS='$INTERNAL_RECOVERYIMAGE_ARGS'" >>  $TMP_SCRATCH
       echo "INTERNAL_MKBOOTIMG_VERSION_ARGS=\"$INTERNAL_MKBOOTIMG_VERSION_ARGS\"" >>  $TMP_SCRATCH
       echo "BOARD_MKBOOTIMG_ARGS=\"$BOARD_MKBOOTIMG_ARGS\"" >>  $TMP_SCRATCH
@@ -863,10 +863,10 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
 	    
 	   # create image
 	   # remove leading and trailing quotation marks
-	   AKA=$(echo "$INTERNAL_RECOVERYIMAGE_ARGS" | sed -e 's/^"//' -e 's/"$//')
+	   LOCAL_ARGS=$(echo "$INTERNAL_RECOVERYIMAGE_ARGS" | sed -e 's/^"//' -e 's/"$//')
 
 	   echo "# Create the recovery image" >> $LITE_CMD
-	   echo "$MKBOOTIMG $INTERNAL_MKBOOTIMG_VERSION_ARGS $AKA $BOARD_MKBOOTIMG_ARGS -o $RECOVERY_IMAGE_2GB" >> $LITE_CMD
+	   echo "$MKBOOTIMG $INTERNAL_MKBOOTIMG_VERSION_ARGS $LOCAL_ARGS $BOARD_MKBOOTIMG_ARGS -o $RECOVERY_IMAGE_2GB" >> $LITE_CMD
 	   echo "" >> $LITE_CMD
 	   echo "rm -f $TMP_SCRATCH" >> $LITE_CMD
 	   echo "rm -f $LITE_CMD" >> $LITE_CMD
