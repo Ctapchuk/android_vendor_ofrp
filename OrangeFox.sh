@@ -19,29 +19,13 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 23 July 2020
+# 30 July 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
 #
 # It is best to declare them in a script that you will use for building 
 #
-#
-
-# export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
-if [ -n "$4" ]; then
-   echo "#########################################################################"
-   echo "Variables exported from build/core/Makefile:"
-   echo "$@"
-   export "$@"
-   echo "#########################################################################"
-else
-   if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
-      echo -e "${RED}-- Build OrangeFox: FATAL ERROR! ${NC}"
-      echo -e "${RED}-- You cannot use FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER without patching build/core/Makefile in the build system! ${NC}"
-      exit 100  
-   fi
-fi
 #
 
 # some colour codes
@@ -60,6 +44,51 @@ WHITEONORANGE='\033[0;43m'
 WHITEONBLUE='\033[0;44m'
 WHITEONPURPLE='\033[0;46m'
 NC='\033[0m'
+TMP_SCRATCH=/tmp/fox_build_000tmp.txt
+WORKING_TMP=/tmp/Fox_000_tmp
+
+# exit function (cleanup first), and return status code
+abort() {
+  [ -d $WORKING_TMP ] && rm -rf $WORKING_TMP
+  [ -f $TMP_SCRATCH ] && rm -f $TMP_SCRATCH
+  exit $1
+}
+
+if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -a "$BUILD_2GB_VERSION" = "1" ]; then
+   echo ""
+   echo -e "${WHITEONRED}-- Build OrangeFox: ERROR! ${NC}"
+   echo -e "${WHITEONRED}-- Do NOT use \"FOX_DRASTIC_SIZE_REDUCTION\" and \"BUILD_2GB_VERSION\" together. Aborting! ${NC}"
+   echo ""
+   abort 99
+fi
+
+# export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
+if [ -n "$4" ]; then
+   echo "#########################################################################"
+   echo "Variables exported from build/core/Makefile:"
+   echo "$@"
+   export "$@"
+   if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+      echo "# - save the vars that we might need later - " &> $TMP_SCRATCH
+      echo "MKBOOTFS=$MKBOOTFS" >>  $TMP_SCRATCH
+      echo "TARGET_OUT=$TARGET_OUT" >>  $TMP_SCRATCH
+      echo "TARGET_RECOVERY_ROOT_OUT=$TARGET_RECOVERY_ROOT_OUT" >>  $TMP_SCRATCH
+      echo "RECOVERY_RAMDISK_COMPRESSOR=$RECOVERY_RAMDISK_COMPRESSOR" >>  $TMP_SCRATCH
+      echo "INTERNAL_KERNEL_CMDLINE=\"$INTERNAL_KERNEL_CMDLINE\"" >>  $TMP_SCRATCH
+      echo "recovery_ramdisk=$recovery_ramdisk" >>  $TMP_SCRATCH
+      echo "INTERNAL_RECOVERYIMAGE_ARGS='$INTERNAL_RECOVERYIMAGE_ARGS'" >>  $TMP_SCRATCH
+      echo "INTERNAL_MKBOOTIMG_VERSION_ARGS=\"$INTERNAL_MKBOOTIMG_VERSION_ARGS\"" >>  $TMP_SCRATCH
+      echo "BOARD_MKBOOTIMG_ARGS=\"$BOARD_MKBOOTIMG_ARGS\"" >>  $TMP_SCRATCH
+      echo "#" >>  $TMP_SCRATCH
+   fi   
+   echo "#########################################################################"
+else
+   if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
+      echo -e "${WHITEONRED}-- Build OrangeFox: FATAL ERROR! ${NC}"
+      echo -e "${WHITEONRED}-- You cannot use FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER without patching build/core/Makefile in the build system. Aborting! ${NC}"
+      abort 100  
+   fi
+fi
 
 #
 RECOVERY_DIR="recovery"
@@ -130,7 +159,7 @@ if [ "$OF_AB_DEVICE" = "1" ]; then
       echo "-- And this         - \"export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1\" "
       echo -e "${RED}-- Quitting now ... ${NC}"
       echo -e "${RED}-- ************************************************************************************************${NC}"
-      exit 200
+      abort 200
    fi
 fi
 
@@ -147,11 +176,24 @@ RECOVERY_IMAGE_2GB=$OUT/$FOX_OUT_NAME"_lite.img"
 # exports
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 
+# create working tmp
+if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" -o -z "$FOX_VENDOR_CMD" ]; then
+   rm -rf $WORKING_TMP
+   mkdir -p $WORKING_TMP
+fi
+
 # ****************************************************
 # --- embedded functions
 # ****************************************************
 
-# to saved the build date, and (if desired) patch bugged alleged anti-rollback on some ROMs
+# size of file
+filesize() {
+  [ -z "$1" -o -d "$1" ] && { echo "0"; return; }
+  [ ! -e "$1" -a ! -h "$1" ] && { echo "0"; return; }
+  stat -c %s "$1"
+}
+
+# to save the build date, and (if desired) patch bugged alleged anti-rollback on some ROMs
 Save_Build_Date() {
 local DT="$1"
 local F="$DEFAULT_PROP_ROOT"
@@ -211,7 +253,7 @@ expand_vendor_path() {
 # create zip file
 do_create_update_zip() {
 local TDT=$(date "+%d %B %Y")
-  echo -e "${BLUE}-- Creating update.zip${NC}"
+  echo -e "${BLUE}-- Creating the OrangeFox zip installer ...${NC}"
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
   
@@ -390,39 +432,92 @@ file_getprop() {
   grep "^$2=" "$1" | cut -d= -f2
 }
 
+# are we using toolbox/toybox?
+uses_toolbox() {
+ [ "$TW_USE_TOOLBOX" = "true" ] && { echo "1"; return; }
+ local T=$(filesize $FOX_RAMDISK/sbin/toybox)
+ [ "$T" = "0" ] && { echo "0"; return; }
+ local B=$(filesize $FOX_RAMDISK/sbin/busybox)
+ [ $T -gt $B ] && { echo "1"; return; }
+ T=$(readlink "$FOX_RAMDISK/sbin/yes")
+ [ "$T" = "toybox" ] && echo "1" || echo "0"
+}
+
 # try to trim the ramdisk for really small recovery partitions
+# can reduce the recovery image size by up to 3MB
 reduce_ramdisk_size() {
 local big_xml=$FOX_RAMDISK/twres/pages/customization.xml
 local small_xml=$FOX_RAMDISK/twres/pages/smaller_size.txt
+local image_xml=$FOX_RAMDISK/twres/resources/images.xml
 local C=""
 local D=""
 local F=""
-local REMOVE_THEME_COLORS="1"
 
-      echo "- Pruning the ramdisk to reduce the size..."
+      echo -e "${GREEN}-- Pruning the ramdisk to reduce the size ... ${NC}"
+      local FFil="$FOX_RAMDISK/FFiles"
+      rm -rf $FFil/nano
+      rm -f $FOX_RAMDISK/sbin/aapt
+      rm -f $FOX_RAMDISK/sbin/zip
+      rm -f $FOX_RAMDISK/sbin/nano
+      rm -f $FOX_RAMDISK/sbin/gnutar
+      rm -f $FOX_RAMDISK/sbin/bash
+      rm -f $FOX_RAMDISK/etc/bash.bashrc
+      
+      # --- some sanity checks - try to restore some originals 
+      if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
+          rm -f $FOX_RAMDISK/sbin/sh
+          if [ -f $WORKING_TMP/sh ] || [ -h $WORKING_TMP/sh -a "$(readlink $WORKING_TMP/sh)" != "bash" ]; then
+             cp -a $WORKING_TMP/sh $FOX_RAMDISK/sbin/
+          else
+             F=$(readlink $FOX_RAMDISK/sbin/umount)
+             [ -z "$F" ] && F=$(readlink $FOX_RAMDISK/sbin/uname)
+             ln -s $F $FOX_RAMDISK/sbin/sh
+          fi
+      fi
+         
+      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
+          rm -f $FOX_RAMDISK/sbin/ash
+          if [ -h $WORKING_TMP/ash -a "$(readlink $WORKING_TMP/ash)" != "bash" ]; then
+             cp -a $WORKING_TMP/ash $FOX_RAMDISK/sbin/
+          fi
+      fi
+      
+      if [ "$FOX_USE_UNZIP_BINARY" = "1" ]; then
+         [ -e $WORKING_TMP/unzip -o -h $WORKING_TMP/unzip ] && { 
+            rm -f $FOX_RAMDISK/sbin/unzip
+            cp -af $WORKING_TMP/unzip $FOX_RAMDISK/sbin/
+         }
+      fi
+      
+      # 2GB version bail out here
+      [ "$1" = "lite" ] && return
 
-      # remove some theme colours
-      if [ "$REMOVE_THEME_COLORS" = "1" ]; then
+      # remove some theme colours (not for R11)
+      if [ "$FOX_R11" != "1" ]; then
          echo -e "${GREEN}-- Removing some theme colours ... ${NC}"
       	 declare -a fColors=("Amber" "Brown" "Pink" "Purple")
-         local image_xml=$FOX_RAMDISK/twres/resources/images.xml
          for i in "${fColors[@]}"
          do
        		F=$FOX_RAMDISK/twres/images/$i
        		[ -d $F ] && rm -rf $F
        		C="Color"$i
-       		
-       		#D=$C"_deleted_"
-       		#sed -i -e "s/$C/$D/" $image_xml
-       		
        		# don't load it in the UI
        		sed -i -e "/$C/d" $image_xml
          done
       fi
 
+      # ----- proceeding to remove some fonts can save about 460kb in size -----
+ 
       # remove some fonts? (only do so if we have a working "small" xml to cover the situation)
       echo -e "${GREEN}-- Removing some fonts ... ${NC}"
-      declare -a FontFiles=("Amatic" "AngryBirds" "Bender" "Cooljazz" "Chococooky")
+      if [ "$FOX_R11" = "1" ]; then
+         declare -a FontFiles=(
+         "Amatic" "Chococooky" "Exo2-Medium" "Exo2-Regular"
+         "Firacode-Medium" "Firacode-Regular" "MILanPro-Medium"
+         "MILanPro-Regular")
+      else
+         declare -a FontFiles=("Amatic" "AngryBirds" "Bender" "Cooljazz" "Chococooky") 
+      fi
          
       # delete the font (*.ttf) tiles
       for i in "${FontFiles[@]}"
@@ -434,30 +529,12 @@ local REMOVE_THEME_COLORS="1"
      	   sed -i "/$C/d" $image_xml
       done
 
-      # remove references to them in customization.xml, using their font numbers
-      # the the matching line plus the next 2 lines
+      # delete the matching line plus the next 2 lines
       for i in {5..9}; do
     	   F="font"$i
      	   sed -i "/$F/I,+2 d" $big_xml
       done
       
-      # remove other large files
-      echo -e "${GREEN}-- Removing some large files ... ${NC}"
-      local FFil="$FOX_RAMDISK/FFiles"
-      rm -rf $FFil/OF_initd
-      rm -rf $FFil/AromaFM
-      rm -rf $FFil/nano
-      rm -f $FOX_RAMDISK/sbin/aapt
-      rm -f $FOX_RAMDISK/sbin/zip
-      rm -f $FOX_RAMDISK/sbin/nano
-      if [ "$FOX_USE_BASH_SHELL" = "1" -o "$FOX_ASH_IS_BASH" = "1" ]; then
-     	 echo -e "${WHITEONRED}-- ERROR!!! Never use \"FOX_USE_BASH_SHELL=1\" together with \"FOX_DRASTIC_SIZE_REDUCTION\" !!!${NC}"
-     	 #exit 255
-      else
-         rm -f $FOX_RAMDISK/sbin/bash
-         rm -f $FOX_RAMDISK/etc/bash.bashrc
-      fi
-      #
 }
 
 # ****************************************************
@@ -488,7 +565,6 @@ if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
      echo -e "${GREEN}-- This is NOT a system-as-root build - removing the system_sar_mount directory ...${NC}"
      rm -rf "$FOX_RAMDISK/FFiles/Tools/system_sar_mount/"
   fi
-
 fi
 
 ###############################################################
@@ -544,9 +620,17 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      fi
   fi
 
+  # try to fix toolbox egrep/fgrep symlink bug
+  if [ "$(uses_toolbox)" = "1" ]; then
+     rm -f $FOX_RAMDISK/sbin/egrep $FOX_RAMDISK/sbin/fgrep
+     ln -sf grep $FOX_RAMDISK/sbin/egrep
+     ln -sf grep $FOX_RAMDISK/sbin/fgrep
+  fi
+  
   # replace busybox ps with our own ?
   if [ "$(readlink $FOX_RAMDISK/sbin/ps)" = "toybox" ]; then # if using toybox, then we don't need this
      rm -f "$FOX_RAMDISK/FFiles/ps"
+     export FOX_REPLACE_BUSYBOX_PS="0"
      echo -e "${GREEN}-- The \"ps\" command is symlinked to \"toybox\". NOT replacing it...${NC}"
   else
      if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
@@ -600,17 +684,32 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   
   # replace busybox "sh" with bash ?
   if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
-     if [ -f "$FOX_RAMDISK/sbin/sh" ]; then
+     if [ -f "$FOX_RAMDISK/sbin/sh" ]; then 
+        if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -o $BUILD_2GB_VERSION = "1" ]; then
+           echo -e "${GREEN}-- Backing up the original \"sh\" ...${NC}"
+      	   cp -af $FOX_RAMDISK/sbin/sh $WORKING_TMP/
+        fi
+
         echo -e "${GREEN}-- Replacing the busybox \"sh\" applet with bash ...${NC}"
   	rm -f $FOX_RAMDISK/sbin/sh
   	ln -s bash $FOX_RAMDISK/sbin/sh
-  	# do the same for "ash"?
-        if [ "$FOX_ASH_IS_BASH" = "1" ]; then
-           echo -e "${GREEN}-- Replacing the busybox \"ash\" applet with bash ...${NC}"
-  	   rm -f $FOX_RAMDISK/sbin/ash
-  	   ln -s bash $FOX_RAMDISK/sbin/ash
-  	fi
      fi
+  fi
+
+# do the same for "ash"?
+  if [ "$FOX_ASH_IS_BASH" = "1" ]; then
+     if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -o $BUILD_2GB_VERSION = "1" ]; then
+        [ -f $FOX_RAMDISK/sbin/ash -o -h $FOX_RAMDISK/sbin/ash ] && {
+           echo -e "${GREEN}-- Backing up the original \"ash\" ...${NC}"
+           cp -af $FOX_RAMDISK/sbin/ash $WORKING_TMP/
+        }
+     fi
+     
+     [ -f $FOX_RAMDISK/sbin/ash -o -h $FOX_RAMDISK/sbin/ash ] && {
+        echo -e "${GREEN}-- Replacing the \"ash\" applet with bash ...${NC}"
+        rm -f $FOX_RAMDISK/sbin/ash
+        ln -s bash $FOX_RAMDISK/sbin/ash
+     }
   fi
 
   # Include nano editor ?
@@ -629,6 +728,11 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
 
   # Include "unzip" binary ?
   if [ "$FOX_USE_UNZIP_BINARY" = "1" -a -x $FOX_VENDOR_PATH/Files/unzip ]; then
+      if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -o $BUILD_2GB_VERSION = "1" ]; then
+         echo -e "${GREEN}-- Backing up the original unzip ...${NC}"
+      	 cp -af $FOX_RAMDISK/sbin/unzip $WORKING_TMP/
+      fi
+      
       echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"unzip\" binary ...${NC}"
       rm -f $FOX_RAMDISK/sbin/unzip
       cp -af $FOX_VENDOR_PATH/Files/unzip $FOX_RAMDISK/sbin/
@@ -741,37 +845,45 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
      # end: standard version
 
     #: build "lite" (2GB) version (virtually obsolete now) #
-    if [ "$BUILD_2GB_VERSION" = "1" ] && [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" != "1" ]; then
-	echo -e "${BLUE}-- Repacking and copying the \"lite\" version of recovery${NC}"
-	FFil="$FOX_RAMDISK/FFiles"
-	rm -rf $FFil/OF_initd
-	rm -rf $FFil/AromaFM
-	rm -rf $FFil/nano
-	rm -f $FOX_RAMDISK/sbin/nano
-	rm -f $FOX_RAMDISK/sbin/bash
-	rm -f $FOX_RAMDISK/sbin/aapt
-	rm -f $FOX_RAMDISK/etc/bash.bashrc
-  	if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
-     	   if [ -L "$FOX_RAMDISK/sbin/sh" ]; then
-              echo -e "${GREEN}-- Replacing bash 'sh' with busybox 'sh' ...${NC}"
-  	      rm -f $FOX_RAMDISK/sbin/sh
-  	      ln -s busybox $FOX_RAMDISK/sbin/sh
-  	      # do the same for "ash"?
-  	      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
-  	         echo -e "${GREEN}-- Replacing bash 'ash' with busybox 'ash' ...${NC}"
-  	         rm -f $FOX_RAMDISK/sbin/ash
-  	         ln -s busybox $FOX_RAMDISK/sbin/ash
-  	      fi
-     	   fi
- 	fi
-	[ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
-	bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
-  	if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
-     	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE_2GB ${NC}"
-     	   echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE_2GB
-  	fi
+    if [ "$BUILD_2GB_VERSION" = "1" ]; then
+	echo -e "${RED}-- Repacking and copying the \"lite\" version of recovery${NC}"
+     	echo -e "${WHITEONBLUE}-- The \"lite\" build is deprecated. Test it VERY carefully - and I sincerely hope you are making a CLEAN build!${NC}"
+ 	reduce_ramdisk_size "lite";
+	if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
+	   . $TMP_SCRATCH
+	   LITE_CMD=/tmp/fox_lite_build.sh
+
+	   # create ramdisk
+	   echo "#!/bin/bash" &> $LITE_CMD
+	   echo "" >> $LITE_CMD
+	   echo "# Pack the ramdisk" >> $LITE_CMD
+	   echo "rm -f $recovery_ramdisk" >> $LITE_CMD
+	   echo "$MKBOOTFS $FOX_RAMDISK | $RECOVERY_RAMDISK_COMPRESSOR >$recovery_ramdisk" >> $LITE_CMD
+	   echo "" >> $LITE_CMD
+	    
+	   # create image
+	   # remove leading and trailing quotation marks
+	   AKA=$(echo "$INTERNAL_RECOVERYIMAGE_ARGS" | sed -e 's/^"//' -e 's/"$//')
+
+	   echo "# Create the recovery image" >> $LITE_CMD
+	   echo "$MKBOOTIMG $INTERNAL_MKBOOTIMG_VERSION_ARGS $AKA $BOARD_MKBOOTIMG_ARGS -o $RECOVERY_IMAGE_2GB" >> $LITE_CMD
+	   echo "" >> $LITE_CMD
+	   echo "rm -f $TMP_SCRATCH" >> $LITE_CMD
+	   echo "rm -f $LITE_CMD" >> $LITE_CMD
+	   echo "" >> $LITE_CMD
+	   bash "$LITE_CMD"
+	else 
+	    [ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
+	    bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
+  	    if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
+     	       echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE_2GB ${NC}"
+     	       echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE_2GB
+  	    fi
+	fi
+
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
-    fi # end: "GO" version
+
+    fi # end: 2GB "(lite)" version
 
    # create update zip installer
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
@@ -829,5 +941,8 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    echo -e ""
    echo -e "=================================================================="
    fi
+   
+   # clean up, with success code
+   abort 0
 fi
 # end!
