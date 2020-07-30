@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 23 July 2020
+# Date: 30 July 2020
 #
 # -----------------------------------
 #
@@ -26,8 +26,10 @@
    - point to a custom "callback" script that will be executed just before creating the final recovery image
    - eg, a script to delete some files, or add some files to the ramdisk
 #
-"BUILD_2GB_VERSION"
-   - whether to build a stripped down "lite" version for 2GB RAM devices
+"BUILD_2GB_VERSION" [DEPRECATED]
+   - set to 1 to build a stripped down "lite" version for 2GB RAM devices
+   - if you use this, you *MUST* make a CLEAN BUILD every time
+   - any "lite" build needs VERY thorough testing to ensure that it works properly (or at all)
    - default = 0
 #
 "FOX_REPLACE_BUSYBOX_PS"
@@ -269,11 +271,6 @@
   - if OF_ALLOW_DISABLE_NAVBAR is set to 0 user can't hide on-screen navbar
   - default = 1
 # 
-"OF_USE_LEGACY_CRYPTO" [OBSOLESCENT]
-  - set to 1 if there is a need to use the legacy "lollipop" crypto code
-  - only try this as a last resort (if the normal decryption code does not work after all efforts)
-  - default = 0
-#
 "OF_DONT_KEEP_LOG_HISTORY" [NEW]
   - Time-stamped copies of the recovery.log (in .zip format) will now be kept (in /sdcard/Fox/logs/)
   - this means that the previously saved recovery logs will not be overwritten
@@ -282,9 +279,9 @@
   - default = 0
 #
 "FOX_BUGGED_AOSP_ARB_WORKAROUND" [NEW]
- - Use this to set an old UTC time for the build, to work around bugged alleged
- - anti-rollback protection in some ROMs
- - example: export FOX_BUGGED_AOSP_ARB_WORKAROUND="1546300800" [for Tue Jan 1 2019 00:00:00 GMT]
+ - Use this to set an old UTC time for the build, to work around bugged alleged anti-rollback protection in some ROMs
+ - eg, export FOX_BUGGED_AOSP_ARB_WORKAROUND="1546300800" [Tue Jan 1 2019 00:00:00 GMT]
+ -     export FOX_BUGGED_AOSP_ARB_WORKAROUND="1420041600" [Wed Dec 31 2014 16:00:00 GMT]
  - default = nothing
 #
 "TARGET_DEVICE_ALT" [NEW]
