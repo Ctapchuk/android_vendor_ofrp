@@ -412,9 +412,15 @@
 - default = 0
 #
 "FOX_REMOVE_ZIP_BINARY" [NEW]
-   - set this to 1 if you do NOT want the InfoZip zip binary to be added (to create zip archives)
-   - this must be set in a shell script, or at the command line, before building
-   - the binary will add about 275kb to the size of the recovery image
-   - default = 0
+- set this to 1 if you do NOT want the InfoZip zip binary to be added (to create zip archives)
+- this must be set in a shell script, or at the command line, before building
+- the binary will add about 275kb to the size of the recovery image
+- default = 0
+#
+"FOX_ADVANCED_SECURITY" [NEW] [R11 only]
+- set this to 1 to enable the advanced security features
+- this forces ADB and MTP to be disabled until after you enter the recovery (ie, until after
+- all decryption/recovery passwords are successfully entered)
+- default = 0
 #
 # -----------------------------------
