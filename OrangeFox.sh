@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 July 2020
+# 31 July 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -665,7 +665,21 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      echo -e "${GREEN}-- Make sure that you mount both /system *and* /system_root in your fstab.${NC}"     
      cp -a $FOX_VENDOR_PATH/Files/fox_pre_flash $FOX_RAMDISK/sbin
   fi
-     
+
+  # remove the green LED setting?
+  if [ "$OF_USE_GREEN_LED" = "0" ]; then
+     echo -e "${GREEN}-- Removing the \"green LED\" setting ...${NC}"
+     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
+
+     # remove the "green LED" tick box (the line where it is found + the next 2 lines)
+     green_setting="fox_use_green_led"
+     sed -i "/$green_setting/I,+2 d" $Led_xml_File
+
+     # remove the text label
+     green_setting="fox_led_title"
+     sed -i "/$green_setting/I,+0 d" $Led_xml_File
+  fi
+
   # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
      export FOX_USE_BASH_SHELL="0"

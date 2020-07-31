@@ -3,7 +3,7 @@
 # These should be declared - in a shell script, or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 30 July 2020
+# Date: 31 July 2020
 #
 # -----------------------------------
 #
@@ -219,8 +219,8 @@
    - default = 0
 #
 "OF_USE_GREEN_LED"
-   - set to 1 to use the green led (where the device supports it)
-   - default = 0
+   - set to 0 to remove the "green led" setting
+   - default = 1
 #
 "OF_FLASHLIGHT_ENABLE"
   - whether the enable the flashlight feature
