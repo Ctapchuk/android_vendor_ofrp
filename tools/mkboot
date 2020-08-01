@@ -14,12 +14,15 @@
 #
 #boot.img tool
 #by xiaolu
+# modded by DarthJabba9
+
 trap "clean" 2 3 4
 workdir=$(pwd)
 toolpath=$(readlink -f $0)
 tooldir=$(dirname $toolpath)
 mkbootimg=$tooldir/mkbootimg
 mkbootfs=$tooldir/mkbootfs
+bootimginfo=$tooldir/bootimg-info
 C_OUT="\033[0;1m"
 C_ERR="\033[31;1m"
 C_CLEAR="\033[0;0m"
@@ -27,9 +30,11 @@ C_CLEAR="\033[0;0m"
 pout() {
     printf "${C_OUT}${*}${C_CLEAR}\n"
 }
+
 perr() {
     printf "${C_ERR}${*}${C_CLEAR}\n"
 }
+
 clean()
 {
     rm -rf /tmp/mkboot.*
@@ -88,20 +93,28 @@ print_info()
     [ ! -z $second_size ] && [ $second_size -gt 0 ] && \
         pout "  second_offset  : $second_offset"
     pout "  tags offset    : $tags_offset"
+
+    pout "  os_version     : $os_version"
+    pout "  os_patch_level : $os_patch_level"
+
     [ $dtb_size -gt 0 ] && pout "  dtb img        : $dt"
     pout "  cmd line       : $cmd_line"
 }
 
 mkboot_img()
 {
+local patch_ver=""
+local os_ver=""
     error=0
     [ $second_size -gt 0 ] && second="--second ${second}"
     [ $dtb_size -gt 0 ] && dtb="--dt ${dt}"
+    [ -n "$os_version" ] && os_ver="--os_version $os_version"
+    [ -n "$os_patch_level" ] && patch_ver="--os_patch_level $os_patch_level"
 
     $mkbootimg --kernel $kernel --ramdisk $ramdisk --board "$board" \
         --base $base_addr --ramdisk_offset $ramdisk_offset \
         --tags_offset $tags_offset --cmdline "$cmd_line" \
-        --pagesize $page_size $second $dtb -o $1 || error=1
+        --pagesize $page_size $second $os_ver $patch_ver $dtb -o $1 || error=1
 
     [ $error -eq 1 ] && return $error
     ramdisk_size=$(stat -c "%s" $ramdisk)
@@ -110,7 +123,34 @@ mkboot_img()
     pout "$(basename $1) has been created."
 }
 
-#decide action
+save_os_stuff() {
+local F=""
+local infile=$1
+local outfile=$2
+local cmd="$bootimginfo"
+   [ -z "$infile" -o -z "$outfile" -o -z "$cmd" ] && return
+   [ ! -f "$infile" -o ! -f "$outfile" ] && return
+
+   local OSVER=$($cmd $infile | grep os_version)
+   local OSPATCH=$($cmd $infile | grep os_patch_level)
+   [ -n "$OSVER" ] && {
+   	local VER=$(echo $OSVER | sed 's/ //g' | sed 's/:/=/g')
+   	[ -n "$VER" ] && {
+   		F=$(grep $VER $outfile)
+   		[ -z "$F" ] && echo $VER >> $outfile
+   	}
+   }
+   
+   [ -n "$OSPATCH" ] && {
+   	local PATCH=$(echo $OSPATCH | sed 's/ //g' | sed 's/:/=/g')
+   	[ -n "$PATCH" ] && {
+   		F=$(grep $PATCH $outfile)
+   		[ -z "$F" ] && echo $PATCH >> $outfile
+   	}
+   }
+}
+
+# decide which action to take
 [ $# -lt 2 ] || [ $# -gt 3 ] && usage
 if [ $# -eq 2 ] && [ -d $1 ]; then
     mkboot_from_dir=1
@@ -140,8 +180,6 @@ if [ ! -z $mkboot_from_dir ]; then
     if [ -d $ramdisk ]; then
         [ -z $format ] && format=gzip
         zip_command $format
-        #cd $ramdisk; find . | fakeroot cpio -R 0:0 -H newc -o 2>/dev/null \
-        #    | $zcommand > $unpacked_dir/new_ramdisk; cd $unpacked_dir
         $mkbootfs $ramdisk | $zcommand > new_ramdisk
         ramdisk=new_ramdisk
         ramdisk_size=$(stat -c "%s" $ramdisk)
@@ -150,8 +188,6 @@ if [ ! -z $mkboot_from_dir ]; then
     pout "ramdisk is $format format."
     rm -f $new_img
     mkboot_img $new_img || perr "Make boot.img Error! pls check img_info file."
-    #pout "Add SEANDROIDENFORCE tag."
-    #printf SEANDROIDENFORCE >> $new_img
     rm -f new_ramdisk
     clean
 fi
@@ -229,9 +265,11 @@ d_offset=$((s_offset+s_count))
 #kernel
 dd if=$bootimg of=kernel_tmp bs=$page_size skip=$k_offset count=$k_count 2>/dev/null
 dd if=kernel_tmp of=kernel bs=$kernel_size count=1 2>/dev/null
+
 #ramdisk.packed
 dd if=$bootimg of=ramdisk_tmp bs=$page_size skip=$r_offset count=$r_count 2>/dev/null
 dd if=ramdisk_tmp of=ramdisk.packed bs=$ramdisk_size count=1 2>/dev/null
+
 #second
 if [ $second_size -gt 0 ]; then
    dd if=$bootimg of=second.img.tmp bs=$page_size skip=$s_offset count=$s_count 2>/dev/null
@@ -239,6 +277,7 @@ if [ $second_size -gt 0 ]; then
    s_name="second=second.img\n"
    s_size="second_size=$second_size\n"
 fi
+
 #dtb
 if [ $dtb_size -gt 0 ]; then
     dd if=$bootimg of=dt.img_tmp bs=$page_size skip=$d_offset count=$d_count 2>/dev/null
@@ -253,7 +292,14 @@ rm -f *_tmp $(basename $1) $bootimg
 kernel=kernel
 ramdisk=ramdisk
 [ ! -s $kernel ] && clean
-#print boot.img info
+
+echo "#" > img_info
+
+#print_info
+fox_fox_tmp=/tmp/fox_img_info_000.txt
+echo -n "" > $fox_fox_tmp
+save_os_stuff $1 $fox_fox_tmp
+eval $(cat $fox_fox_tmp)
 print_info
 
 esq="'\"'\"'"
@@ -263,6 +309,9 @@ escaped_cmd_line=`echo $cmd_line | sed "s/'/$esq/g"`
 printf "kernel=kernel\nramdisk=ramdisk\n${s_name}${dt_name}page_size=$page_size\n\
 kernel_size=$kernel_size\nramdisk_size=$ramdisk_size\n${s_size}${dt_size}base_addr=$base_addr\nkernel_offset=$kernel_offset\n\
 ramdisk_offset=$ramdisk_offset\ntags_offset=$tags_offset\ncmd_line=\'$escaped_cmd_line\'\nboard=\"$board\"\n" > img_info
+cat $fox_fox_tmp >> img_info
+
+rm -f $fox_fox_tmp
 mkdir ramdisk
 cd ramdisk
 
