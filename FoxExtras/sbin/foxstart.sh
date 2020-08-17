@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200531
+# * Date:   20200817
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200531"
+SCRIPT_LASTMOD_DATE="20200817"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
@@ -472,7 +472,7 @@ get_setprop() {
   SETPROP=/sbin/resetprop
   [ -x $SETPROP ] && {
     rm -f /sbin/setprop
-    ln -sf $SETPROP /sbin/setprop
+    ln -sf resetprop /sbin/setprop
     return
   }
   SETPROP=/sbin/setprop

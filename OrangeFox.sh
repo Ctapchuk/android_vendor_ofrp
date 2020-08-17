@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 31 July 2020
+# 17 August 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -587,7 +587,6 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/sbin"
       cp "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/sbin"
-      cp "$FOX_VENDOR_PATH/prebuilt/arm64/resetprop" "$FOX_RAMDISK/sbin"
       ;;
   "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
@@ -607,6 +606,9 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
+  # copy resetprop (armeabi)
+  cp -a $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/sbin/
+    
   # deal with magiskboot/mkbootimg/unpackbootimg
   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
       echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/sbin/magiskboot ...${NC}"
@@ -646,7 +648,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   if [ "$FOX_REPLACE_TOOLBOX_GETPROP" = "1" -a -f $FOX_RAMDISK/sbin/resetprop ]; then
      echo -e "${GREEN}-- Replacing the toolbox \"getprop\" command with a fuller version ...${NC}"
      rm -f $FOX_RAMDISK/sbin/getprop
-     ln -s /sbin/resetprop $FOX_RAMDISK/sbin/getprop
+     ln -s resetprop $FOX_RAMDISK/sbin/getprop
   fi
 
   # replace busybox lzma (and "xz") with our own 
