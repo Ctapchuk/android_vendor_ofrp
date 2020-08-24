@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 17 August 2020
+# 24 August 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -27,7 +27,6 @@
 # It is best to declare them in a script that you will use for building 
 #
 #
-
 # some colour codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -839,14 +838,18 @@ fi
 
 # repack the recovery image
 if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+     SAMSUNG_DEVICE=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.product.manufacturer")
      if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
   	echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
         cp -af "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
+  	if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
+     	   echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
+  	fi
   	cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
      else
   	echo -e "${BLUE}-- Repacking and copying recovery${NC}"
   	[ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
-  	SAMSUNG_DEVICE=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.product.manufacturer")
   	if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
      	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $FOX_WORK/kernel ${NC}"
      	   [ -e "$FOX_WORK/kernel" ] && echo -n "SEANDROIDENFORCE" >> "$FOX_WORK/kernel"
@@ -858,6 +861,13 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
   	fi
   	cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
      fi
+     #
+     if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     	echo -e "${RED}-- Creating Odin flashable recovery tar ($RECOVERY_IMAGE.tar) ... ${NC}"
+     	tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c $(basename "$RECOVERY_IMAGE") > $RECOVERY_IMAGE".tar"
+     	#tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c recovery.img > $RECOVERY_IMAGE".tar"
+     fi
+
      # end: standard version
 
     #: build "lite" (2GB) version (virtually obsolete now) #
@@ -888,6 +898,12 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
 	   echo "rm -f $LITE_CMD" >> $LITE_CMD
 	   echo "" >> $LITE_CMD
 	   bash "$LITE_CMD"
+
+  	   if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     	      echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE_2GB ${NC}"
+     	      echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE_2GB
+  	   fi
+
 	else 
 	    [ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
 	    bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
@@ -899,6 +915,10 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
 
 	cd "$OUT" && md5sum "$RECOVERY_IMAGE_2GB" > "$RECOVERY_IMAGE_2GB.md5" && cd - > /dev/null 2>&1
 
+        if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     	   echo -e "${RED}-- Creating Odin flashable recovery tar ($RECOVERY_IMAGE_2GB.tar) ... ${NC}"
+     	   tar -C $(dirname "$RECOVERY_IMAGE_2GB") -H ustar -c $(basename "$RECOVERY_IMAGE_2GB") > $RECOVERY_IMAGE_2GB".tar"
+        fi
     fi # end: 2GB "(lite)" version
 
    # create update zip installer

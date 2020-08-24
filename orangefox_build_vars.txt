@@ -1,12 +1,15 @@
+# ------------------------------------
 #
 # Custom build VARs for the OrangeFox Recovery
-# These should be declared - in a shell script, or at the command line - before building
+#
+# These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 17 August 2020
+# Date: 24 August 2020
 #
 # -----------------------------------
 #
+
 "TARGET_ARCH"
   - set this to "arm" or "arm64", depending on whether your device is 32-bit or 64-bit
   - eg., "export TARGET_ARCH=arm"
@@ -15,9 +18,9 @@
 "OF_AB_DEVICE"
    - whether the device is an A/B device
    - set to 1 if your device is an A/B device (** make sure that it really is **)
-   - if you enable this (by setting to 1), you must also do these (before building):
-        export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1
-        export OF_USE_MAGISKBOOT=1
+   - if you enable this, all these will be set automatically to "1":
+    	OF_USE_MAGISKBOOT
+    	OF_USE_MAGISKBOOT_FOR_ALL_PATCHES
    - default = 0
 #
 "FOX_PORTS_TMP" 
@@ -124,7 +127,7 @@
 "OF_SUPPORT_PRE_FLASH_SCRIPT"
    - set to 1 to support running a script before flashing zips (other than ROMs)
    - the script must be called /sbin/fox_pre_flash - and you need to copy it there yourself
-   - default = 0 (for lavender/violet/perseus, set to 1)
+   - default = 0
 #
 "OF_DONT_PATCH_ON_FRESH_INSTALLATION"
    - set to 1 to prevent patching dm-verity and forced-encryption when the OrangeFox zip is flashed
@@ -424,6 +427,14 @@
 "FOX_ADVANCED_SECURITY" [NEW] [R11 only]
 - set this to 1 to enable the advanced security features
 - this forces ADB and MTP to be disabled until after you enter the recovery (ie, until after
+- all decryption/recovery passwords are successfully entered)
+- default = 0
+#
+"OF_NO_SAMSUNG_SPECIAL" [NEW]
+- set this to 1 to disable some operations relating only to Samsung devices - these are:
+-   1) appending "SEANDROIDENFORCE" to the recovery image of a Samsung device
+-   2) creating an Odin flashable tar file of the recovery image
+- this setting is only effective is FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER is set to 1
 - all decryption/recovery passwords are successfully entered)
 - default = 0
 #
