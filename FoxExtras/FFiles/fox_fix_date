@@ -5,10 +5,15 @@
 #
 # By DarthJabba9
 #
-# Copyright (C) 2018 OrangeFox Recovery Project
+# Copyright (C) 2018-2020 The OrangeFox Recovery Project
 # -------------------------
 
 save_drift() {
+if [ ! -d /persist/ ]; then
+   echo "There is no /persist partition. Quitting..."
+   exit
+fi
+
 local epoch_cfg=/persist/.fox_epoch_drift.cfg
 local now=$(date +%s)
 local epoch=$(cat /sys/class/rtc/rtc0/since_epoch)

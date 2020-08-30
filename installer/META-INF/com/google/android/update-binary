@@ -39,7 +39,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200721"
+MOD_DATE="20200830"
   
 # sundry glodal defaults
 SYS_DIR="/system"
@@ -512,9 +512,12 @@ local F="$1"
 	rm -rf $F/Fox/.theme
 	rm -rf $F/Fox/.navbar
 	mount_part "/persist"
-	rm -f /persist/.foxs
-	rm -f /persist/.fsec*
-	umount_part /persist
+	F=$(is_mounted "/persist")
+	if [ "$F" = "1" ]; then
+	   rm -f /persist/.foxs
+	   rm -f /persist/.fsec*
+	   umount_part /persist
+	fi
 }
 
 # main function
