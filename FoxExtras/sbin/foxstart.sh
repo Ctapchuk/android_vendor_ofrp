@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200817
+# * Date:   20200830
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200817"
+SCRIPT_LASTMOD_DATE="20200830"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
@@ -41,6 +41,7 @@ ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 ANDROID_SDK="21"  # assume at least (and no more than) Lollipop in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
+SYSTEM_PARTITION="/dev/block/bootdevice/by-name/system" # default system partition mount point
 FOX_DEVICE=$(getprop "ro.product.device")
 SETPROP=/sbin/setprop
 T=0
@@ -56,7 +57,8 @@ fi
 # file_getprop <file> <property>
 file_getprop() 
 { 
-   grep "^$2=" "$1" | cut -d= -f2
+  local F=$(grep "^$2=" "$1" | cut -d= -f2)
+  echo $F | sed 's/ *$//g'
 }
 
 #  some optional debug message stuff
@@ -165,7 +167,7 @@ local slot=$(getprop "ro.boot.slot_suffix")
    fi
    
    # mount
-   $MOUNT_CMD -t ext4 /dev/block/bootdevice/by-name/system"$slot" $S > /dev/null 2>&1
+   $MOUNT_CMD -t ext4 $SYSTEM_PARTITION"$slot" $S > /dev/null 2>&1
    
    # look for build.prop
    [ ! -e "$PROP" ] && PROP="$S/system/build.prop" # test for SAR
@@ -295,7 +297,7 @@ isMIUI() {
       mkdir -p $S
    fi
 
-   $MOUNT_CMD -t ext4 /dev/block/bootdevice/by-name/system"$slot" $S > /dev/null 2>&1
+   $MOUNT_CMD -t ext4 $SYSTEM_PARTITION"$slot" $S > /dev/null 2>&1
    
    DebugDirList "$S/"
    DebugDirList "$S/vendor"

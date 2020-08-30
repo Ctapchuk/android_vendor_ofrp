@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 24 August 2020
+# 30 August 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -52,6 +52,19 @@ abort() {
   [ -f $TMP_SCRATCH ] && rm -f $TMP_SCRATCH
   exit $1
 }
+
+# remove all extras if FOX_DRASTIC_SIZE_REDUCTION is defined
+if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
+   export BUILD_2GB_VERSION=0
+   export FOX_REMOVE_AAPT=1
+   export FOX_REMOVE_BASH=1
+   export FOX_REMOVE_ZIP_BINARY=1
+   export FOX_USE_BASH_SHELL=0
+   export FOX_ASH_IS_BASH=0
+   export FOX_USE_ZIP_BINARY=0
+   export FOX_USE_NANO_EDITOR=0
+   export FOX_USE_TAR_BINARY=0
+fi
 
 if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -a "$BUILD_2GB_VERSION" = "1" ]; then
    echo ""
@@ -108,7 +121,11 @@ else
 fi
 
 # default prop
-DEFAULT_PROP="$FOX_RAMDISK/prop.default"
+if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.prop" ]; then
+   DEFAULT_PROP="$TARGET_RECOVERY_ROOT_OUT/default.prop"
+else
+   [ -e "$FOX_RAMDISK/prop.default" ] && DEFAULT_PROP="$FOX_RAMDISK/prop.default" || DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+fi
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
@@ -221,7 +238,7 @@ SAR_BUILD() {
   [ ! -d "$FOX_RAMDISK/system_root/" ] && { echo "0"; return; }
   local C=$(cat "$FOX_RAMDISK/etc/recovery.fstab" | grep -s ^"/system_root")
   [ -z "$C" ] && { echo "0"; return; }
-  C=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.system_root_image")
+  C=$(file_getprop "$DEFAULT_PROP" "ro.build.system_root_image")
   [ "$C" = "true" ] && echo "1" || echo "0"
 }
 
@@ -309,6 +326,12 @@ local TDT=$(date "+%d %B %Y")
      echo -e "${RED}- Changing the recovery install partition to \"$FOX_RECOVERY_INSTALL_PARTITION\" ${NC}"
      sed -i -e "s|^RECOVERY_PARTITION=.*|RECOVERY_PARTITION=\"$FOX_RECOVERY_INSTALL_PARTITION\"|" $F
      # sed -i -e "s|$DEFAULT_INSTALL_PARTITION|$FOX_RECOVERY_INSTALL_PARTITION|" $F
+  fi
+
+  # embed the system partition
+  if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
+     echo -e "${RED}- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
+     sed -i -e "s|^SYSTEM_PARTITION=.*|SYSTEM_PARTITION=\"$FOX_RECOVERY_SYSTEM_PARTITION\"|" $F
   fi
 
   # A/B devices
@@ -428,7 +451,8 @@ local ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
 
 # file_getprop <file> <property>
 file_getprop() { 
-  grep "^$2=" "$1" | cut -d= -f2
+  local F=$(grep "^$2=" "$1" | cut -d= -f2)
+  echo $F | sed 's/ *$//g'
 }
 
 # are we using toolbox/toybox?
@@ -461,6 +485,12 @@ local F=""
       rm -f $FOX_RAMDISK/sbin/gnutar
       rm -f $FOX_RAMDISK/sbin/bash
       rm -f $FOX_RAMDISK/etc/bash.bashrc
+      [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
+      rm -rf $FFil/Tools
+      if [ "$OF_VANILLA_BUILD" = "1" ]; then
+         rm -rf $FFil/OF_avb20
+         rm -rf $FFil/OF_verity_crypt
+      fi
       
       # --- some sanity checks - try to restore some originals 
       if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
@@ -766,6 +796,13 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       chmod 0755 $FOX_RAMDISK/sbin/zip
   fi
 
+  # embed the system partition
+  if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
+     F=$FOX_RAMDISK/sbin/foxstart.sh
+     echo -e "${RED}- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
+     sed -i -e "s|^SYSTEM_PARTITION=.*|SYSTEM_PARTITION=\"$FOX_RECOVERY_SYSTEM_PARTITION\"|" $F
+  fi
+
   # Include mmgui
   cp -a $FOX_VENDOR_PATH/Files/mmgui $FOX_RAMDISK/sbin/mmgui
   chmod 0755 $FOX_RAMDISK/sbin/mmgui
@@ -838,7 +875,7 @@ fi
 
 # repack the recovery image
 if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
-     SAMSUNG_DEVICE=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.product.manufacturer")
+     SAMSUNG_DEVICE=$(file_getprop "$DEFAULT_PROP" "ro.product.manufacturer")
      if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
   	echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
         cp -af "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
