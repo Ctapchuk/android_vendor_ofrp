@@ -711,6 +711,26 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      sed -i "/$green_setting/I,+0 d" $Led_xml_File
   fi
 
+  # remove extra "More..." link in the "About" screen?
+  if [ "$OF_DISABLE_EXTRA_ABOUT_PAGE" = "1" ]; then
+     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
+     green_setting="btn_about_credits"
+     sed -i "/$green_setting/I,+8 d" $Led_xml_File
+     
+     green_setting="floating_btn"
+     sed -i "/$green_setting/I,+6 d" $Led_xml_File
+  fi
+
+  # remove the "splash" setting?
+  if [ "$OF_NO_SPLASH_CHANGE" = "1" ]; then
+     echo -e "${GREEN}-- Removing the \"splash image\" setting ...${NC}"
+     Led_xml_File=$FOX_RAMDISK/twres/pages/customization.xml
+
+     # remove the "splash" setting (the line where it is found + the next 8 lines)
+     green_setting="sph_sph"
+     sed -i "/$green_setting/I,+8 d" $Led_xml_File
+  fi
+
   # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
      export FOX_USE_BASH_SHELL="0"
