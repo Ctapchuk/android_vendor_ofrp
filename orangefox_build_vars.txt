@@ -5,11 +5,11 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 24 August 2020
+# Date: 02 September 2020
 #
 # -----------------------------------
 #
-
+#
 "TARGET_ARCH"
   - set this to "arm" or "arm64", depending on whether your device is 32-bit or 64-bit
   - eg., "export TARGET_ARCH=arm"
@@ -57,6 +57,13 @@
      different from the default "/dev/block/bootdevice/by-name/recovery"
    - default = "/dev/block/bootdevice/by-name/recovery"
 #
+"FOX_RECOVERY_SYSTEM_PARTITION" [NEW]
+   - !!! this should normally BE LEFT WELL ALONE !!!
+   - set this ONLY if your device's system partition is in a location that is
+     different from the default "/dev/block/bootdevice/by-name/system"
+     (eg, some Samsung/HTC devices have a different location for system)
+   - default = "/dev/block/bootdevice/by-name/system"
+
 "FOX_USE_LZMA_COMPRESSION"
    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
    - * this requires you to have an up-to-date lzma binary in your build system, and 
@@ -438,4 +445,26 @@
 - all decryption/recovery passwords are successfully entered)
 - default = 0
 #
+"OF_DISABLE_KEYMASTER2" [NEW] [R11 only]
+- set this to 1 to disable the keymaster2 support code
+- only do this if you are getting compiler errors with keymaster2 (eg, with legacy build systems)
+- default = 0
+#
+"OF_LEGACY_SHAR512" [NEW] [R11 only]
+- set this to 1 to avoid compiler errors in legacy build systems
+- default = 0
+#
+"OF_DEVICE_WITHOUT_PERSIST" [NEW] [R11 only]
+- set this to 1 if your device does not have a /persist partition
+- default = 0
+#
+"OF_DISABLE_EXTRA_ABOUT_PAGE" [NEW] [R11 only]
+- set this to 1 to disable display of the extra information under the "About" page
+- you only need to do this if trying to display it causes problems
+- default = 0
+#
+"OF_NO_SPLASH_CHANGE" [NEW] [R11 only]
+- set this to 1 to disable changing the splash image
+- you only need to do this if trying to change the splash image causes problems
+- default = 0
 # -----------------------------------
