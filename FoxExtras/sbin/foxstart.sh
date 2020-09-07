@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200830
+# * Date:   20200907
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200830"
+SCRIPT_LASTMOD_DATE="20200907"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
@@ -41,7 +41,13 @@ ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 ANDROID_SDK="21"  # assume at least (and no more than) Lollipop in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
-SYSTEM_PARTITION="/dev/block/bootdevice/by-name/system" # default system partition mount point
+
+# default system partition mount point
+SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
+
+# default vendor partition mount point
+VENDOR_PARTITION=/dev/block/bootdevice/by-name/system
+
 FOX_DEVICE=$(getprop "ro.product.device")
 SETPROP=/sbin/setprop
 T=0
@@ -92,7 +98,7 @@ local D="$1"
 
 realTreble() {
 local CC=/tmp_vendor
-local V=/dev/block/bootdevice/by-name/vendor
+local V=$VENDOR_PARTITION
   [ ! -e $V ] && {
     echo "0"
     return

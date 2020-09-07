@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 August 2020
+# 7 September 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -27,6 +27,13 @@
 # It is best to declare them in a script that you will use for building 
 #
 #
+# whether to print extra debug messages
+if [ -z "$FOX_BUILD_DEBUG_MESSAGES" ]; then
+   export FOX_BUILD_DEBUG_MESSAGES="0"
+elif [ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ]; then
+   set -o xtrace
+fi
+
 # some colour codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -152,9 +159,6 @@ fi
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
-
-# whether to print extra debug messages
-DEBUG="0"
 
 # FOX_REPLACE_BUSYBOX_PS: default to 0
 if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
@@ -315,48 +319,47 @@ local TDT=$(date "+%d %B %Y")
   # embed the build date
   sed -i -e "s/TODAY/$TDT/" $F
 
-  # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
-  # "--last-call" = just before creating the OrangeFox update zip file
-  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$OF_WORKING_DIR" "--last-call"
-  fi
-
   # embed the recovery partition
   if [ -n "$FOX_RECOVERY_INSTALL_PARTITION" ]; then
-     echo -e "${RED}- Changing the recovery install partition to \"$FOX_RECOVERY_INSTALL_PARTITION\" ${NC}"
+     echo -e "${RED}-- Changing the recovery install partition to \"$FOX_RECOVERY_INSTALL_PARTITION\" ${NC}"
      sed -i -e "s|^RECOVERY_PARTITION=.*|RECOVERY_PARTITION=\"$FOX_RECOVERY_INSTALL_PARTITION\"|" $F
-     # sed -i -e "s|$DEFAULT_INSTALL_PARTITION|$FOX_RECOVERY_INSTALL_PARTITION|" $F
   fi
 
   # embed the system partition
   if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
-     echo -e "${RED}- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
+     echo -e "${RED}-- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
      sed -i -e "s|^SYSTEM_PARTITION=.*|SYSTEM_PARTITION=\"$FOX_RECOVERY_SYSTEM_PARTITION\"|" $F
+  fi
+
+  # embed the VENDOR partition
+  if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
+     echo -e "${RED}-- Changing the recovery vendor partition to \"$FOX_RECOVERY_VENDOR_PARTITION\" ${NC}"
+     sed -i -e "s|^VENDOR_PARTITION=.*|VENDOR_PARTITION=\"$FOX_RECOVERY_VENDOR_PARTITION\"|" $F
   fi
 
   # A/B devices
   if [ "$OF_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
      cp -af $FOX_RAMDISK/sbin/magiskboot .
-     sed -i -e "s|^OF_AB_DEVICE=.*|OF_AB_DEVICE=\"1\"|" $F
+     sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
   fi
 
   # Reset Settings
   if [ "$FOX_RESET_SETTINGS" = "disabled" ]; then
      echo -e "${WHITEONRED}-- Instructing the zip installer to NOT reset OrangeFox settings (NOT recommended!) ... ${NC}"
-     sed -i -e "s|^FOX_RESET_SETTINGS=.*|FOX_RESET_SETTINGS=\"disabled\"|" $F
+     sed -i -e "s/^FOX_RESET_SETTINGS=.*/FOX_RESET_SETTINGS=\"disabled\"/" $F
   fi
 
   # R11 
   if [ "$FOX_R11" = "1" ]; then
      echo -e "${RED}-- Preparing zip installer for OrangeFox R11 ... ${NC}"
-     sed -i -e "s|^FOX_R11=.*|FOX_R11=\"1\"|" $F
+     sed -i -e "s/^FOX_R11=.*/FOX_R11=\"1\"/" $F
   fi
 
   # skip all patches ?
   if [ "$OF_VANILLA_BUILD" = "1" ]; then
      echo -e "${RED}-- This build will skip all OrangeFox patches ... ${NC}"
-     sed -i -e "s|^OF_VANILLA_BUILD=.*|OF_VANILLA_BUILD=\"1\"|" $F
+     sed -i -e "s/^OF_VANILLA_BUILD=.*/OF_VANILLA_BUILD=\"1\"/" $F
   fi
 
   # omit AromaFM ?
@@ -374,6 +377,12 @@ local TDT=$(date "+%d %B %Y")
   if [ -n "$TARGET_DEVICE_ALT" ]; then
      echo -e "${GREEN}-- Adding the alternative device codename: \"$TARGET_DEVICE_ALT\" ${NC}"
      Add_Target_Alt;
+  fi
+
+  # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
+  # "--last-call" = just before creating the OrangeFox update zip file
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+     $FOX_LOCAL_CALLBACK_SCRIPT "$OF_WORKING_DIR" "--last-call"
   fi
 
   # create update zip
@@ -422,6 +431,7 @@ local TDT=$(date "+%d %B %Y")
   # export the filenames
   echo "ZIP_FILE=$ZIP_FILE">/tmp/oFox00.tmp
   echo "RECOVERY_IMAGE=$RECOVERY_IMAGE">>/tmp/oFox00.tmp
+  [ -f $RECOVERY_IMAGE".tar" ] && echo "RECOVERY_ODIN=$RECOVERY_IMAGE.tar" >>/tmp/oFox00.tmp
   if [ "$BUILD_2GB_VERSION" = "1" ]; then  
 	echo "ZIP_FILE_GO=$ZIP_FILE_GO">>/tmp/oFox00.tmp
   	echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
@@ -632,7 +642,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
 
   # build standard (3GB) version
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
-  [ "$DEBUG" = "1" ] && echo "- DEBUG: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
+  #[ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ] && echo "- FOX_BUILD_DEBUG_MESSAGES: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   cp -ar $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
   # copy resetprop (armeabi)
@@ -659,12 +669,12 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   fi
   
   # replace busybox ps with our own ?
-  if [ "$(readlink $FOX_RAMDISK/sbin/ps)" = "toybox" ]; then # if using toybox, then we don't need this
-     rm -f "$FOX_RAMDISK/FFiles/ps"
-     export FOX_REPLACE_BUSYBOX_PS="0"
-     echo -e "${GREEN}-- The \"ps\" command is symlinked to \"toybox\". NOT replacing it...${NC}"
-  else
-     if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
+  if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
+     if [ "$(readlink $FOX_RAMDISK/sbin/ps)" = "toybox" ]; then # if using toybox, then we don't need this
+     	rm -f "$FOX_RAMDISK/FFiles/ps"
+     	export FOX_REPLACE_BUSYBOX_PS="0"
+     	echo -e "${GREEN}-- The \"ps\" command is symlinked to \"toybox\". NOT replacing it...${NC}"
+     elif [ "$(readlink $FOX_RAMDISK/sbin/ps)" = "busybox" ]; then
         if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
            echo -e "${GREEN}-- Replacing the busybox \"ps\" command with our own full version ...${NC}"
   	   rm -f $FOX_RAMDISK/sbin/ps
@@ -713,6 +723,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
 
   # remove extra "More..." link in the "About" screen?
   if [ "$OF_DISABLE_EXTRA_ABOUT_PAGE" = "1" ]; then
+     echo -e "${GREEN}-- Disabling the \"More...\" link in the \"About\" page ...${NC}"
      Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
      green_setting="btn_about_credits"
      sed -i "/$green_setting/I,+8 d" $Led_xml_File
@@ -816,11 +827,19 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       chmod 0755 $FOX_RAMDISK/sbin/zip
   fi
 
-  # embed the system partition
+  # embed the system partition (in foxstart.sh)
+  F=$FOX_RAMDISK/sbin/foxstart.sh
   if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
-     F=$FOX_RAMDISK/sbin/foxstart.sh
-     echo -e "${RED}- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
+     echo -e "${RED}-- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
      sed -i -e "s|^SYSTEM_PARTITION=.*|SYSTEM_PARTITION=\"$FOX_RECOVERY_SYSTEM_PARTITION\"|" $F
+     # sed -i 's/^SYSTEM_PARTITION=.*/SYSTEM_PARTITION="'"$FOX_RECOVERY_SYSTEM_PARTITION"'"/' $F
+  fi
+
+  # embed the vendor partition (in foxstart.sh)
+  F=$FOX_RAMDISK/sbin/foxstart.sh
+  if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
+     echo -e "${RED}-- Changing the recovery vendor partition to \"$FOX_RECOVERY_VENDOR_PARTITION\" ${NC}"
+     sed -i -e "s|^VENDOR_PARTITION=.*|VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION|" $F
   fi
 
   # Include mmgui
@@ -886,6 +905,15 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/etc/fox.cfg
   echo "ro.build.date.utc_fox=$BUILD_DATE_UTC" >> $FOX_RAMDISK/etc/fox.cfg
   echo "ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC" >> $FOX_RAMDISK/etc/fox.cfg
+  if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
+     echo "SYSTEM_PARTITION=$FOX_RECOVERY_SYSTEM_PARTITION" >> $FOX_RAMDISK/etc/fox.cfg
+  fi
+  if [ -n "$FOX_RECOVERY_INSTALL_PARTITION" ]; then
+     echo "RECOVERY_PARTITION=$FOX_RECOVERY_INSTALL_PARTITION" >> $FOX_RAMDISK/etc/fox.cfg
+  fi
+  if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
+     echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/etc/fox.cfg
+  fi
 
   # let's be clear where we are ...
   if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
@@ -906,7 +934,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
   	cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
      else
   	echo -e "${BLUE}-- Repacking and copying recovery${NC}"
-  	[ "$DEBUG" = "1" ] && echo "- DEBUG: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
+  	#[ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ] && echo "- FOX_BUILD_DEBUG_MESSAGES: Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE ***"
   	if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
      	   echo -e "${RED}-- Appending SEANDROIDENFORCE to $FOX_WORK/kernel ${NC}"
      	   [ -e "$FOX_WORK/kernel" ] && echo -n "SEANDROIDENFORCE" >> "$FOX_WORK/kernel"
@@ -962,7 +990,8 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
   	   fi
 
 	else 
-	    [ "$DEBUG" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
+	    echo -n ""
+	    #[ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
 	    bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
   	    if [ "$SAMSUNG_DEVICE" = "samsung" ]; then
      	       echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE_2GB ${NC}"
