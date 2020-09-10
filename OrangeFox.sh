@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 7 September 2020
+# 10 September 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -366,6 +366,13 @@ local TDT=$(date "+%d %B %Y")
   if [ "$FOX_DELETE_AROMAFM" = "1" ]; then
      echo -e "${GREEN}-- Deleting AromaFM ...${NC}"
      rm -rf $OF_WORKING_DIR/sdcard/Fox/FoxFiles/AromaFM
+  fi
+
+  # delete the magisk addon zips ?
+  if [ "$FOX_DELETE_MAGISK_ADDON" = "1" ]; then
+     echo -e "${GREEN}-- Deleting the magisk addon zips ...${NC}"
+     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
+     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
   fi
 
   # use anykernel3 version of OF_initd
@@ -740,6 +747,17 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      # remove the "splash" setting (the line where it is found + the next 8 lines)
      green_setting="sph_sph"
      sed -i "/$green_setting/I,+8 d" $Led_xml_File
+  fi
+
+  # disable the magisk addon ui entries?
+  if [ "$FOX_DELETE_MAGISK_ADDON" = "1" ]; then
+     echo -e "${GREEN}-- Disabling the magisk addon entries in advanced.xml ...${NC}"
+     Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
+     sed -i "/Magisk Manager/I,+5 d" $Led_xml_File
+     #sed -i "/magisk_ver/I,+7 d" $Led_xml_File
+     sed -i "/>mod_magisk</I,+0 d" $Led_xml_File
+     sed -i "/>mod_unmagisk</I,+0 d" $Led_xml_File
+     sed -i "s/>Magisk</>Magisk ({@disabled})</" $Led_xml_File
   fi
 
   # Include bash shell ?
