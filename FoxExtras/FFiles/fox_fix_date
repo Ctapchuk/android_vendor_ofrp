@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/sbin/sh
 # ---------------------------
 # Fix epoch issues in OrangeFox recovery by storing the offset drifts in since_epoch
 # Useful in OrangeFox recovery when the device's RTC is misbehaving

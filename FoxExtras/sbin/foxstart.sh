@@ -1,6 +1,6 @@
 #!/sbin/sh
 #
-# 	/sbin/foxstart.sh
+# 	/bin/foxstart.sh
 # 	Custom script for OrangeFox Recovery
 #
 #	This file is part of the OrangeFox Recovery Project
@@ -23,16 +23,16 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200907
+# * Date:   20200922
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200907"
+SCRIPT_LASTMOD_DATE="20200922"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
-FS="/etc/recovery.fstab"
+FS="/system/etc/recovery.fstab"
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
 SYS_ROOT="0"	  # do we have system_root?
@@ -50,6 +50,8 @@ VENDOR_PARTITION=/dev/block/bootdevice/by-name/system
 
 FOX_DEVICE=$(getprop "ro.product.device")
 SETPROP=/sbin/setprop
+[ ! -e "$SETPROP" ] && SETPROP=/system/bin/setprop
+
 T=0
 M=0
 ROM=""
@@ -475,15 +477,16 @@ local OPS=$(getprop "orangefox.postinit.status")
 
 # cater for situations where setprop is a dead symlinked applet
 get_setprop() {
+local TPROP=""
   $SETPROP > /dev/null 2>&1
   [ $? == 0 ] && return
-  SETPROP=/sbin/resetprop
-  [ -x $SETPROP ] && {
-    rm -f /sbin/setprop
-    ln -sf resetprop /sbin/setprop
+  TPROP=/sbin/resetprop
+  [ ! -x "$TPROP" ] && TPROP=/system/bin/resetprop
+  [ -x "$TPROP" ] && {
+    rm -f $SETPROP
+    ln -sf $TPROP $SETPROP
     return
   }
-  SETPROP=/sbin/setprop
 }
 
 # try to get display panel information
