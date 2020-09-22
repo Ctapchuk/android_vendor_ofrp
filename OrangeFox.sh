@@ -312,6 +312,9 @@ local TDT=$(date "+%d %B %Y")
   mkdir -p $OF_WORKING_DIR/sdcard/Fox
   cd $OF_WORKING_DIR
 
+  # copy busybox
+#  $CP -a $FOX_VENDOR_PATH/Files/busybox .
+
   # copy documentation
   $CP -a $FOX_VENDOR_PATH/Files/INSTALL.txt .
   
