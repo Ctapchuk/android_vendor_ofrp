@@ -45,10 +45,13 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200907"
+MOD_DATE="20200922"
   
 # sundry glodal defaults
-SYS_DIR="/system"
+# VEND_DIR="/vendor"
+# SYS_DIR="/system"
+VEND_DIR="/mnt/vendor"
+SYS_DIR="/mnt/system"
 SYS_ROOT="$SYS_DIR"
 ETC_DIR="$SYS_DIR/etc"
 SAR="0"
@@ -225,16 +228,30 @@ CheckRequirements() {
 # do we have a SAR build?
 is_SAR() {
   local F=$($GETPROP "ro.build.system_root_image")
-  [ "$F" != "true" -a "$($GETPROP ro.twrp.sar)" != "true" ] && {
-    echo "0"
+  [ "$F" = "true" ] && {
+    echo "1"
     return  
   }
+
+  F=$(grep -s "/system_root" "/etc/fstab")
+  [ -n "$F" ] && {
+     echo "1"
+     return
+  }
+  
   [ -L "/system" -a -d "/system_root" ] && {
     echo "1"
     return
   }
+
   F=$(grep -s "/system_root" "/proc/mounts")
-  [ -n "$F" ] && echo "1" || echo "0"
+  [ -n "$F" ] && {
+     echo "1"
+     return
+  }
+  
+  F=$($GETPROP ro.twrp.sar)
+  [ "$F" = "true" ] && echo "1" || echo "0"
 }
 
 # file/directory/block exists
@@ -250,7 +267,11 @@ Exists() {
 
 # mount everything we might need
 MountThemAll() {
-local sys="/system"
+local sys="/mnt/system"
+
+	mkdir -p $SYS_DIR
+	mkdir -p $VEND_DIR
+	
 	# /system
     	SAR=$(is_SAR)
     	[ "$SAR" = "1" ] && sys="/system_root"
@@ -268,19 +289,19 @@ local sys="/system"
 	fi
 
     	# /vendor
-    	F=$(is_mounted "/vendor")
+    	F=$(is_mounted "$VEND_DIR")
     	if [ "$F" = "0" ]; then
-    	   mount "/vendor" > /dev/null 2>&1    	   
-    	   F=$(is_mounted "/vendor")
-    	   [ "$F" = "0" ] && mount -t ext4 $VENDOR_PARTITION /vendor > /dev/null 2>&1	   
+    	   mount "$VEND_DIR" > /dev/null 2>&1    	   
+    	   F=$(is_mounted "$VEND_DIR")
+    	   [ "$F" = "0" ] && mount -t ext4 $VENDOR_PARTITION $VEND_DIR > /dev/null 2>&1	   
 	fi
 } 
 
 # unmount everything that we mounted
 UnMountThemAll() {
    umount_part "$SYS_ROOT"
-   umount_part "/system" > /dev/null 2>&1
-   umount_part "/vendor"
+   umount_part "$SYS_DIR" > /dev/null 2>&1
+   umount_part "$VEND_DIR"
    umount_part "/cache"
    umount_part "/persist"
    umount_part "/data"
@@ -297,19 +318,19 @@ local RF=$1
 }
 
 Disable_stock_recovery_overwrites() {
-local ToRename="/system/bin/install-recovery.sh
+local ToRename="$SYS_DIR/bin/install-recovery.sh
 $ETC_DIR/install-recovery.sh
 $ETC_DIR/recovery-resource.dat
 $SYS_ROOT/recovery-from-boot.p
 $SYS_DIR/recovery-from-boot.p
-/system/vendor/bin/install-recovery.sh
-/system/vendor/etc/install-recovery.sh
-/system/vendor/etc/recovery-resource.dat
-/system/vendor/recovery-from-boot.p
-/vendor/recovery-from-boot.p
-/vendor/bin/install-recovery.sh
-/vendor/etc/install-recovery.sh
-/vendor/etc/recovery-resource.dat"
+$SYS_DIR/vendor/bin/install-recovery.sh
+$SYS_DIR/vendor/etc/install-recovery.sh
+$SYS_DIR/vendor/etc/recovery-resource.dat
+$SYS_DIR/vendor/recovery-from-boot.p
+$VEND_DIR/recovery-from-boot.p
+$VEND_DIR/bin/install-recovery.sh
+$VEND_DIR/etc/install-recovery.sh
+$VEND_DIR/etc/recovery-resource.dat"
 
    for i in $ToRename
    do
@@ -651,3 +672,4 @@ Main() {
 # --
 Main
 # --
+
