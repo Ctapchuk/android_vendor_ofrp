@@ -32,7 +32,7 @@ SCRIPT_LASTMOD_DATE="20200922"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
-FS="/system/etc/recovery.fstab"
+FS="/etc/recovery.fstab"
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
 SYS_ROOT="0"	  # do we have system_root?
@@ -146,17 +146,31 @@ has_system_root() {
 
 # Is this set up properly as SAR?
 is_SAR() {
-  local F=$(has_system_root)
-  [ "$F" != "1" ] && {
-    echo "0"
+  local F=$(getprop "ro.build.system_root_image")
+  [ "$F" = "true" ] && {
+    echo "1"
     return  
   }
+
+  F=$(grep -s "/system_root" "/etc/fstab")
+  [ -n "$F" ] && {
+     echo "1"
+     return
+  }
+  
   [ -L "/system" -a -d "/system_root" ] && {
     echo "1"
     return
   }
+
   F=$(grep -s "/system_root" "/proc/mounts")
-  [ -n "$F" ] && echo "1" || echo "0"
+  [ -n "$F" ] && {
+     echo "1"
+     return
+  }
+  
+  F=$(getprop ro.twrp.sar)
+  [ "$F" = "true" ] && echo "1" || echo "0"
 }
 
 # try to identify the installed ROM, and some ROM information
