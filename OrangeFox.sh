@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 24 September 2020
+# 26 September 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -32,18 +32,6 @@ if [ -z "$FOX_BUILD_DEBUG_MESSAGES" ]; then
    export FOX_BUILD_DEBUG_MESSAGES="0"
 elif [ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ]; then
    set -o xtrace
-fi
-
-# some things are changing in native Android 10.0 devices
-RAMDISK_BIN=/sbin
-RAMDISK_ETC=/etc
-NEW_RAMDISK_BIN=/system/bin
-NEW_RAMDISK_ETC=/system/etc
-
-# we can still use the original ("legacy") settings, if we want
-if [ "$FOX_LEGACY_SBIN_ETC" = "1" ]; then
-   NEW_RAMDISK_BIN=$RAMDISK_BIN
-   NEW_RAMDISK_ETC=$RAMDISK_ETC
 fi
 
 # some colour codes
@@ -74,6 +62,12 @@ abort() {
   [ -d $WORKING_TMP ] && rm -rf $WORKING_TMP
   [ -f $TMP_SCRATCH ] && rm -f $TMP_SCRATCH
   exit $1
+}
+
+# file_getprop <file> <property>
+file_getprop() { 
+  local F=$(grep "^$2=" "$1" | cut -d= -f2)
+  echo $F | sed 's/ *$//g'
 }
 
 # remove all extras if FOX_DRASTIC_SIZE_REDUCTION is defined
@@ -148,6 +142,20 @@ if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.pro
    DEFAULT_PROP="$TARGET_RECOVERY_ROOT_OUT/default.prop"
 else
    [ -e "$FOX_RAMDISK/prop.default" ] && DEFAULT_PROP="$FOX_RAMDISK/prop.default" || DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+fi
+
+# some things are changing in native Android 10.0 devices
+RAMDISK_BIN=/sbin
+RAMDISK_ETC=/etc
+NEW_RAMDISK_BIN=/system/bin
+NEW_RAMDISK_ETC=/system/etc
+
+# we can still use the original ("legacy") settings, if we want or are clearly building on less-than android10 manifest
+tmp01=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.version.sdk")
+[ -z "$tmp01" ] && tmp01=28
+if [ "$FOX_LEGACY_SBIN_ETC" = "1" -o $tmp01 -lt 29 ]; then
+   NEW_RAMDISK_BIN=$RAMDISK_BIN
+   NEW_RAMDISK_ETC=$RAMDISK_ETC
 fi
 
 # device name
@@ -490,12 +498,6 @@ local ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
    rm -f $F
 } # function
 
-
-# file_getprop <file> <property>
-file_getprop() { 
-  local F=$(grep "^$2=" "$1" | cut -d= -f2)
-  echo $F | sed 's/ *$//g'
-}
 
 # are we using toolbox/toybox?
 uses_toolbox() {
