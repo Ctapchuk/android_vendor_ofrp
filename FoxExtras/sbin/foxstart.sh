@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200922
+# * Date:   20200926
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200922"
+SCRIPT_LASTMOD_DATE="20200926"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 CFG="/etc/orangefox.cfg"
@@ -553,6 +553,7 @@ post_init() {
   # FBE - remove the "del_pass" addon, but keep a copy in /FFiles/Tools/
   M=$(isFB_Encrypted)
   [ "$M" = "1" ] && {
+    mkdir -p /FFiles/Tools
     cp -a /FFiles/OF_DelPass/OF_DelPass.zip /FFiles/Tools/
     rm -rf "/FFiles/OF_DelPass/"
   }
