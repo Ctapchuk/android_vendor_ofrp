@@ -457,12 +457,12 @@ local TDT=$(date "+%d %B %Y")
   local tmp="$FOX_RAMDISK/prop.default"
   [ ! -e "$tmp" ] && tmp="$DEFAULT_PROP" 
   [ ! -e "$tmp" ] && tmp="$FOX_RAMDISK/default.prop" 
-  [ -e "$tmp" ] &&  $CP -a "$tmp" "$OF_WORKING_DIR/META-INF/debug/default.prop"
+  [ -e "$tmp" ] && $CP "$tmp" "$OF_WORKING_DIR/META-INF/debug/default.prop"
 
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
-  $ZIP_CMD -z <$FOX_VENDOR_PATH/Files/INSTALL.txt
+  $ZIP_CMD -z < $FOX_VENDOR_PATH/Files/INSTALL.txt
    
   #  sign zip installer
   #if [ -f $ZIP_FILE ]; then
