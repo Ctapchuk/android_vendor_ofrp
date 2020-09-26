@@ -308,12 +308,8 @@ expand_vendor_path() {
 # save build vars
 save_build_vars() {
 local F=$1
-#/tmp/fox_build_vars.log
-   echo "# OrangeFox Build variables used in this build: "  > $F
-   echo "# ________________________"  >> $F
    export | grep "FOX_" >> $F
    export | grep "OF_" >> $F
-   echo "# ________________________"  >> $F
    sed -i '/FOX_BUILD_LOG_FILE/d' $F
    sed -i '/FOX_LOCAL_CALLBACK_SCRIPT/d' $F
    sed -i '/FOX_PORTS_TMP/d' $F
@@ -323,8 +319,7 @@ local F=$1
    sed -i '/FOX_VENDOR_CMD/d' $F
    sed -i '/FOX_VENDOR/d' $F
    sed -i '/OF_MAINTAINER/d' $F
-   sed -i '/FOX_VERSION/d' $F
-   sed -i "s/declare -x /export /g" $F   
+   sed -i "s/declare -x //g" $F
 }
 
 
