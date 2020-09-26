@@ -151,7 +151,13 @@ NEW_RAMDISK_BIN=/system/bin
 NEW_RAMDISK_ETC=/system/etc
 
 # we can still use the original ("legacy") settings, if we want or are clearly building on less-than android10 manifest
-tmp01=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.version.sdk")
+if [ -e "$FOX_RAMDISK/prop.default" ]; then
+   tmp01=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.version.sdk")
+elif [ -e "$FOX_RAMDISK/default.prop" ]; then
+   tmp01=$(file_getprop "$FOX_RAMDISK/default.prop" "ro.build.version.sdk")
+else
+   tmp01=$(file_getprop "$DEFAULT_PROP" "ro.build.version.sdk")
+fi
 [ -z "$tmp01" ] && tmp01=28
 if [ "$FOX_LEGACY_SBIN_ETC" = "1" -o $tmp01 -lt 29 ]; then
    NEW_RAMDISK_BIN=$RAMDISK_BIN
@@ -299,6 +305,29 @@ expand_vendor_path() {
   }
 }
 
+# save build vars
+save_build_vars() {
+local F=$1
+#/tmp/fox_build_vars.log
+   echo "# OrangeFox Build variables used in this build: "  > $F
+   echo "# ________________________"  >> $F
+   export | grep "FOX_" >> $F
+   export | grep "OF_" >> $F
+   echo "# ________________________"  >> $F
+   sed -i '/FOX_BUILD_LOG_FILE/d' $F
+   sed -i '/FOX_LOCAL_CALLBACK_SCRIPT/d' $F
+   sed -i '/FOX_PORTS_TMP/d' $F
+   sed -i '/FOX_RAMDISK/d' $F
+   sed -i '/FOX_WORK/d' $F
+   sed -i '/FOX_VENDOR_DIR/d' $F
+   sed -i '/FOX_VENDOR_CMD/d' $F
+   sed -i '/FOX_VENDOR/d' $F
+   sed -i '/OF_MAINTAINER/d' $F
+   sed -i '/FOX_VERSION/d' $F
+   sed -i "s/declare -x /export /g" $F   
+}
+
+
 # create zip file
 do_create_update_zip() {
 local TDT=$(date "+%d %B %Y")
@@ -317,8 +346,11 @@ local TDT=$(date "+%d %B %Y")
 
   # recreate dir
   mkdir -p $OF_WORKING_DIR
-  mkdir -p $OF_WORKING_DIR/sdcard/Fox
   cd $OF_WORKING_DIR
+
+  # create some others
+  mkdir -p $OF_WORKING_DIR/sdcard/Fox
+  mkdir -p $OF_WORKING_DIR/META-INF/debug
 
   # copy busybox
 #  $CP -a $FOX_VENDOR_PATH/Files/busybox .
@@ -424,6 +456,13 @@ local TDT=$(date "+%d %B %Y")
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$OF_WORKING_DIR" "--last-call"
   fi
+
+  # save the build vars
+  save_build_vars "$OF_WORKING_DIR/META-INF/debug/fox_build_vars.log"
+  local tmp="$FOX_RAMDISK/prop.default"
+  [ ! -e "$tmp" ] && tmp="$DEFAULT_PROP" 
+  [ ! -e "$tmp" ] && tmp="$FOX_RAMDISK/default.prop" 
+  [ -e "$tmp" ] &&  $CP -a "$tmp" "$OF_WORKING_DIR/META-INF/debug/default.prop"
 
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
