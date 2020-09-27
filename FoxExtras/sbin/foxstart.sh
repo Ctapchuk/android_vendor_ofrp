@@ -23,16 +23,14 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200926
+# * Date:   20200927
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200926"
+SCRIPT_LASTMOD_DATE="20200927"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
-CFG="/etc/orangefox.cfg"
-FS="/etc/recovery.fstab"
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
 SYS_ROOT="0"	  # do we have system_root?
@@ -42,11 +40,13 @@ ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 ANDROID_SDK="21"  # assume at least (and no more than) Lollipop in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
 
-# default system partition mount point
-SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
+# etc dir
+[ -h /etc ] && ETC_DIR=$(readlink /etc) || ETC_DIR=/etc
+CFG="$ETC_DIR/orangefox.cfg"
 
-# default vendor partition mount point
-VENDOR_PARTITION=/dev/block/bootdevice/by-name/system
+# fstab
+FS="$ETC_DIR/twrp.fstab"
+[ ! -f $FS ] && FS="$ETC_DIR/recovery.fstab"
 
 FOX_DEVICE=$(getprop "ro.product.device")
 SETPROP=/sbin/setprop
@@ -60,6 +60,41 @@ ROM=""
 if [ "$VERBOSE_DEBUG" = "1" ]; then
    DEBUG=1
    set -o xtrace
+fi
+
+# return the 3rd argument
+parse_logical_parm() {
+  echo $3
+}
+
+# has_super_partition <fle_to_parse>
+has_super_partition() {
+ [ ! -e "$1" ] && {
+   echo "0"
+   return
+ }
+ local T=$(cat "$1" | grep "^/super" | grep "/dev/block/by-name/super")
+ [ -n "$T" ] && echo "true" || echo "false"
+}
+
+# get_mount_point <part_name> <fle_to_parse>
+get_mount_point(){
+local T=$(cat $2 | grep "dm-" | grep "^$1")
+ [ -z "$T" ] && {
+    echo "$3"
+    return
+ }
+ parse_logical_parm $T 
+}
+
+# partition mountpoints
+SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
+VENDOR_PARTITION=/dev/block/bootdevice/by-name/vendor
+
+# TODO - provide a more robust way to do this
+if [ "$(has_super_partition $LOG)" = "true" ]; then
+   SYSTEM_PARTITION=$(get_mount_point /system $LOG $SYSTEM_PARTITION)
+   VENDOR_PARTITION=$(get_mount_point /vendor $LOG $VENDOR_PARTITION)
 fi
 
 # file_getprop <file> <property>
@@ -152,7 +187,7 @@ is_SAR() {
     return  
   }
 
-  F=$(grep -s "/system_root" "/etc/fstab")
+  F=$(grep -s "/system_root" "$ETC_DIR/fstab")
   [ -n "$F" ] && {
      echo "1"
      return
@@ -467,7 +502,7 @@ start_script()
 local OPS=$(getprop "orangefox.postinit.status")
    [ -f "$CFG" ] || [ "$OPS" = "1" ] && exit 0
    echo "# OrangeFox live cfg" > $CFG
-   local D=$(file_getprop "/etc/fox.cfg" "FOX_BUILD_DATE")
+   local D=$(file_getprop "$ETC_DIR/fox.cfg" "FOX_BUILD_DATE")
    [ -z "$D" ] && D=$(getprop "ro.bootimage.build.date")
    [ -z "$D" ] && D=$(getprop "ro.build.date")
    OPS=$(uname -r)
