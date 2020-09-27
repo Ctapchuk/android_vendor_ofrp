@@ -87,14 +87,20 @@ local T=$(cat $2 | grep "dm-" | grep "^$1")
  parse_logical_parm $T 
 }
 
+# TODO - provide a more robust way to do this
+#if [ "$(has_super_partition $LOG)" = "true" ]; then
+#   SYSTEM_PARTITION=$(get_mount_point /system $LOG $SYSTEM_PARTITION)
+#   VENDOR_PARTITION=$(get_mount_point /vendor $LOG $VENDOR_PARTITION)
+#fi
+
 # partition mountpoints
 SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
 VENDOR_PARTITION=/dev/block/bootdevice/by-name/vendor
-
-# TODO - provide a more robust way to do this
-if [ "$(has_super_partition $LOG)" = "true" ]; then
-   SYSTEM_PARTITION=$(get_mount_point /system $LOG $SYSTEM_PARTITION)
-   VENDOR_PARTITION=$(get_mount_point /vendor $LOG $VENDOR_PARTITION)
+if [ "$(getprop orangefox.super.partition)" = "true" ]; then
+   tmp01=$(getprop orangefox.system.block_device)
+   [ -n "$tmp01" ] && SYSTEM_PARTITION="$tmp01"
+   tmp01=$(getprop orangefox.vendor.block_device)
+   [ -n "$tmp01" ] && VENDOR_PARTITION="$tmp01"
 fi
 
 # file_getprop <file> <property>
