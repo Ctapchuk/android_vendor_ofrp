@@ -1125,12 +1125,14 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    echo -e ""
    echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
    echo -e "          MD5: $RECOVERY_IMAGE.md5"
+   export RECOVERY_IMAGE
    
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 	echo -e ""
 	echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE"
 	echo -e "          MD5: $ZIP_FILE.md5"
    echo -e ""
+   export ZIP_FILE
    fi
   
    echo -e "=================================================================="
@@ -1143,11 +1145,13 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    	echo -e ""
    	echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
    	echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
+      export RECOVERY_IMAGE_2GB
    	if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
    	   echo -e ""
    	   echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE_GO"
    	   echo -e "          MD5: $ZIP_FILE_GO.md5"
    	   echo -e ""
+         export ZIP_FILE_GO
    	fi
    	echo -e "=================================================================="
    fi
