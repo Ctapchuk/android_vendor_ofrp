@@ -484,13 +484,13 @@ local TDT=$(date "+%d %B %Y")
   $ZIP_CMD -z < $FOX_VENDOR_PATH/Files/INSTALL.txt
 
   #  sign zip installer
-  #if [ -f $ZIP_FILE ]; then
-  #   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
-  #   echo "- Running ZIP command: $ZIP_CMD"
-  #   $ZIP_CMD
-  #fi
+  if [ -f $ZIP_FILE ]; then
+     ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
+     echo "- Running ZIP command: $ZIP_CMD"
+     $ZIP_CMD
+  fi
 
-  #Creating ZIP md5
+  # Creating ZIP md5
   echo -e "${BLUE}-- Creating md5 for $ZIP_FILE${NC}"
   cd "$OUT" && md5sum "$ZIP_FILE" > "$ZIP_FILE.md5" && cd - > /dev/null 2>&1
 
@@ -502,12 +502,13 @@ local TDT=$(date "+%d %B %Y")
   	echo "- Running ZIP command: $ZIP_CMD"
   	$ZIP_CMD -z <$FOX_VENDOR_PATH/Files/INSTALL.txt
   	#  sign zip installer ("lite" version)
-  	# if [ -f $ZIP_FILE_GO ]; then
-   #  	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
-   #  	   echo "- Running ZIP command: $ZIP_CMD"
-   #  	   $ZIP_CMD
-   #  	fi
-    #md5 Go zip
+  	if [ -f $ZIP_FILE_GO ]; then
+     	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
+     	   echo "- Running ZIP command: $ZIP_CMD"
+     	   $ZIP_CMD
+     	fi
+   
+    # md5 Go zip
     echo -e "${BLUE}-- Creating md5 for $ZIP_FILE_GO${NC}"
     cd "$OUT" && md5sum "$ZIP_FILE_GO" > "$ZIP_FILE_GO.md5" && cd - > /dev/null 2>&1
   fi

@@ -1,7 +1,7 @@
 #!/bin/bash
 # --------------------------------------------------------------------
 # Bash Script to sign zip or apk files, using "signapk" stuff
-# Note: this script requires bash
+# Note: this script requires bash, and java-8
 # --------------------------------------------------------------------
 
 abort() {
@@ -17,6 +17,14 @@ Syntax() {
  echo "          $0 -z myapp.zip"
  exit
 }
+
+# get java-8
+JAVA="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+if [ ! -x "$JAVA" ]; then
+   echo "This process requires java-8, but I can't find $JAVA. You will probably get errors!"
+   JAVA=$(which java)
+fi
+JAVA=$JAVA" -jar"
 
 # begin processing
 zipfile=""
@@ -55,10 +63,10 @@ processzip() {
   [ -z "$1" ] && abort "Syntax = $0 -z <zip_file>"
   [ ! -f $1 ] && abort "Error: \"$1\" file not found"
   zipbase=$(basename -s .zip $1)  # strip the .zip extension
-  java -jar $j1_jar $PEM $KEY $1 "$zipbase"_tmp1
+  $JAVA $j1_jar $PEM $KEY $1 "$zipbase"_tmp1
   #echo "Adjust programe = $WORK_DIR/zipadjust "$zipbase"_tmp1 "$zipbase"_fixed"
   $WORK_DIR/zipadjust "$zipbase"_tmp1 "$zipbase"_fixed
-  java -jar $j2_jar $PEM $KEY "$zipbase"_fixed "$zipbase"-signed.zip 
+  $JAVA $j2_jar $PEM $KEY "$zipbase"_fixed "$zipbase"-signed.zip
   rm -f "$zipbase"_tmp1 "$zipbase"_fixed
   rm -f "$zipbase"-unsigned.zip
   
