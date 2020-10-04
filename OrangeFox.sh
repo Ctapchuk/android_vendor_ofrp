@@ -19,12 +19,12 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 26 September 2020
+# 04 October 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
 #
-# It is best to declare them in a script that you will use for building 
+# It is best to declare them in a script that you will use for building
 #
 #
 # whether to print extra debug messages
@@ -65,9 +65,16 @@ abort() {
 }
 
 # file_getprop <file> <property>
-file_getprop() { 
+file_getprop() {
   local F=$(grep "^$2=" "$1" | cut -d= -f2)
   echo $F | sed 's/ *$//g'
+}
+
+# size of file
+filesize() {
+  [ -z "$1" -o -d "$1" ] && { echo "0"; return; }
+  [ ! -e "$1" -a ! -h "$1" ] && { echo "0"; return; }
+  stat -c %s "$1"
 }
 
 # remove all extras if FOX_DRASTIC_SIZE_REDUCTION is defined
@@ -109,13 +116,13 @@ if [ -n "$4" ]; then
       echo "INTERNAL_MKBOOTIMG_VERSION_ARGS=\"$INTERNAL_MKBOOTIMG_VERSION_ARGS\"" >>  $TMP_SCRATCH
       echo "BOARD_MKBOOTIMG_ARGS=\"$BOARD_MKBOOTIMG_ARGS\"" >>  $TMP_SCRATCH
       echo "#" >>  $TMP_SCRATCH
-   fi   
+   fi
    echo "#########################################################################"
 else
    if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
       echo -e "${WHITEONRED}-- Build OrangeFox: FATAL ERROR! ${NC}"
       echo -e "${WHITEONRED}-- You cannot use FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER without patching build/core/Makefile in the build system. Aborting! ${NC}"
-      abort 100  
+      abort 100
    fi
 fi
 
@@ -123,7 +130,7 @@ fi
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
 
-# 
+#
 [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 
@@ -145,30 +152,43 @@ else
 fi
 
 # some things are changing in native Android 10.0 devices
+[ "$FOX_MANIFEST_VER" = "10.0" ] && FOX_LEGACY_MANIFEST="0" || FOX_LEGACY_MANIFEST="1"
 RAMDISK_BIN=/sbin
 RAMDISK_ETC=/etc
 NEW_RAMDISK_BIN=/system/bin
 NEW_RAMDISK_ETC=/system/etc
+PROP_DEFAULT="$DEFAULT_PROP"
 
 # we can still use the original ("legacy") settings, if we want or are clearly building on less-than android10 manifest
 if [ -e "$FOX_RAMDISK/prop.default" ]; then
    tmp01=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.version.sdk")
+   PROP_DEFAULT="$FOX_RAMDISK/prop.default"
 elif [ -e "$FOX_RAMDISK/default.prop" ]; then
    tmp01=$(file_getprop "$FOX_RAMDISK/default.prop" "ro.build.version.sdk")
+   PROP_DEFAULT="$FOX_RAMDISK/default.prop"
 else
    tmp01=$(file_getprop "$DEFAULT_PROP" "ro.build.version.sdk")
 fi
 [ -z "$tmp01" ] && tmp01=28
-if [ "$FOX_LEGACY_SBIN_ETC" = "1" -o $tmp01 -lt 29 ]; then
+[  $tmp01 -ge 29 ] && FOX_LEGACY_MANIFEST="0" || FOX_LEGACY_MANIFEST="1"
+if [ "$FOX_LEGACY_SBIN_ETC" = "1" -o "$FOX_LEGACY_MANIFEST" = "1" ]; then
    NEW_RAMDISK_BIN=$RAMDISK_BIN
    NEW_RAMDISK_ETC=$RAMDISK_ETC
+   FOX_LEGACY_MANIFEST="1"; # set this in case it's not already set
+fi
+
+# there are too many prop files around!
+if [ "$FOX_LEGACY_MANIFEST" != "1" -a "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
+   if [ $(filesize $PROP_DEFAULT) -gt $(filesize $DEFAULT_PROP) ]; then
+      DEFAULT_PROP=$PROP_DEFAULT
+   fi
 fi
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
 # build_type
-if [ -z "$FOX_BUILD_TYPE" ]; then 
+if [ -z "$FOX_BUILD_TYPE" ]; then
    export FOX_BUILD_TYPE=Unofficial
 fi
 
@@ -241,18 +261,16 @@ fi
 # --- embedded functions
 # ****************************************************
 
-# size of file
-filesize() {
-  [ -z "$1" -o -d "$1" ] && { echo "0"; return; }
-  [ ! -e "$1" -a ! -h "$1" ] && { echo "0"; return; }
-  stat -c %s "$1"
-}
-
 # to save the build date, and (if desired) patch bugged alleged anti-rollback on some ROMs
 Save_Build_Date() {
 local DT="$1"
-local F="$DEFAULT_PROP_ROOT"
-   [ ! -f  "$F" ] && F="$DEFAULT_PROP"
+local F="$DEFAULT_PROP"
+
+  if [ "$FOX_LEGACY_MANIFEST" = "1" ]; then
+     F="$DEFAULT_PROP_ROOT"
+     [ ! -f  "$F" ] && F="$DEFAULT_PROP"
+  fi
+
    grep -q "ro.build.date.utc=" $F && \
    	sed -i -e "s/ro.build.date.utc=.*/ro.build.date.utc=$DT/g" $F || \
    	echo "ro.build.date.utc=$DT" >> $F
@@ -261,6 +279,7 @@ local F="$DEFAULT_PROP_ROOT"
    grep -q "ro.bootimage.build.date.utc=" $F && \
    	sed -i -e "s/ro.bootimage.build.date.utc=.*/ro.bootimage.build.date.utc=$DT/g" $F || \
    	echo "ro.bootimage.build.date.utc=$DT" >> $F
+
 }
 
 # if there is an ALT device, cater for it in update-binary
@@ -292,7 +311,7 @@ local T1=$PWD
   cd "$1"
   local T2=$PWD
   cd $T1
-  echo "$T2"    
+  echo "$T2"
 }
 
 # expand
@@ -329,12 +348,12 @@ local TDT=$(date "+%d %B %Y")
   echo -e "${BLUE}-- Creating the OrangeFox zip installer ...${NC}"
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
-  
+
   # names of output zip file(s)
   ZIP_FILE=$OUT/$FOX_OUT_NAME.zip
   ZIP_FILE_GO=$OUT/$FOX_OUT_NAME"_lite.zip"
   echo "- Creating $ZIP_FILE for deployment ..."
-  
+
   # clean any existing files
   rm -rf $OF_WORKING_DIR
   rm -f $ZIP_FILE_GO $ZIP_FILE
@@ -352,26 +371,26 @@ local TDT=$(date "+%d %B %Y")
 
   # copy documentation
   $CP -p $FOX_VENDOR_PATH/Files/INSTALL.txt .
-  
+
   # copy recovery image
   $CP -p $RECOVERY_IMAGE ./recovery.img
-   
-  # copy installer bins and script 
+
+  # copy installer bins and script
   $CP -pr $INST_DIR/* .
 
   # copy FoxFiles/ to sdcard/Fox/
   $CP -a $FILES_DIR/ sdcard/Fox/
-     
+
   # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
-     $CP -pr $FOX_PORTS_INSTALLER/* . 
+     $CP -pr $FOX_PORTS_INSTALLER/* .
   fi
-  
-  # patch update-binary (which is a script) to run only for the current device 
+
+  # patch update-binary (which is a script) to run only for the current device
   # (mido is the default)
   local F="$OF_WORKING_DIR/META-INF/com/google/android/update-binary"
-  sed -i -e "s/mido/$FOX_DEVICE/g" $F     
-  sed -i -e "s/ALT_DEVICE/$FOX_DEVICE_ALT/g" $F     
+  sed -i -e "s/mido/$FOX_DEVICE/g" $F
+  sed -i -e "s/ALT_DEVICE/$FOX_DEVICE_ALT/g" $F
 
   # embed the release version
   sed -i -e "s/RELEASE_VER/$FOX_BUILD/" $F
@@ -410,7 +429,7 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s/^FOX_RESET_SETTINGS=.*/FOX_RESET_SETTINGS=\"disabled\"/" $F
   fi
 
-  # R11 
+  # R11
   if [ "$FOX_R11" = "1" ]; then
      echo -e "${RED}-- Preparing zip installer for OrangeFox R11 ... ${NC}"
      sed -i -e "s/^FOX_R11=.*/FOX_R11=\"1\"/" $F
@@ -455,15 +474,15 @@ local TDT=$(date "+%d %B %Y")
   # save the build vars
   save_build_vars "$OF_WORKING_DIR/META-INF/debug/fox_build_vars.log"
   local tmp="$FOX_RAMDISK/prop.default"
-  [ ! -e "$tmp" ] && tmp="$DEFAULT_PROP" 
-  [ ! -e "$tmp" ] && tmp="$FOX_RAMDISK/default.prop" 
+  [ ! -e "$tmp" ] && tmp="$DEFAULT_PROP"
+  [ ! -e "$tmp" ] && tmp="$FOX_RAMDISK/default.prop"
   [ -e "$tmp" ] && $CP "$tmp" "$OF_WORKING_DIR/META-INF/debug/default.prop"
 
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
   echo "- Running ZIP command: $ZIP_CMD"
   $ZIP_CMD -z < $FOX_VENDOR_PATH/Files/INSTALL.txt
-   
+
   #  sign zip installer
   #if [ -f $ZIP_FILE ]; then
   #   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
@@ -492,7 +511,7 @@ local TDT=$(date "+%d %B %Y")
     echo -e "${BLUE}-- Creating md5 for $ZIP_FILE_GO${NC}"
     cd "$OUT" && md5sum "$ZIP_FILE_GO" > "$ZIP_FILE_GO.md5" && cd - > /dev/null 2>&1
   fi
- 
+
   # list files
   echo "- Finished:"
   echo "---------------------------------"
@@ -501,17 +520,17 @@ local TDT=$(date "+%d %B %Y")
   	echo " $(/bin/ls -laFt $ZIP_FILE_GO)"
   fi
   echo "---------------------------------"
-  
+
   # export the filenames
   echo "ZIP_FILE=$ZIP_FILE">/tmp/oFox00.tmp
   echo "RECOVERY_IMAGE=$RECOVERY_IMAGE">>/tmp/oFox00.tmp
   [ -f $RECOVERY_IMAGE".tar" ] && echo "RECOVERY_ODIN=$RECOVERY_IMAGE.tar" >>/tmp/oFox00.tmp
-  if [ "$BUILD_2GB_VERSION" = "1" ]; then  
+  if [ "$BUILD_2GB_VERSION" = "1" ]; then
 	echo "ZIP_FILE_GO=$ZIP_FILE_GO">>/tmp/oFox00.tmp
   	echo "RECOVERY_IMAGE_GO=$RECOVERY_IMAGE_2GB">>/tmp/oFox00.tmp
-  fi	
-  
-  rm -rf $OF_WORKING_DIR # delete OF Working dir 
+  fi
+
+  rm -rf $OF_WORKING_DIR # delete OF Working dir
 } # function
 
 
@@ -569,8 +588,8 @@ local F=""
          rm -rf $FFil/OF_avb20
          rm -rf $FFil/OF_verity_crypt
       fi
-      
-      # --- some sanity checks - try to restore some originals 
+
+      # --- some sanity checks - try to restore some originals
       if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
           rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
           if [ -f $WORKING_TMP/sh ] || [ -h $WORKING_TMP/sh -a "$(readlink $WORKING_TMP/sh)" != "bash" ]; then
@@ -581,21 +600,21 @@ local F=""
              ln -s $F $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
           fi
       fi
-         
+
       if [ "$FOX_ASH_IS_BASH" = "1" ]; then
           rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
           if [ -h $WORKING_TMP/ash -a "$(readlink $WORKING_TMP/ash)" != "bash" ]; then
              $CP -p $WORKING_TMP/ash $FOX_RAMDISK/$NEW_RAMDISK_BIN/
           fi
       fi
-      
+
       if [ "$FOX_USE_UNZIP_BINARY" = "1" ]; then
-         [ -e $WORKING_TMP/unzip -o -h $WORKING_TMP/unzip ] && { 
+         [ -e $WORKING_TMP/unzip -o -h $WORKING_TMP/unzip ] && {
             rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
             $CP -p $WORKING_TMP/unzip $FOX_RAMDISK/$NEW_RAMDISK_BIN/
          }
       fi
-      
+
       # 2GB version bail out here
       [ "$1" = "lite" ] && return
 
@@ -614,7 +633,7 @@ local F=""
       fi
 
       # ----- proceeding to remove some fonts can save about 460kb in size -----
- 
+
       # remove some fonts? (only do so if we have a working "small" xml to cover the situation)
       echo -e "${GREEN}-- Removing some fonts ... ${NC}"
       if [ "$FOX_R11" = "1" ]; then
@@ -623,16 +642,16 @@ local F=""
          "Firacode-Medium" "Firacode-Regular" "MILanPro-Medium"
          "MILanPro-Regular")
       else
-         declare -a FontFiles=("Amatic" "AngryBirds" "Bender" "Cooljazz" "Chococooky") 
+         declare -a FontFiles=("Amatic" "AngryBirds" "Bender" "Cooljazz" "Chococooky")
       fi
-         
+
       # delete the font (*.ttf) tiles
       for i in "${FontFiles[@]}"
       do
      	   C=$i".ttf"
      	   F=$FOX_RAMDISK/twres/fonts/$C
      	   rm -f $F
-     	   # remove references to them in images.xml 
+     	   # remove references to them in images.xml
      	   sed -i "/$C/d" $image_xml
       done
 
@@ -641,7 +660,7 @@ local F=""
     	   F="font"$i
      	   sed -i "/$F/I,+2 d" $big_xml
       done
-      
+
 }
 
 # ****************************************************
@@ -718,10 +737,10 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   # if these directories don't already exist
   mkdir -p $FOX_RAMDISK/$RAMDISK_ETC/
   mkdir -p $FOX_RAMDISK/$RAMDISK_BIN/
-  
+
   # copy resetprop (armeabi)
   $CP -p $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/$RAMDISK_BIN/
-    
+
   # deal with magiskboot/mkbootimg/unpackbootimg
   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
       echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/$RAMDISK_BIN/magiskboot ...${NC}"
@@ -741,7 +760,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      ln -sf grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep
      ln -sf grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep
   fi
-  
+
   # replace busybox ps with our own ?
   if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
      if [ "$(readlink $FOX_RAMDISK/$NEW_RAMDISK_BIN/ps)" = "toybox" ]; then # if using toybox, then we don't need this
@@ -764,7 +783,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      ln -s $RAMDISK_BIN/resetprop $FOX_RAMDISK/$NEW_RAMDISK_BIN/getprop
   fi
 
-  # replace busybox lzma (and "xz") with our own 
+  # replace busybox lzma (and "xz") with our own
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" ]; then
      echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
@@ -773,11 +792,11 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      $CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$NEW_RAMDISK_BIN/lzma
      ln -s lzma $FOX_RAMDISK/$NEW_RAMDISK_BIN/xz
   fi
-  
+
   # system_root stuff
   if [ "$OF_SUPPORT_PRE_FLASH_SCRIPT" = "1" ]; then
      echo -e "${GREEN}-- OF_SUPPORT_PRE_FLASH_SCRIPT=1 (system_root device); copying fox_pre_flash to sbin ...${NC}"
-     echo -e "${GREEN}-- Make sure that you mount both /system *and* /system_root in your fstab.${NC}"     
+     echo -e "${GREEN}-- Make sure that you mount both /system *and* /system_root in your fstab.${NC}"
      $CP -p $FOX_VENDOR_PATH/Files/fox_pre_flash $FOX_RAMDISK/$RAMDISK_BIN/
   fi
 
@@ -801,7 +820,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
      green_setting="btn_about_credits"
      sed -i "/$green_setting/I,+8 d" $Led_xml_File
-     
+
      green_setting="floating_btn"
      sed -i "/$green_setting/I,+6 d" $Led_xml_File
   fi
@@ -839,13 +858,13 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      $CP -p $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
      chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/bash
      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
-        export FOX_USE_BASH_SHELL="1"     
+        export FOX_USE_BASH_SHELL="1"
      fi
   fi
-  
+
   # replace busybox "sh" with bash ?
   if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
-    # if [ -f "$FOX_RAMDISK/$RAMDISK_BIN/sh" ]; then 
+    # if [ -f "$FOX_RAMDISK/$RAMDISK_BIN/sh" ]; then
         if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -o $BUILD_2GB_VERSION = "1" ]; then
            echo -e "${GREEN}-- Backing up the original \"sh\" ...${NC}"
       	   $CP -pf $FOX_RAMDISK/$RAMDISK_BIN/sh $WORKING_TMP/
@@ -854,7 +873,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
         echo -e "${GREEN}-- Replacing the busybox \"sh\" applet with bash ...${NC}"
   	rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
   	ln -s $RAMDISK_BIN/bash $FOX_RAMDISK/$RAMDISK_BIN/sh
-  	if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then 
+  	if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then
   	   rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
   	   ln -s $RAMDISK_BIN/bash $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
   	fi
@@ -869,7 +888,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
            $CP -pf $FOX_RAMDISK/$RAMDISK_BIN/ash $WORKING_TMP/
         fi
      fi
-     
+
      #[ -f $FOX_RAMDISK/$RAMDISK_BIN/ash -o -h $FOX_RAMDISK/$RAMDISK_BIN/ash ] && {
         echo -e "${GREEN}-- Replacing the \"ash\" applet with bash ...${NC}"
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/ash
@@ -900,7 +919,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
          echo -e "${GREEN}-- Backing up the original unzip ...${NC}"
       	 $CP -p $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip $WORKING_TMP/
       fi
-      
+
       echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"unzip\" binary ...${NC}"
       rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
       $CP -p $FOX_VENDOR_PATH/Files/unzip $FOX_RAMDISK/$NEW_RAMDISK_BIN/
@@ -922,7 +941,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
          fi
          $CP -pf $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/$RAMDISK_BIN/
          chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/zip
-      fi 
+      fi
   fi
 
   # embed the system partition (in foxstart.sh)
@@ -982,7 +1001,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   [ ! -e "$DEFAULT_PROP" ] && DEFAULT_PROP="$FOX_RAMDISK/default.prop"
   [ ! -e "$DEFAULT_PROP_ROOT" ] && DEFAULT_PROP_ROOT="$DEFAULT_PROP"
 
-  # if we need to work around the bugged aosp alleged anti-rollback protection  
+  # if we need to work around the bugged aosp alleged anti-rollback protection
   if [ -n "$FOX_BUGGED_AOSP_ARB_WORKAROUND" ]; then
      echo -e "${WHITEONGREEN}-- Dealing with bugged AOSP alleged anti-ARB: setting build date to \"$FOX_BUGGED_AOSP_ARB_WORKAROUND\" (instead of the true date: \"$BUILD_DATE_UTC\") ...${NC}"
      Save_Build_Date "$FOX_BUGGED_AOSP_ARB_WORKAROUND" "$BUILD_DATE_UTC"
@@ -990,7 +1009,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      Save_Build_Date "$BUILD_DATE_UTC"
   fi
 
-  # ensure that we have a proper record of the actual build date/time	
+  # ensure that we have a proper record of the actual build date/time
   grep -q "ro.build.date.utc_fox=" $DEFAULT_PROP_ROOT && \
   	sed -i -e "s/ro.build.date.utc_fox=.*/ro.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP_ROOT || \
   	echo "ro.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP_ROOT
@@ -1069,7 +1088,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
 	   echo "rm -f $recovery_ramdisk" >> $LITE_CMD
 	   echo "$MKBOOTFS $FOX_RAMDISK | $RECOVERY_RAMDISK_COMPRESSOR >$recovery_ramdisk" >> $LITE_CMD
 	   echo "" >> $LITE_CMD
-	    
+
 	   # create image
 	   # remove leading and trailing quotation marks
 	   LOCAL_ARGS=$(echo "$INTERNAL_RECOVERYIMAGE_ARGS" | sed -e 's/^"//' -e 's/"$//')
@@ -1087,7 +1106,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
      	      echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE_2GB
   	   fi
 
-	else 
+	else
 	    echo -n ""
 	    #[ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ] && echo "*** Running command: bash $FOX_VENDOR_PATH/tools/mkboot $FOX_WORK $RECOVERY_IMAGE_2GB ***"
 	    bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE_2GB" > /dev/null 2>&1
@@ -1108,7 +1127,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    # create update zip installer
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
       	do_create_update_zip
-      	
+
       	# create old theme zip file
       	do_create_old_theme_zip
    else
@@ -1126,7 +1145,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE"
    echo -e "          MD5: $RECOVERY_IMAGE.md5"
    export RECOVERY_IMAGE
-   
+
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
 	echo -e ""
 	echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE"
@@ -1134,7 +1153,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    echo -e ""
    export ZIP_FILE
    fi
-  
+
    echo -e "=================================================================="
 
    # OrangeFox Lite
@@ -1165,7 +1184,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    echo -e ""
    echo -e "=================================================================="
    fi
-   
+
    # clean up, with success code
    abort 0
 fi
