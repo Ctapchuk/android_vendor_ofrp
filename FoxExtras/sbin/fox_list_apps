@@ -33,12 +33,14 @@ local d_mnt=$(is_mounted "/data")
 	[ -d "$list" ] && return	
 	[ "$d_mnt" != "1" ] && mount /data
 	
-	mkdir "$tmp" "$list"
+	mkdir -p "$tmp" "$list"
 	cd "$apps_dir"
 	if [ -f "/sbin/aapt" ]; then
 	   for pkgname in * ; do
-	       name=$(aapt dump badging "$pkgname/base.apk" | grep "$namestr" | sed "s/"$namestr"//" | sed "s/'//")
-	       echo "$apps_dir/$pkgname" > "$list/$name"
+	       name=$(aapt dump badging "$pkgname/base.apk" 2>/dev/null | grep "$namestr" | sed "s/"$namestr"//" | sed "s/'//")
+	       if [ -n "$name" ]; then
+	          echo "$apps_dir/$pkgname" > "$list/$name"
+	       fi
 	   done
 	else 
 	   for pkgname in * ; do
