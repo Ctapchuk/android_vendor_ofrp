@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20200927
+# * Date:   20201009
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20200927"
+SCRIPT_LASTMOD_DATE="20201009"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 DEBUG="0"  	  # enable for more debug messages
@@ -39,6 +39,8 @@ ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
 ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
 ANDROID_SDK="21"  # assume at least (and no more than) Lollipop in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
+SUPER="0" # whether the rdevice has a "super" partition
+OUR_TMP="/FFiles/temp" # our "safe" temp directory
 
 # etc dir
 [ -h /etc ] && ETC_DIR=$(readlink /etc) || ETC_DIR=/etc
@@ -62,41 +64,11 @@ if [ "$VERBOSE_DEBUG" = "1" ]; then
    set -o xtrace
 fi
 
-# return the 3rd argument
-parse_logical_parm() {
-  echo $3
-}
-
-# has_super_partition <fle_to_parse>
-has_super_partition() {
- [ ! -e "$1" ] && {
-   echo "0"
-   return
- }
- local T=$(cat "$1" | grep "^/super" | grep "/dev/block/by-name/super")
- [ -n "$T" ] && echo "true" || echo "false"
-}
-
-# get_mount_point <part_name> <fle_to_parse>
-get_mount_point(){
-local T=$(cat $2 | grep "dm-" | grep "^$1")
- [ -z "$T" ] && {
-    echo "$3"
-    return
- }
- parse_logical_parm $T 
-}
-
-# TODO - provide a more robust way to do this
-#if [ "$(has_super_partition $LOG)" = "true" ]; then
-#   SYSTEM_PARTITION=$(get_mount_point /system $LOG $SYSTEM_PARTITION)
-#   VENDOR_PARTITION=$(get_mount_point /vendor $LOG $VENDOR_PARTITION)
-#fi
-
 # partition mountpoints
 SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
 VENDOR_PARTITION=/dev/block/bootdevice/by-name/vendor
-if [ "$(getprop orangefox.super.partition)" = "true" ]; then
+if [ "$(getprop ro.boot.dynamic_partitions)" = "true" -o "$(getprop orangefox.super.partition)" = "true" ]; then
+   SUPER="1"
    tmp01=$(getprop orangefox.system.block_device)
    [ -n "$tmp01" ] && SYSTEM_PARTITION="$tmp01"
    tmp01=$(getprop orangefox.vendor.block_device)
@@ -218,8 +190,14 @@ is_SAR() {
 get_ROM() {
 local S="/tmp_system_rom"
 local PROP="$S/build.prop"
+local V="/vendor"
+local V_PROP="$V/build.prop"
+local found_vendor_prop="0"
 local slot=$(getprop "ro.boot.slot_suffix")
 
+   # if not there already
+   mkdir -p $OUR_TMP
+   
    # mount /system and check
    if [ -d "$S" ]; then
       DebugMsg "$S already exists"
@@ -238,50 +216,60 @@ local slot=$(getprop "ro.boot.slot_suffix")
    # have we found a proper build.prop ?
    [ ! -e $PROP ] && {
       umount $S > /dev/null 2>&1
-      rmdir $S
+      rmdir $S > /dev/null 2>&1
       echo "DEBUG: OrangeFox: error - I cannot find the system build.prop" >> $LOG
       echo ""
       return
    }
+   
+   # - make a copy of the system build.prop
+   cp $PROP "$OUR_TMP/system_build_prop" > /dev/null 2>&1
+   PROP="$OUR_TMP/system_build_prop"
+   umount $S > /dev/null 2>&1
+   rmdir $S > /dev/null 2>&1
+   
+   # now look for vendor prop
+   local mv1="0"
+   [ ! -d "$V" ] && mkdir -p $V > /dev/null 2>&1
+   if [ -d "$V" ]; then
+      ! is_mounted $V && {
+         $MOUNT_CMD $V > /dev/null 2>&1
+         is_mounted $V && mv1="1"
+      }
+      is_mounted $V && {
+         [ -f $V_PROP ] && {
+           found_vendor_prop=1
+           # make a copy of the vendor build.prop
+           cp $V_PROP "$OUR_TMP/vendor_build_prop" > /dev/null 2>&1
+           V_PROP="$OUR_TMP/vendor_build_prop"
+           [ "$mv1" = "1" ] && umount $V > /dev/null 2>&1
+         }
+      }
+   fi
+   
+   # use the vendor prop if found
+   [ "$found_vendor_prop" != "1" ] && V_PROP=""
 
    # query the build.prop
-   local mv1=0
-   local mv2=0
    local tmp2=""
-   local tmp3=""
-   tmp2=$(file_getprop "$PROP" "ro.build.display.id")
+   [ -n "$V_PROP" ] && tmp2=$(file_getprop "$V_PROP" "ro.vendor.build.id")
+   [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.build.display.id")
    [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.build.id")
    [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.system.build.id")
    
    # ROM not found?
-   if [ -z "$tmp2" ]; 
-   then
-      umount $S > /dev/null 2>&1
-      [ -d "$S" ] && rmdir $S > /dev/null 2>&1
-      echo "DEBUG: OrangeFox: I cannot find the ROM information in the system build.prop. Trying vendor ..." >> $LOG
-      PROP="/vendor/build.prop"
-      [ ! -d "/vendor" ] && mkdir -p /vendor > /dev/null 2>&1
-      if [ -d "/vendor" ]; then
-         !is_mounted /vendor && {
-            $MOUNT_CMD /vendor > /dev/null 2>&1
-            is_mounted /vendor && mv1=1
-         }
-   	 [ -e $PROP ] && tmp2=$(file_getprop "$PROP" "ro.vendor.build.id")
-      fi
-      [ ! -e $PROP -o -z "$tmp2" ] && {
-           [ "$mv1" = "1" ] && umount /vendor > /dev/null 2>&1
-      	   echo "DEBUG: OrangeFox: error - no joy with the vendor build.prop either" >> $LOG
-      	   echo ""
-      	   return
-      }
-  fi
+   if [ -z "$tmp2" ]; then
+      echo "DEBUG: OrangeFox: I cannot find the ROM information!" >> $LOG
+      echo ""
+      return
+   fi
    
    # we have a ROM - get SDK, etc
-   if [ -n "$tmp2" ]; 
-   then
-      tmp3=$(file_getprop "$PROP" "ro.build.version.sdk")
+   local tmp3=""
+   if [ -n "$tmp2" ]; then
+      [ -n "$V_PROP" ] && tmp3=$(file_getprop "$V_PROP" "ro.vendor.build.version.sdk") 
+      [ -z "$tmp3" ] && ttmp3=$(file_getprop "$PROP" "ro.build.version.sdk")
       [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.system.build.version.sdk")
-      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.vendor.build.version.sdk")
       [ -n "$tmp3" ] && {
          ANDROID_SDK="$tmp3"
          $SETPROP orangefox.rom.sdk "$tmp3" > /dev/null 2>&1
@@ -290,9 +278,9 @@ local slot=$(getprop "ro.boot.slot_suffix")
       }
       
       # get incremental version
-      tmp3=$(file_getprop "$PROP" "ro.build.version.incremental")
+      [ -n "$V_PROP" ] && tmp3=$(file_getprop "$V_PROP" "ro.vendor.build.version.incremental")
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.build.version.incremental")
       [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.system.build.version.incremental")
-      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.vendor.build.version.incremental")
       [ -n "$tmp3" ] && {
         echo "DEBUG: OrangeFox: INCREMENTAL_VERSION=$tmp3" >> $LOG
         echo "INCREMENTAL_VERSION=$tmp3" >> $CFG
@@ -307,36 +295,21 @@ local slot=$(getprop "ro.boot.slot_suffix")
    fi
 
    # check for ROM fingerprints
-   if [ -n "$tmp2" ]; 
-   then
-      local FP=$(file_getprop "$PROP" "ro.build.fingerprint")
+   local FP=""
+   if [ -n "$tmp2" ]; then
+      [ -n "$V_PROP" ] && FP=$(file_getprop "$V_PROP" "ro.vendor.build.fingerprint")
+      [ -z "$FP" ] && FP=$(file_getprop "$PROP" "ro.build.version.base_os")
+      [ -z "$FP" ] && FP=$(file_getprop "$PROP" "ro.build.fingerprint")
       [ -z "$FP" ] && FP=$(file_getprop "$PROP" "ro.system.build.fingerprint")
-      [ -z "$FP" ] && FP=$(file_getprop "$PROP" "ro.vendor.build.fingerprint")
-      if [ -z "$FP" ]; 
-      then
-      	 PROP="/vendor/build.prop"
-      	 [ ! -d "/vendor" ] && mkdir -p /vendor > /dev/null 2>&1
-      	 [ -d "/vendor" ] && {
-            !is_mounted /vendor && {
-               $MOUNT_CMD /vendor > /dev/null 2>&1
-               is_mounted /vendor && mv2=1
-            }
-            FP=$(file_getprop "$PROP" "ro.vendor.build.fingerprint")
-      	 }     
-      fi
-      
       [ -n "$FP" ] && {
            echo "ROM_FINGERPRINT=$FP" >> $CFG
            echo "DEBUG: OrangeFox: ROM_FINGERPRINT=$FP" >> $LOG
-           # echo "ro.build.fingerprint=$FP" >> $LOG
-           # [ -x "/sbin/resetprop" ] && resetprop "ro.build.fingerprint" "$FP"      
+           [ -x "$SETPROP" ] && {
+              $SETPROP "ro.build.fingerprint" "$FP" > /dev/null 2>&1
+              $SETPROP "orangefox.system.fingerprint" "$FP" > /dev/null 2>&1
+            }
       }
    fi # check for ROM fingerprints
-   
-   # unmount
-   is_mounted $S && umount $S > /dev/null 2>&1
-   [ -d "$S" ] && rmdir $S > /dev/null 2>&1
-   [ "$mv1" = "1" -o "$mv2" = "1"  ] && umount /vendor > /dev/null 2>&1
    
    # return
    echo "$tmp2"
