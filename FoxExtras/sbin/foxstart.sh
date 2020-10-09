@@ -276,7 +276,7 @@ local slot=$(getprop "ro.boot.slot_suffix")
          echo "DEBUG: OrangeFox: ANDROID_SDK=$ANDROID_SDK" >> $LOG
          echo "ANDROID_SDK=$ANDROID_SDK" >> $CFG
       }
-      
+
       # get incremental version
       [ -n "$V_PROP" ] && tmp3=$(file_getprop "$V_PROP" "ro.vendor.build.version.incremental")
       [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.build.version.incremental")
@@ -284,6 +284,23 @@ local slot=$(getprop "ro.boot.slot_suffix")
       [ -n "$tmp3" ] && {
         echo "DEBUG: OrangeFox: INCREMENTAL_VERSION=$tmp3" >> $LOG
         echo "INCREMENTAL_VERSION=$tmp3" >> $CFG
+        [ -x "$SETPROP" ] && {
+              $SETPROP "ro.build.version.incremental" "$tmp3" > /dev/null 2>&1
+              $SETPROP "orangefox.system.incremental" "$tmp3" > /dev/null 2>&1
+        }
+      }
+
+      # get "release" version
+      [ -n "$V_PROP" ] && tmp3=$(file_getprop "$V_PROP" "ro.vendor.build.version.release")
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.build.version.release")
+      [ -z "$tmp3" ] && tmp3=$(file_getprop "$PROP" "ro.system.build.version.release")
+      [ -n "$tmp3" ] && {
+        echo "DEBUG: OrangeFox: RELEASE_VERSION=$tmp3" >> $LOG
+        echo "RELEASE_VERSION=$tmp3" >> $CFG
+        [ -x "$SETPROP" ] && {
+              $SETPROP "ro.build.version.release" "$tmp3" > /dev/null 2>&1
+              $SETPROP "orangefox.system.release" "$tmp3" > /dev/null 2>&1
+        }
       }
       
       # and other stuff
