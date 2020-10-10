@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 04 October 2020
+# 10 October 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -176,6 +176,10 @@ if [ "$FOX_LEGACY_SBIN_ETC" = "1" -o "$FOX_LEGACY_MANIFEST" = "1" ]; then
    NEW_RAMDISK_ETC=$RAMDISK_ETC
    FOX_LEGACY_MANIFEST="1"; # set this in case it's not already set
 fi
+
+# are we using a 10.0 (or higher) manifest? TODO - is there a better way to determine this?
+FOX_10=""
+[ "$FOX_MANIFEST_VER" = "10.0" -o $tmp01 -ge 29 ] && FOX_10="true"
 
 # there are too many prop files around!
 if [ "$FOX_LEGACY_MANIFEST" != "1" -a "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
@@ -380,6 +384,12 @@ local TDT=$(date "+%d %B %Y")
 
   # copy FoxFiles/ to sdcard/Fox/
   $CP -a $FILES_DIR/ sdcard/Fox/
+
+  if [ "$FOX_10" = "true" ]; then
+     echo -e "${WHITEONBLUE} - FOX_10 - copying new-magisk: $FOX_VENDOR_PATH/Files/new_magisk.zip to $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip ... ${NC}"
+     $CP -f $FOX_VENDOR_PATH/Files/new_magisk.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
+     $CP -f $FOX_VENDOR_PATH/Files/new_unrootmagisk.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
+  fi
 
   # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
@@ -974,8 +984,18 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
      chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/aapt
   fi
 
+  # fox_10 - include some stuff (busybox, new magisk)
+  if [ "$FOX_10" = "true" ]; then
+     $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_BIN/busybox
+     chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/busybox
+     tmp=$FOX_VENDOR_PATH/Files/new_magisk.zip
+  else
+     tmp=$FOX_VENDOR_PATH/FoxFiles/Magisk.zip
+  fi
+  
   # Get Magisk version
-  MAGISK_VER=$(unzip -c $FOX_VENDOR_PATH/FoxFiles/Magisk.zip common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
+  MAGISK_VER=$(unzip -c $tmp common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
+  #MAGISK_VER=$(unzip -c $FOX_VENDOR_PATH/FoxFiles/Magisk.zip common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
   echo -e "${GREEN}-- Detected Magisk version: ${MAGISK_VER}${NC}"
   sed -i -E "s+\"magisk_ver\" value=\"(.*)\"+\"magisk_ver\" value=\"$MAGISK_VER\"+" $FOX_RAMDISK/twres/ui.xml
 
