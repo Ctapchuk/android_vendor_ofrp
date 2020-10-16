@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 10 October 2020
+# 16 October 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -180,6 +180,11 @@ fi
 # are we using a 10.0 (or higher) manifest? TODO - is there a better way to determine this?
 FOX_10=""
 [ "$FOX_MANIFEST_VER" = "10.0" -o $tmp01 -ge 29 ] && FOX_10="true"
+
+# fox_10 has a proper zip binary, so no need to use our own
+if [ "$FOX_10" = "true" -a -z "$FOX_SKIP_ZIP_BINARY" ]; then
+   export FOX_SKIP_ZIP_BINARY="1"
+fi
 
 # there are too many prop files around!
 if [ "$FOX_LEGACY_MANIFEST" != "1" -a "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
@@ -348,6 +353,7 @@ local F=$1
 
 # create zip file
 do_create_update_zip() {
+local tmp=""
 local TDT=$(date "+%d %B %Y")
   echo -e "${BLUE}-- Creating the OrangeFox zip installer ...${NC}"
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
@@ -386,7 +392,7 @@ local TDT=$(date "+%d %B %Y")
   $CP -a $FILES_DIR/ sdcard/Fox/
 
   if [ "$FOX_10" = "true" ]; then
-     echo -e "${WHITEONBLUE} - FOX_10 - copying new-magisk: $FOX_VENDOR_PATH/Files/new_magisk.zip to $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip ... ${NC}"
+     echo -e "${WHITEONBLUE} - FOX_10 - copying new-magisk: new_magisk.zip to $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip ... ${NC}"
      $CP -f $FOX_VENDOR_PATH/Files/new_magisk.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
      $CP -f $FOX_VENDOR_PATH/Files/new_unrootmagisk.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
   fi
@@ -465,13 +471,21 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # use anykernel3 version of OF_initd
-  echo -e "${GREEN}-- Using OF_initd-ak3 zip ...${NC}"
   rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
-  mv $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
+  if [ "$FOX_10" = "true" ]; then
+     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
+     tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3-fox_10.zip
+     echo -e "${WHITEONBLUE} - FOX_10 - using OF_initd-ak3-fox_10.zip ${NC}"
+  else
+     tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
+     echo -e "${GREEN}-- Using OF_initd-ak3 zip ...${NC}"
+  fi
+  
+  mv $tmp $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
 
   # alternative/additional device codename? (eg, "kate" (for kenzo); "willow" (for ginkgo))
   if [ -n "$TARGET_DEVICE_ALT" ]; then
-     echo -e "${GREEN}-- Adding the alternative device codename: \"$TARGET_DEVICE_ALT\" ${NC}"
+     echo -e "${GREEN}-- Adding the alternative device codename(s): \"$TARGET_DEVICE_ALT\" ${NC}"
      Add_Target_Alt;
   fi
 
@@ -483,7 +497,7 @@ local TDT=$(date "+%d %B %Y")
 
   # save the build vars
   save_build_vars "$OF_WORKING_DIR/META-INF/debug/fox_build_vars.log"
-  local tmp="$FOX_RAMDISK/prop.default"
+  tmp="$FOX_RAMDISK/prop.default"
   [ ! -e "$tmp" ] && tmp="$DEFAULT_PROP"
   [ ! -e "$tmp" ] && tmp="$FOX_RAMDISK/default.prop"
   [ -e "$tmp" ] && $CP "$tmp" "$OF_WORKING_DIR/META-INF/debug/default.prop"
@@ -937,7 +951,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       chmod 0755 $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
   fi
 
-  # Include "zip" binary ?
+  # Include our own "zip" binary ?
   if [ "$FOX_REMOVE_ZIP_BINARY" = "1" ]; then
       [ -e $FOX_RAMDISK/$RAMDISK_BIN/zip ] && {
          echo -e "${RED}-- Removing the OrangeFox InfoZip \"zip\" binary ...${NC}"
@@ -946,9 +960,8 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   else
       if [ "$FOX_SKIP_ZIP_BINARY" != "1" ]; then
          echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"zip\" binary ...${NC}"
-         if [ -x $FOX_RAMDISK/$NEW_RAMDISK_BIN/zip ]; then
-         rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/zip
-         ln -s $RAMDISK_BIN/zip $FOX_RAMDISK/$NEW_RAMDISK_BIN/zip
+         if [ -e $FOX_RAMDISK/$RAMDISK_BIN/zip ]; then
+            rm -f $FOX_RAMDISK/$RAMDISK_BIN/zip
          fi
          $CP -pf $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/$RAMDISK_BIN/
          chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/zip
