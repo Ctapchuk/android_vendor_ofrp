@@ -23,7 +23,7 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20201009
+# * Date:   20201017
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
@@ -65,14 +65,16 @@ if [ "$VERBOSE_DEBUG" = "1" ]; then
 fi
 
 # partition mountpoints
-SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
-VENDOR_PARTITION=/dev/block/bootdevice/by-name/vendor
+SYSTEM_BLOCK=/dev/block/bootdevice/by-name/system
+VENDOR_BLOCK=/dev/block/bootdevice/by-name/vendor
 if [ "$(getprop ro.boot.dynamic_partitions)" = "true" -o "$(getprop orangefox.super.partition)" = "true" ]; then
    SUPER="1"
    tmp01=$(getprop orangefox.system.block_device)
-   [ -n "$tmp01" ] && SYSTEM_PARTITION="$tmp01"
+   [ -z "$tmp01" ] && tmp01=$(cat /etc/fstab | grep "/system" | cut -f1 -d" ")
+   [ -n "$tmp01" ] && SYSTEM_BLOCK="$tmp01"
    tmp01=$(getprop orangefox.vendor.block_device)
-   [ -n "$tmp01" ] && VENDOR_PARTITION="$tmp01"
+   [ -z "$tmp01" ] && tmp01=$(cat /etc/fstab | grep "/vendor" | cut -f1 -d" ")
+   [ -n "$tmp01" ] && VENDOR_BLOCK="$tmp01"
 fi
 
 # file_getprop <file> <property>
@@ -113,7 +115,7 @@ local D="$1"
 
 realTreble() {
 local CC=/tmp_vendor
-local V=$VENDOR_PARTITION
+local V=$VENDOR_BLOCK
   [ ! -e $V ] && {
     echo "0"
     return
@@ -208,7 +210,7 @@ local slot=$(getprop "ro.boot.slot_suffix")
    fi
    
    # mount
-   $MOUNT_CMD -t ext4 $SYSTEM_PARTITION"$slot" $S > /dev/null 2>&1
+   $MOUNT_CMD -t ext4 $SYSTEM_BLOCK"$slot" $S > /dev/null 2>&1
    
    # look for build.prop
    [ ! -e "$PROP" ] && PROP="$S/system/build.prop" # test for SAR
@@ -350,7 +352,7 @@ isMIUI() {
       mkdir -p $S
    fi
 
-   $MOUNT_CMD -t ext4 $SYSTEM_PARTITION"$slot" $S > /dev/null 2>&1
+   $MOUNT_CMD -t ext4 $SYSTEM_BLOCK"$slot" $S > /dev/null 2>&1
    
    DebugDirList "$S/"
    DebugDirList "$S/vendor"
@@ -590,6 +592,17 @@ post_init() {
   }
 }
 
+# kludge for issues with mounting system/vendor logical partitions
+# TODO: one day, this will not be needed; can be moved to device tree
+fix_dynamic() {
+  if [ "$SUPER" = "1" ]; then
+     sleep 1
+     mount "$VENDOR_BLOCK" > /dev/null 2>&1
+     sleep 1
+     mount "$SYSTEM_BLOCK" > /dev/null 2>&1
+  fi
+}
+
 ### main() ###
 get_setprop
 
@@ -617,6 +630,9 @@ post_init
 # Leds
 flashlight_Leds_config
 
-#
+# dynamic
+# fix_dynamic
+
+# end
 exit 0
 ### end main ###
