@@ -23,7 +23,7 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20201017
+# * Date:   20201023
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
@@ -590,6 +590,10 @@ post_init() {
     cp -a /FFiles/OF_DelPass/OF_DelPass.zip /FFiles/Tools/
     rm -rf "/FFiles/OF_DelPass/"
   }
+  
+  # write OrangeFox props to the log
+  echo "DEBUG: OrangeFox: Fox properties:" >> $LOG
+  getprop | grep 'orangefox' >> $LOG
 }
 
 # kludge for issues with mounting system/vendor logical partitions
@@ -597,9 +601,15 @@ post_init() {
 fix_dynamic() {
   if [ "$SUPER" = "1" ]; then
      sleep 1
-     mount "$VENDOR_BLOCK" > /dev/null 2>&1
+     mount /product > /dev/null 2>&1
      sleep 1
-     mount "$SYSTEM_BLOCK" > /dev/null 2>&1
+     mount /vendor > /dev/null 2>&1
+     sleep 1
+     mount /system_root > /dev/null 2>&1
+     sleep 1
+     umount /product > /dev/null 2>&1
+     umount /vendor > /dev/null 2>&1
+     umount /system_root > /dev/null 2>&1
   fi
 }
 
