@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20201023
+# * Date:   20201026
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20201009"
+SCRIPT_LASTMOD_DATE="20201026"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 DEBUG="0"  	  # enable for more debug messages
@@ -80,7 +80,7 @@ fi
 # file_getprop <file> <property>
 file_getprop() 
 { 
-  local F=$(grep "^$2=" "$1" | cut -d= -f2)
+  local F=$(grep -m1 "^$2=" "$1" | cut -d= -f2)
   echo $F | sed 's/ *$//g'
 }
 
@@ -156,7 +156,8 @@ local C="/tmp_cust"
 has_system_root() {
   local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
   local F2=$(getprop "ro.twrp.sar" 2>/dev/null)
-  [ "$F" = "true" -o "$F2" = "true" ] && echo "1" || echo "0"
+  local F3=$(cat $ETC_DIR/fstab | grep "/system_root" | cut -f2 -d" " 2>/dev/null)
+  [ "$F" = "true" -o "$F2" = "true" -o "$F3" = "/system_root" ] && echo "1" || echo "0"
 }
 
 # Is this set up properly as SAR?
@@ -517,6 +518,7 @@ local OPS=$(getprop "orangefox.postinit.status")
    echo "DEBUG: OrangeFox: PROPER_SAR=$SAR" >> $LOG
    echo "DEBUG: OrangeFox: FOX_SCRIPT_DATE=$SCRIPT_LASTMOD_DATE" >> $LOG
    $SETPROP orangefox.postinit.status 1
+   $SETPROP ro.orangefox.sar "$SAR"
    
    # if someone is still using old recovery sources
    ln -s $CFG /tmp/orangefox.cfg
