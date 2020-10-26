@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 16 October 2020
+# 26 October 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -66,7 +66,7 @@ abort() {
 
 # file_getprop <file> <property>
 file_getprop() {
-  local F=$(grep "^$2=" "$1" | cut -d= -f2)
+  local F=$(grep -m1 "^$2=" "$1" | cut -d= -f2)
   echo $F | sed 's/ *$//g'
 }
 
@@ -302,11 +302,19 @@ local F="$D/META-INF/com/google/android/update-binary"
 
 # whether this is a system-as-root build
 SAR_BUILD() {
-  [ ! -d "$FOX_RAMDISK/system_root/" ] && { echo "0"; return; }
-  local C=$(cat "$FOX_RAMDISK/$NEW_RAMDISK_ETC/recovery.fstab" | grep -s ^"/system_root")
-  [ -z "$C" ] && { echo "0"; return; }
-  C=$(file_getprop "$DEFAULT_PROP" "ro.build.system_root_image")
-  [ "$C" = "true" ] && echo "1" || echo "0"
+  local C=$(file_getprop "$DEFAULT_PROP" "ro.build.system_root_image")
+  [ "$C" = "true" ] && { echo "1"; return; }
+
+  C=$(file_getprop "$DEFAULT_PROP" "ro.boot.dynamic_partitions")
+  [ "$C" = "true" ] && { echo "1"; return; }
+
+  C=$(cat "$FOX_RAMDISK/$NEW_RAMDISK_ETC/twrp.fstab" 2>/dev/null | grep -s ^"/system_root")
+  [ -n "$C" ] && { echo "1"; return; }
+
+  C=$(cat "$FOX_RAMDISK/$NEW_RAMDISK_ETC/recovery.fstab" 2>/dev/null | grep -s ^"/system_root")
+  [ -n "$C" ] && { echo "1"; return; }
+
+  [ -d "$FOX_RAMDISK/system_root/" ] && echo "1" || echo "0"
 }
 
 # expand a directory path
@@ -336,7 +344,7 @@ expand_vendor_path() {
 # save build vars
 save_build_vars() {
 local F=$1
-   export | grep "FOX_" >> $F
+   export | grep "FOX_" > $F
    export | grep "OF_" >> $F
    sed -i '/FOX_BUILD_LOG_FILE/d' $F
    sed -i '/FOX_LOCAL_CALLBACK_SCRIPT/d' $F
@@ -496,7 +504,7 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # save the build vars
-  save_build_vars "$OF_WORKING_DIR/META-INF/debug/fox_build_vars.log"
+  save_build_vars "$OF_WORKING_DIR/META-INF/debug/fox_build_vars.txt"
   tmp="$FOX_RAMDISK/prop.default"
   [ ! -e "$tmp" ] && tmp="$DEFAULT_PROP"
   [ ! -e "$tmp" ] && tmp="$FOX_RAMDISK/default.prop"
