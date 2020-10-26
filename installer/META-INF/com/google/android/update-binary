@@ -45,7 +45,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20200922"
+MOD_DATE="20201026"
   
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -163,7 +163,7 @@ package_extract_file() {
 
 # file_getprop <file> <property>
 file_getprop() { 
-  grep "^$2=" "$1" | cut -d= -f2
+  grep -m1 "^$2=" "$1" | cut -d= -f2
 }
 
 # getprop <property>
