@@ -443,7 +443,11 @@ local TDT=$(date "+%d %B %Y")
   # A/B devices
   if [ "$OF_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
-     $CP -pf $FOX_RAMDISK/$RAMDISK_BIN/magiskboot .
+     tmp=$FOX_RAMDISK/$RAMDISK_BIN/magiskboot
+     [ ! -e $tmp ] && tmp=$(find $TARGET_RECOVERY_ROOT_OUT -name magiskboot)
+     [ ! -e $tmp ] && tmp=/tmp/fox_build_tmp/magiskboot
+     rm -rf /tmp/fox_build_tmp/
+     $CP -pf $tmp .
      sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
   fi
 
@@ -788,6 +792,9 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
         echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/$RAMDISK_BIN/magiskboot] - deleting mkbootimg/unpackbootimg ...${NC}"
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/mkbootimg
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/unpackbootimg
+        echo -e "${GREEN}-- Backing up $FOX_RAMDISK/$RAMDISK_BIN/magiskboot to: /tmp/fox_build_tmp/ ...${NC}"
+        mkdir -p /tmp/fox_build_tmp/
+        $CP -pf $FOX_RAMDISK/$RAMDISK_BIN/magiskboot /tmp/fox_build_tmp/
      fi
   fi
 
