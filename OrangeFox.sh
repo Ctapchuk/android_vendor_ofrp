@@ -446,10 +446,10 @@ local TDT=$(date "+%d %B %Y")
      tmp=$FOX_RAMDISK/$RAMDISK_BIN/magiskboot
      [ ! -e $tmp ] && tmp=$(find $TARGET_RECOVERY_ROOT_OUT -name magiskboot)
      [ ! -e $tmp ] && tmp=/tmp/fox_build_tmp/magiskboot
-     rm -rf /tmp/fox_build_tmp/
      $CP -pf $tmp .
      sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
   fi
+  rm -rf /tmp/fox_build_tmp/
 
   # Reset Settings
   if [ "$FOX_RESET_SETTINGS" = "disabled" ]; then
