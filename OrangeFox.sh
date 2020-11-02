@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 26 October 2020
+# 02 November 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -520,6 +520,8 @@ local TDT=$(date "+%d %B %Y")
      ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
      echo "- Running ZIP command: $ZIP_CMD"
      $ZIP_CMD
+     echo "- Adding comments (again):"
+     zip $ZIP_FILE -z <$FOX_VENDOR_PATH/Files/INSTALL.txt > /dev/null 2>&1
   fi
 
   # Creating ZIP md5
@@ -538,6 +540,8 @@ local TDT=$(date "+%d %B %Y")
      	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
      	   echo "- Running ZIP command: $ZIP_CMD"
      	   $ZIP_CMD
+     	   echo "- Adding comments (again):"
+     	   zip $ZIP_FILE_GO -z <$FOX_VENDOR_PATH/Files/INSTALL.txt > /dev/null 2>&1
      	fi
    
     # md5 Go zip
