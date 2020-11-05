@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 02 November 2020
+# 05 November 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -1181,8 +1181,8 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
       	do_create_update_zip
 
-      	# create old theme zip file
-      	do_create_old_theme_zip
+      	# create old theme zip file - !! no more !!
+      	## do_create_old_theme_zip
    else
 	echo -e "${RED}-- Skip creating recovery zip${NC}"
    fi
