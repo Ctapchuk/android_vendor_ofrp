@@ -574,25 +574,6 @@ local TDT=$(date "+%d %B %Y")
   rm -rf $OF_WORKING_DIR # delete OF Working dir
 } # function
 
-
-# create old_theme zip
-do_create_old_theme_zip() {
-local INST_DIR=$FOX_VENDOR_PATH/theme_installer
-local F=$INST_DIR/pa.zip
-local ZIP_FILE=$OUT/ClassicTheme.zip
-local ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
-   cd $FOX_VENDOR_PATH/Files/classic_theme/
-   rm -f $F
-   zip -r0 $F * > /dev/null 2>&1
-   cd $INST_DIR
-   echo "- Running ZIP command: $ZIP_CMD"
-   rm -f $ZIP_FILE
-   $ZIP_CMD
-   echo " $(/bin/ls -laFt $ZIP_FILE)"
-   rm -f $F
-} # function
-
-
 # are we using toolbox/toybox?
 uses_toolbox() {
  [ "$TW_USE_TOOLBOX" = "true" ] && { echo "1"; return; }
@@ -1180,9 +1161,6 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    # create update zip installer
    if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
       	do_create_update_zip
-
-      	# create old theme zip file - !! no more !!
-      	## do_create_old_theme_zip
    else
 	echo -e "${RED}-- Skip creating recovery zip${NC}"
    fi
@@ -1203,8 +1181,8 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
 	echo -e ""
 	echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE"
 	echo -e "          MD5: $ZIP_FILE.md5"
-   echo -e ""
-   export ZIP_FILE
+   	echo -e ""
+   	export ZIP_FILE
    fi
 
    echo -e "=================================================================="
@@ -1217,7 +1195,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
    	echo -e ""
    	echo -e "${GREEN}Recovery image:${NC} $RECOVERY_IMAGE_2GB"
    	echo -e "          MD5: $RECOVERY_IMAGE_2GB.md5"
-      export RECOVERY_IMAGE_2GB
+      	export RECOVERY_IMAGE_2GB
    	if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
    	   echo -e ""
    	   echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE_GO"
@@ -1226,16 +1204,6 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
          export ZIP_FILE_GO
    	fi
    	echo -e "=================================================================="
-   fi
-   #
-   if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
-   echo -e ""
-   echo -e ""
-   echo -e "===========================${BLUE}Classic theme${NC}=========================="
-   echo -e ""
-   echo -e "${GREEN}ZIP File:${NC} $OUT/ClassicTheme.zip"
-   echo -e ""
-   echo -e "=================================================================="
    fi
 
    # clean up, with success code
