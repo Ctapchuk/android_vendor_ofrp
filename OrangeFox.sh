@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 05 November 2020
+# 30 November 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -212,7 +212,7 @@ fi
 if [ "$FOX_BUILD_TYPE" = "Unofficial" ] && [ "$FOX_BUILD" = "Unofficial" ]; then
    FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
 else
-   FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_BUILD_TYPE-$FOX_DEVICE
+   FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
 fi
 
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
@@ -520,7 +520,14 @@ local TDT=$(date "+%d %B %Y")
   $ZIP_CMD -z < $FOX_VENDOR_PATH/Files/INSTALL.txt
 
   #  sign zip installer
-  if [ -f $ZIP_FILE ]; then
+  local JAVA8="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+  if [ ! -x "$JAVA8" ]; then
+     JAVA8=""
+  fi
+
+  if [ -z "$JAVA8" ]; then
+     echo -e "${RED}-- java-8 not found. Not signing the zip file. ${NC}"
+  elif [ -f $ZIP_FILE  ]; then
      ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
      echo "- Running ZIP command: $ZIP_CMD"
      $ZIP_CMD
@@ -540,7 +547,9 @@ local TDT=$(date "+%d %B %Y")
   	echo "- Running ZIP command: $ZIP_CMD"
   	$ZIP_CMD -z <$FOX_VENDOR_PATH/Files/INSTALL.txt
   	#  sign zip installer ("lite" version)
-  	if [ -f $ZIP_FILE_GO ]; then
+  	if [ -z "$JAVA8" ]; then
+     	   echo -e "${RED}-- java-8 not found. Not signing the zip file. ${NC}"
+  	elif [ -f $ZIP_FILE_GO ]; then
      	   ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE_GO"
      	   echo "- Running ZIP command: $ZIP_CMD"
      	   $ZIP_CMD
