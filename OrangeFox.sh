@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 November 2020
+# 02 December 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -482,19 +482,25 @@ local TDT=$(date "+%d %B %Y")
      rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
   fi
 
-  # use anykernel3 version of OF_initd
+  # --- OF_initd ---
   rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
-  if [ "$FOX_10" = "true" ]; then
-     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
-     tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3-fox_10.zip
-     echo -e "${WHITEONBLUE} - FOX_10 - using OF_initd-ak3-fox_10.zip ${NC}"
+  # delete the OF_initd addon ?
+  if [ "$FOX_DELETE_INITD_ADDON" = "1" ]; then
+     echo -e "${GREEN}-- Deleting the initd addon ...${NC}"
+     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd*.zip
   else
-     tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
-     echo -e "${GREEN}-- Using OF_initd-ak3 zip ...${NC}"
+     if [ "$FOX_10" = "true" ]; then
+        rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
+        tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3-fox_10.zip
+        echo -e "${WHITEONBLUE} - FOX_10 - using OF_initd-ak3-fox_10.zip ${NC}"
+     else
+        rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3-fox_10.zip
+        tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
+        echo -e "${GREEN}-- Using OF_initd-ak3 zip ...${NC}"
+     fi
+     mv -f $tmp $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
   fi
   
-  mv $tmp $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
-
   # alternative/additional device codename? (eg, "kate" (for kenzo); "willow" (for ginkgo))
   if [ -n "$TARGET_DEVICE_ALT" ]; then
      echo -e "${GREEN}-- Adding the alternative device codename(s): \"$TARGET_DEVICE_ALT\" ${NC}"

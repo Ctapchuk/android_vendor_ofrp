@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 16 November 2020
+# Date: 02 December 2020
 #
 # -----------------------------------
 #
@@ -487,5 +487,8 @@
 - the default setting is either not to report them at all, or to report them for information, rather than as errors
 - default = 0
 #
+"FOX_DELETE_INITD_ADDON" [NEW]
+- set this to 1 to delete the initd addon
+- default = 0
 #
 # -----------------------------------
