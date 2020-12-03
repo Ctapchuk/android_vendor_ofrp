@@ -6,6 +6,14 @@
 # Date: 	TODAY
 # ******************************************************
 
+# whether to print extra debug messages
+FOX_INSTALLER_DEBUG_MODE=0
+
+# if set, then trace the commands before executing them (verbose!)
+if [ "$FOX_INSTALLER_DEBUG_MODE" = "1" ]; then
+   set -o xtrace
+fi
+
 # the target device(s)
 TARGET_DEVICE="mido"
 TARGET_DEVICE_ALT="ALT_DEVICE"
@@ -45,7 +53,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20201201"
+MOD_DATE="20201203"
   
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -442,6 +450,15 @@ Unzip_Installer_Package() {
    unzip -o "$ZIPFILE"
 }
 
+# print the size of a file
+FileSize() {
+  if [ -f $1 ]; then
+     set -- $(ls -l "$1"); echo "$5"
+  else
+     echo "0"
+  fi
+}
+
 # routine for flashing on A/B devices (credits: osm0sis)
 # argument: "0" (if there is no recovery partition); or recovery partition size (if there is one)
 AB_Install_Recovery() {
@@ -450,6 +467,7 @@ local tool="$EX_DIR"/magiskboot
 local target="$EX_DIR"/boot.img
 local slot
 local name
+local tmp
 local PART
 
    	cd "$EX_DIR"
@@ -477,11 +495,14 @@ local PART
 	# if we have a recovery  partition - install the recovery image to recovery _a /_b
 	if [ "$name" = "recovery" ]; then
 	   ui_print "- A/B device - a recovery partition exists"
+	   
 	   # check against partition size - again
+	   tmp=$($GETPROP "ro.boot.slot_suffix")
+	   part_size=$(blockdev --getsize64 $target"$tmp") > /dev/null 2>&1
 	   local rec_size=$(FileSize "recovery.img")
 	   [ $rec_size -gt $part_size ] && abort "The recovery image ($rec_size bytes) is bigger than your recovery partition ($part_size bytes)! Quitting."
+
 	   # if we get here, it is safe to flash the image to the recovery _a /_b slots
-	   tmp=$($GETPROP "ro.boot.slot_suffix")
 	   ui_print "- The active slot is $tmp ..."
 	   for slot in _a _b; do
 		ui_print "- Installing OrangeFox to slot $slot..."
@@ -542,16 +563,6 @@ local PART
 	fi
 }
 
-# print the size of a file
-FileSize() {
-  if [ -f $1 ]; then
-     set -- $(ls -l "$1"); echo "$5"
-     # stat -c %s "$1"
-  else
-     echo "0"
-  fi
-}
-
 # install the recovery
 Install_Recovery() {
 local PART=$(readlink -f $RECOVERY_PARTITION)
@@ -564,42 +575,22 @@ local Is_ABD="0"
     [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ] && Is_ABD="1"
     [ "$Is_ABD" = "1" ] && {
        ui_print "- The device is an A/B device."
-       # verify that there is no recovery partition
-       [ -z "$ttmp" ] && {
-          AB_Install_Recovery "0"
-          return
-       }
-       # if we get here, it is A/B, but it has a recovery partition!
-       ui_print "- But it also has a recovery partition!"
+       
+       # verify that there is no recovery partition, else get its size
+       ttmp=$(blockdev --getsize64 $RECOVERY_PARTITION"_b") > /dev/null 2>&1
+       [ $? == 0 ] && ui_print "- But it also has a recovery partition!" || ttmp=0
+       AB_Install_Recovery "$ttmp"
+       return
     }
 
     # get the size of the recovery partition
-    local bak="/tmp/org_recovery.img"
-    dd bs=1048576 if="$PART" of=$bak > /dev/null 2>&1
-    local oldF=$(FileSize $bak)
+    oldF=$(blockdev --getsize64 $PART) > /dev/null 2>&1
+
+    # get the size of the recovery image
     local newF=$(FileSize recovery.img)
     ui_print "- Partition_Size=$oldF bytes; Recovery_Size=$newF bytes"
     [ $newF -gt $oldF ] && {
-       rm -f $bak
-       [ "$Is_ABD" = "1" -a "$oldF" = "0" ] && {
-          PART=$PART"_a"
-          dd bs=1048576 if="$PART" of=$bak > /dev/null 2>&1
-          oldF=$(FileSize $bak)
-          rm -f $bak
-          if [ "$oldF" = "0" ]; then
-             ui_print "- Hmmm ... an A/B device with a zero byte recovery partition!"
-             ui_print "- Resorting to the A/B installation procedure..."
-             AB_Install_Recovery "0"
-             return
-          else
-             ui_print "- Recovery parition exists! Using the A/B installation procedure..."
-             ui_print "- Partition_Size=$oldF bytes; Recovery_Size=$newF bytes"
-             [ $newF -gt $oldF ] && abort "The recovery image ($newF bytes) is bigger than your recovery partition ($oldF bytes)! Quitting."
-             AB_Install_Recovery "$oldF"
-             return
-          fi
-       }
-       abort "The recovery image ($newF bytes) is bigger than your recovery partition ($oldF bytes)! Quitting."
+      abort "The recovery image ($newF bytes) is bigger than your recovery partition ($oldF bytes)! Quitting."
     }
     
     if [ -x "$FLASH_IMAGE" ] && [ -x "$ERASE_IMAGE" ]; then
