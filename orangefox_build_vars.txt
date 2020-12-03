@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 02 December 2020
+# Date: 03 December 2020
 #
 # -----------------------------------
 #
@@ -491,4 +491,9 @@
 - set this to 1 to delete the initd addon
 - default = 0
 #
+"FOX_INSTALLER_DEBUG_MODE" [NEW] [R11 only]
+- set this to 1 to put the OrangeFox zip installer in debug mode
+- in the debug mode, when the zip is flashed, a large amount of information is written into the install.log file
+- this is for developer testing only - you must disable this before release
+- default = 0
 # -----------------------------------
