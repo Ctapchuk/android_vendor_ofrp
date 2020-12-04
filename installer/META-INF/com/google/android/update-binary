@@ -53,7 +53,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20201203"
+MOD_DATE="20201204"
   
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -369,43 +369,30 @@ local U=$($GETPROP "ro.build.ab_update")
    fi
 }
 
-# get the R10 cache dir
-Fox_R10_GetCacheDir() {
-local C="/cache/" 
-local AB="/data/cache/"
-local P="/persist/cache/"
- if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
-    [ -e $AB ] && { echo "$AB"; return; }
-    [ -e $P ] && { echo "$P"; return; }
-    mount_part "/data"
-    echo "$AB"
-    return
- fi
- [ -e $C ] && { echo "$C"; return; }
- [ -e $AB ] && { echo "$AB"; return; }
- [ -e $P ] && { echo "$P"; return; }
- echo "$C"
-}
-
 # get the cache dir
 GetCacheDir() {
 local C="/cache/" 
-local D="/data/"
-local P="/persist/"
 local AB="/data/cache/"
-local PP="/persist/cache/"
+local D="/data/"
 
-  if [ "$FOX_R11" != "1" ]; then
-    C=$(Fox_R10_GetCacheDir)
-    echo "$C"
-    return
+  if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
+     [ -d $AB ] && { echo "$AB"; return; }
+     mount_part "/data" > /dev/null 2>&1
+     mkdir -p $AB > /dev/null 2>&1
+     [ -d $AB ] && { echo "$AB"; return; }
   fi
+  
+ [ -d $C ] && { 
+    local F=$(cat /etc/fstab | grep "/cache")
+    [ -n "$F" ] && { echo "$C"; return; }
+ }
 
- [ -e $C ] && { echo "$C"; return; }
- [ -e $D ] && { mount_part "/data"; echo "$D"; return; }
- [ -e $P ] && { echo "$P"; return; }
- [ -e $AB ] && { echo "$AB"; return; }
- [ -e $PP ] && { echo "$PP"; return; }
+ [ -d $AB ] && { echo "$AB"; return; }
+ [ -d $D ] && { 
+    mount_part "/data" > /dev/null 2>&1
+    mkdir -p $AB > /dev/null 2>&1
+    [ -d $AB ] && { echo "$AB"; return; }
+  }
 
  echo "$C"
 }
