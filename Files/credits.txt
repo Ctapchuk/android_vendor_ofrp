@@ -4,7 +4,7 @@ OrangeFox Recovery Credits
 * KMP Design - for amazing splash
 * TWRP Team - for base recovery
 
-== Guys who help moderate OrangeFox chats ==
+== Guys who help to moderate OrangeFox chats ==
 * @zakaryan2004
 * @ko_he
 * @Steamrev
@@ -12,7 +12,7 @@ OrangeFox Recovery Credits
 * @Palmbeach05
 * @Diodelvento
 
-== People that protecting our chats against spammers ==
+== People that are protecting our chats against spammers ==
 * @SitiSchu
 * @brombinmirko
 * @GodOfOwls
@@ -25,5 +25,5 @@ OrangeFox Recovery Credits
 * ua-hosting.company
 
 * Our maintainers
-* Our testers which test many builds per day
+* Our testers who test many builds per day
 * Our users and community
