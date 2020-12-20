@@ -53,7 +53,7 @@ OF_VANILLA_BUILD=0
 FOX_R11=0
 
 # last_modified
-MOD_DATE="20201204"
+MOD_DATE="20201212"
   
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -608,15 +608,16 @@ local Is_ABD="0"
 Reset_Settings() {
 local F="$1"
 	[ -z "$F" ] && F=/sdcard
+	local FOX=$F/Fox
 	ui_print "- Removing old OrangeFox configuration files ..."
-	rm -f $F/Fox/.foxs
-	rm -rf $F/Fox/.theme
-	rm -rf $F/Fox/.navbar
-	mount_part "/persist"
-	F=$(is_mounted "/persist")
-	if [ "$F" = "1" ]; then
-	   rm -f /persist/.foxs
+	rm -rf $FOX/.bin.
+	rm -rf $FOX/.theme
+	rm -rf $FOX/.navbar
+	rm -f $FOX/.fox*
+	if [ -d /persist ]; then
+	   mount_part /persist
 	   rm -f /persist/.fsec*
+	   rm -f /persist/.fox*
 	   umount_part /persist
 	fi
 }
