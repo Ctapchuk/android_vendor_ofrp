@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 03 December 2020
+# 26 December 2020
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -1098,6 +1098,11 @@ fi
 # repack the recovery image
 if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      SAMSUNG_DEVICE=$(file_getprop "$DEFAULT_PROP" "ro.product.manufacturer")
+     if [ -z "$SAMSUNG_DEVICE" ]; then
+        SAMSUNG_DEVICE=$(grep ".manufacturer=samsung" "$DEFAULT_PROP")
+        [ -n "$SAMSUNG_DEVICE" ] && SAMSUNG_DEVICE="samsung"
+     fi
+
      if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
   	echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
         $CP -p "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
