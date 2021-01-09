@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2020 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2021 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 26 December 2020
+# 09 January 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -463,12 +463,6 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s/^FOX_RESET_SETTINGS=.*/FOX_RESET_SETTINGS=\"disabled\"/" $F
   fi
 
-  # R11
-  if [ "$FOX_R11" = "1" ]; then
-     echo -e "${RED}-- Preparing zip installer for OrangeFox R11 ... ${NC}"
-     sed -i -e "s/^FOX_R11=.*/FOX_R11=\"1\"/" $F
-  fi
-
   # skip all patches ?
   if [ "$OF_VANILLA_BUILD" = "1" ]; then
      echo -e "${RED}-- This build will skip all OrangeFox patches ... ${NC}"
@@ -663,32 +657,13 @@ local F=""
       # 2GB version bail out here
       [ "$1" = "lite" ] && return
 
-      # remove some theme colours (not for R11)
-      if [ "$FOX_R11" != "1" ]; then
-         echo -e "${GREEN}-- Removing some theme colours ... ${NC}"
-      	 declare -a fColors=("Amber" "Brown" "Pink" "Purple")
-         for i in "${fColors[@]}"
-         do
-       		F=$FOX_RAMDISK/twres/images/$i
-       		[ -d $F ] && rm -rf $F
-       		C="Color"$i
-       		# don't load it in the UI
-       		sed -i -e "/$C/d" $image_xml
-         done
-      fi
-
       # ----- proceeding to remove some fonts can save about 460kb in size -----
-
       # remove some fonts? (only do so if we have a working "small" xml to cover the situation)
       echo -e "${GREEN}-- Removing some fonts ... ${NC}"
-      if [ "$FOX_R11" = "1" ]; then
-         declare -a FontFiles=(
+      declare -a FontFiles=(
          "Amatic" "Chococooky" "Exo2-Medium" "Exo2-Regular"
          "Firacode-Medium" "Firacode-Regular" "MILanPro-Medium"
          "MILanPro-Regular")
-      else
-         declare -a FontFiles=("Amatic" "AngryBirds" "Bender" "Cooljazz" "Chococooky")
-      fi
 
       # delete the font (*.ttf) tiles
       for i in "${FontFiles[@]}"
@@ -1097,9 +1072,14 @@ fi
 
 # repack the recovery image
 if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
-     SAMSUNG_DEVICE=$(file_getprop "$DEFAULT_PROP" "ro.product.manufacturer")
+     if [ "$OF_SAMSUNG_DEVICE" = "1" -o "$OF_SAMSUNG_DEVICE" = "true" ]; then
+        SAMSUNG_DEVICE="samsung"
+     else
+        SAMSUNG_DEVICE=$(file_getprop "$DEFAULT_PROP" "ro.product.manufacturer")
+     fi
+
      if [ -z "$SAMSUNG_DEVICE" ]; then
-        SAMSUNG_DEVICE=$(grep ".manufacturer=samsung" "$DEFAULT_PROP")
+        SAMSUNG_DEVICE=$(grep "manufacturer=samsung" "$DEFAULT_PROP")
         [ -n "$SAMSUNG_DEVICE" ] && SAMSUNG_DEVICE="samsung"
      fi
 

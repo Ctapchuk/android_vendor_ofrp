@@ -49,11 +49,8 @@ FOX_RESET_SETTINGS="1"
 # build a vanilla version that skips all OrangeFox patches?
 OF_VANILLA_BUILD=0
 
-# R11?
-FOX_R11=0
-
 # last_modified
-MOD_DATE="20201212"
+MOD_DATE="20210109"
   
 # sundry glodal defaults
 # VEND_DIR="/vendor"
