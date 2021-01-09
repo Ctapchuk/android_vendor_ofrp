@@ -4,8 +4,8 @@
 #
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
-# Copyright (C) 2019-2020 OrangeFox Recovery Project
-# Date: 03 December 2020
+# Copyright (C) 2019-2021 OrangeFox Recovery Project
+# Date: 09 January 2021
 #
 # -----------------------------------
 #
@@ -57,14 +57,14 @@
      different from the default "/dev/block/bootdevice/by-name/recovery"
    - default = "/dev/block/bootdevice/by-name/recovery"
 #
-"FOX_RECOVERY_SYSTEM_PARTITION" [NEW] [R11 only]
+"FOX_RECOVERY_SYSTEM_PARTITION" [NEW]
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's system partition is in a location that is
      different from the default "/dev/block/bootdevice/by-name/system"
      (eg, some Samsung/HTC devices have a different location for system)
    - default = "/dev/block/bootdevice/by-name/system"
 #
-"FOX_RECOVERY_VENDOR_PARTITION" [NEW] [R11 only]
+"FOX_RECOVERY_VENDOR_PARTITION" [NEW]
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's vendor partition is in a location that is
      different from the default "/dev/block/bootdevice/by-name/vendor"
@@ -406,23 +406,17 @@
 - Set this to 1 to disable the OTA settings by default, meaning that users have to enable OTA manually
 - default = 0
 #
-"OF_USE_TWRP_SAR_DETECT" [NEW] [R11 only]
+"OF_USE_TWRP_SAR_DETECT" [NEW]
 - Set this to 1 to enable the new TWRP auto-detection of system-as-root in the installed ROM
 - default = 0
 #
-"FOX_R11" [NEW] [R11 only]
-- Set this to 1 if you are building R11
-- If enabled, it makes some necessary changes to the updater script in zip installer, to trigger the correct cache paths for cache
-- Do NOT enable this, unless you are building the latest R11 sources, and have pulled the latest commits to the vendor tree
-- default = 0
-#
-"OF_QUICK_BACKUP_LIST" [NEW] [R11 only]
+"OF_QUICK_BACKUP_LIST" [NEW]
 - Use this to specify the desired default list of partitions selected for "Quick Backup"
 - Note: only specify a partition if you mount it in your fstab, else an error will be generated
 - The partitions should be separated by a semi-colon, and the list should end with a semi-colon
 - Example: export OF_QUICK_BACKUP_LIST="/data;/storage;/persist;"
 #
-"OF_USE_LOCKSCREEN_BUTTON" [NEW] [R11 only]
+"OF_USE_LOCKSCREEN_BUTTON" [NEW]
 - Set this to 1 to replace the "Swipe up" lockscreen screen with a button
 - This is especially useful (for the time being) for 720p screens
 - default = 0
@@ -438,7 +432,7 @@
 - the binary will add about 275kb to the size of the recovery image
 - default = 0
 #
-"FOX_ADVANCED_SECURITY" [NEW] [R11 only]
+"FOX_ADVANCED_SECURITY" [NEW]
 - set this to 1 to enable the advanced security features
 - this forces ADB and MTP to be disabled until after you enter the recovery (ie, until after
 - all decryption/recovery passwords are successfully entered)
@@ -452,30 +446,30 @@
 - all decryption/recovery passwords are successfully entered)
 - default = 0
 #
-"OF_DISABLE_KEYMASTER2" [NEW] [R11 only]
+"OF_DISABLE_KEYMASTER2" [NEW]
 - set this to 1 to disable the keymaster2 support code
 - only do this if you are getting compiler errors with keymaster2 (eg, with legacy build systems)
 - default = 0
 #
-"OF_LEGACY_SHAR512" [NEW] [R11 only]
+"OF_LEGACY_SHAR512" [NEW]
 - set this to 1 to avoid compiler errors in legacy build systems
 - default = 0
 #
-"OF_DEVICE_WITHOUT_PERSIST" [NEW] [R11 only]
+"OF_DEVICE_WITHOUT_PERSIST" [NEW]
 - set this to 1 if your device does not have a /persist partition
 - default = 0
 #
-"OF_DISABLE_EXTRA_ABOUT_PAGE" [NEW] [R11 only]
+"OF_DISABLE_EXTRA_ABOUT_PAGE" [NEW]
 - set this to 1 to disable display of the extra information under the "About" page
 - you only need to do this if trying to display it causes problems
 - default = 0
 #
-"OF_NO_SPLASH_CHANGE" [NEW] [R11 only]
+"OF_NO_SPLASH_CHANGE" [NEW]
 - set this to 1 to disable changing the splash image
 - you only need to do this if trying to change the splash image causes problems
 - default = 0
 #
-"FOX_DELETE_MAGISK_ADDON" [Experimental!!!] [R11 only]
+"FOX_DELETE_MAGISK_ADDON" [Experimental!!!]
 - set this to 1 to remove/disable the magisk addon
 - If set, the magisk addon zips will be removed from the OrangeFox installer, and
 - the relevant menu will be disabled so that magisk cannot be installed from the "Fox Addons" menu
@@ -491,7 +485,7 @@
 - set this to 1 to delete the initd addon
 - default = 0
 #
-"FOX_INSTALLER_DEBUG_MODE" [NEW] [R11 only]
+"FOX_INSTALLER_DEBUG_MODE" [NEW]
 - set this to 1 to put the OrangeFox zip installer in debug mode
 - in the debug mode, when the zip is flashed, a large amount of information is written into the install.log file
 - this is for developer testing only - you must disable this before release
