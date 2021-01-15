@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 09 January 2021
+# 15 January 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -993,6 +993,16 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   else
      $CP -p $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/$RAMDISK_BIN/aapt
      chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/aapt
+  fi
+
+  # disable the app manager?
+  if [ "$FOX_DISABLE_APP_MANAGER" = "1" ]; then
+     echo -e "${GREEN}-- Disabling the App Manager in advanced.xml ...${NC}"
+     Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
+     sed -i "/appmgr_title/I,+3 d" $Led_xml_File
+     # remove aapt also, as it would be redundant
+     echo -e "${GREEN}-- Omitting the aapt binary ...${NC}"
+     rm -f $FOX_RAMDISK/$RAMDISK_BIN/aapt
   fi
 
   # fox_10 - include some stuff (busybox, new magisk)

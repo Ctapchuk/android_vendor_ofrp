@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 09 January 2021
+# Date: 15 January 2021
 #
 # -----------------------------------
 #
@@ -490,4 +490,10 @@
 - in the debug mode, when the zip is flashed, a large amount of information is written into the install.log file
 - this is for developer testing only - you must disable this before release
 - default = 0
+#
+"FOX_DISABLE_APP_MANAGER" [NEW]
+- set this to 1 to disable the OrangeFox App Manager 
+- sometimes there are issues with the App Manager - in such cases, use this variable to disable it
+- default = 0
+#
 # -----------------------------------
