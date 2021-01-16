@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 15 January 2021
+# 16 January 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -947,6 +947,18 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
       $CP -p $FOX_VENDOR_PATH/Files/unzip $FOX_RAMDISK/$NEW_RAMDISK_BIN/
       chmod 0755 $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
+  fi
+
+  # Include standalone "grep" binary ?
+  if [ "$FOX_USE_GREP_BINARY" = "1"  -a -x $FOX_VENDOR_PATH/Files/grep ]; then
+      echo -e "${GREEN}-- Copying the GNU \"grep\" binary ...${NC}"
+      rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep $FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep
+      $CP -pf $FOX_VENDOR_PATH/Files/grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/
+      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep"
+      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep"
+      echo 'exec grep -F "$@"' >> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep"
+      echo 'exec grep -E "$@"' >> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep"
+      chmod 0755 $FOX_RAMDISK/$NEW_RAMDISK_BIN/grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep $FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep
   fi
 
   # Include our own "zip" binary ?
