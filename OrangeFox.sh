@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 18 January 2021
+# 06 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -934,6 +934,8 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
       echo -e "${GREEN}-- Copying the GNU \"tar\" binary (gnutar) ...${NC}"
       $CP -p $FOX_VENDOR_PATH/Files/gnutar $FOX_RAMDISK/$RAMDISK_BIN/
       chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/gnutar
+  else
+      rm -f $FOX_RAMDISK/$RAMDISK_BIN/gnutar
   fi
 
   # Include "unzip" binary ?
@@ -1020,8 +1022,12 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
 
   # fox_10 - include some stuff (busybox, new magisk)
   if [ "$FOX_10" = "true" ]; then
-     $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_BIN/busybox
-     chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/busybox
+     if [ "$FOX_REMOVE_BUSYBOX_BINARY" = "1" ]; then
+        rm -f $FOX_RAMDISK/$RAMDISK_BIN/busybox
+     else
+        $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_BIN/busybox
+        chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/busybox
+     fi
      tmp=$FOX_VENDOR_PATH/Files/new_magisk.zip
   else
      tmp=$FOX_VENDOR_PATH/FoxFiles/Magisk.zip
