@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 06 February 2021
+# 08 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -111,10 +111,11 @@ if [ -n "$4" ]; then
       echo "TARGET_RECOVERY_ROOT_OUT=\"$TARGET_RECOVERY_ROOT_OUT\"" >>  $TMP_SCRATCH
       echo "RECOVERY_RAMDISK_COMPRESSOR=\"$RECOVERY_RAMDISK_COMPRESSOR\"" >>  $TMP_SCRATCH
       echo "INTERNAL_KERNEL_CMDLINE=\"$INTERNAL_KERNEL_CMDLINE\"" >>  $TMP_SCRATCH
-      echo "recovery_ramdisk=\"$recovery_ramdisk\"" >>  $TMP_SCRATCH
       echo "INTERNAL_RECOVERYIMAGE_ARGS='$INTERNAL_RECOVERYIMAGE_ARGS'" >>  $TMP_SCRATCH
       echo "INTERNAL_MKBOOTIMG_VERSION_ARGS=\"$INTERNAL_MKBOOTIMG_VERSION_ARGS\"" >>  $TMP_SCRATCH
       echo "BOARD_MKBOOTIMG_ARGS=\"$BOARD_MKBOOTIMG_ARGS\"" >>  $TMP_SCRATCH
+      echo "recovery_ramdisk=\"$recovery_ramdisk\"" >>  $TMP_SCRATCH
+      echo "recovery_uncompressed_ramdisk=\"$recovery_uncompressed_ramdisk\"" >>  $TMP_SCRATCH
       echo "#" >>  $TMP_SCRATCH
    fi
    echo "#########################################################################"
@@ -1092,6 +1093,11 @@ if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
+
+   # save some original file sizes
+   echo -e "${GREEN}-- Saving some original file sizes ${NC}"
+   F=$(filesize $recovery_uncompressed_ramdisk)
+   echo "ramdisk_size=$F" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg 
 
   # let's be clear where we are ...
   if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
