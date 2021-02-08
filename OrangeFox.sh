@@ -528,6 +528,7 @@ local TDT=$(date "+%d %B %Y")
 
   #  sign zip installer
   local JAVA8="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+  [ -n "$FOX_JAVA8_PATH" ] && JAVA8="$FOX_JAVA8_PATH"
   if [ ! -x "$JAVA8" ]; then
      JAVA8=""
   fi

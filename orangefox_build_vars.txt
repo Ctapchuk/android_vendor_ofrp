@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 06 February 2021
+# Date: 08 February 2021
 #
 # -----------------------------------
 #
@@ -504,5 +504,19 @@
 "FOX_REMOVE_BUSYBOX_BINARY" [NEW] [FOX_10.0 builds only]
 - set this to 1 to delete the extra standalone /sbin/busybox binary from the fox_10.0 builds
 - default = 0
+#
+"FOX_JAVA8_PATH" [NEW]
+- use this to point to the installed java-8 binary
+- eg, export FOX_JAVA8_PATH="/usr/lib/jvm/java-8-openjdk/jre/bin/java"
+- default = "/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+#
+"OF_SPLASH_MAX_SIZE"  [NEW] [FOX_10.0 builds only]
+- use this to specify the maximum size (in kilobytes) of image files that can safely be used for splash images
+- on some devices, the maximum safe size is 65 Kb; on others, the images can be very big (eg, megabytes)
+- Note: verify that the maximum value you set is not too big (ie, test it yourself)
+- if the splash image chosen by the user is too big, this can easily cause a "System is destroyed" scenario
+- in that case, the user will need to flash the recovery image again, via fastboot
+- eg, "export OF_SPLASH_MAX_SIZE=128" (ie, 128 Kb maximum)
+- default = 1024
 #
 # -----------------------------------
