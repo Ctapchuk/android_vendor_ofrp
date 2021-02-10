@@ -31,6 +31,10 @@ C_CLEAR="\033[0;0m"
 CP=/bin/cp
 [ ! -x "$CP" ] && CP=cp
 
+# make sure we know exactly which "od" command we are running
+OD=/usr/bin/od
+[ ! -x $OD ] && OD=od
+
 pout() {
     printf "${C_OUT}${*}${C_CLEAR}\n"
 }
@@ -223,21 +227,21 @@ if [ $offset -gt 0 ]; then
     bootimg=bootimg
 fi
 
-kernel_addr=0x$(od -A n -X -j 12 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
-ramdisk_addr=0x$(od -A n -X -j 20 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
-second_addr=0x$(od -A n -X -j 28 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
-tags_addr=0x$(od -A n -X -j 32 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
+kernel_addr=0x$($OD -A n -j 12 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
+ramdisk_addr=0x$($OD -A n -j 20 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
+second_addr=0x$($OD -A n -j 28 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
+tags_addr=0x$($OD -A n -j 32 -N 4 $bootimg | sed 's/ //g' | sed 's/^0*//g')
 
-kernel_size=$(od -A n -D -j 8 -N 4 $bootimg | sed 's/ //g')
-#base_addr=0x$(od -A n -x -j 14 -N 2 $bootimg | sed 's/ //g')0000
-ramdisk_size=$(od -A n -D -j 16 -N 4 $bootimg | sed 's/ //g')
-second_size=$(od -A n -D -j 24 -N 4 $bootimg | sed 's/ //g')
-page_size=$(od -A n -D -j 36 -N 4 $bootimg | sed 's/ //g')
-dtb_size=$(od -A n -D -j 40 -N 4 $bootimg | sed 's/ //g')
-#cmd_line=$(od -A n --strings -j 64 -N 512 $bootimg)
-#board=$(od -A n --strings -j 48 -N 16 $bootimg)
-cmd_line=$(od -A n -S1 -j 64 -N 512 $bootimg)
-board=$(od -A n -S1 -j 48 -N 16 $bootimg)
+kernel_size=$($OD -A n -j 8 -N 4 $bootimg | sed 's/ //g')
+#base_addr=0x$($OD -A n -x -j 14 -N 2 $bootimg | sed 's/ //g')0000
+ramdisk_size=$($OD -A n -j 16 -N 4 $bootimg | sed 's/ //g')
+second_size=$($OD -A n -j 24 -N 4 $bootimg | sed 's/ //g')
+page_size=$($OD -A n -j 36 -N 4 $bootimg | sed 's/ //g')
+dtb_size=$($OD -A n -j 40 -N 4 $bootimg | sed 's/ //g')
+#cmd_line=$($OD -A n --strings -j 64 -N 512 $bootimg)
+#board=$($OD -A n --strings -j 48 -N 16 $bootimg)
+cmd_line=$($OD -A n -S1 -j 64 -N 512 $bootimg)
+board=$($OD -A n -S1 -j 48 -N 16 $bootimg)
 
 base_addr=$((kernel_addr-0x00008000))
 kernel_offset=$((kernel_addr-base_addr))
