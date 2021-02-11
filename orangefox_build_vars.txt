@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 08 February 2021
+# Date: 11 February 2021
 #
 # -----------------------------------
 #
@@ -34,11 +34,7 @@
    - point to a custom "callback" script that will be executed just before creating the final recovery image
    - eg, a script to delete some files, or add some files to the ramdisk
 #
-"BUILD_2GB_VERSION" [DEPRECATED]
-   - set to 1 to build a stripped down "lite" version for 2GB RAM devices
-   - if you use this, you *MUST* make a CLEAN BUILD every time
-   - any "lite" build needs VERY thorough testing to ensure that it works properly (or at all)
-   - default = 0
+"BUILD_2GB_VERSION" [As of 20210210, this is now OBSOLETE]
 #
 "FOX_REPLACE_BUSYBOX_PS"
    - set to 1 to replace the (stripped down) busybox version of the "ps" command
@@ -517,6 +513,16 @@
 - if the splash image chosen by the user is too big, this can easily cause a "System is destroyed" scenario
 - in that case, the user will need to flash the recovery image again, via fastboot
 - eg, "export OF_SPLASH_MAX_SIZE=128" (ie, 128 Kb maximum)
-- default = 1024
+- default = 4096 (ie, 4mb maximum)
+#
+"FOX_USE_XZ_UTILS" [NEW]
+- set this to 1 if you want the XZ Utils (lzma, xz) to be added to the build (the binary is about 260kb in size)
+- default = 0
+#
+"FOX_DYNAMIC_SAMSUNG_FIX" [NEW] [FOX_10.0 builds only]
+- set this to 1 to provide a workaround for bug in Samsung dynamic partition devices, which causes a bootloop
+- when enabled, the "bash" and "aapt" binaries are removed from the build 
+- use this only if the recovery doesn't boot on your Samsung dynamic partition device
+- default = 0
 #
 # -----------------------------------

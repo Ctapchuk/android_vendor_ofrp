@@ -253,6 +253,18 @@ if [ -h "$FOX_RAMDISK/$RAMDISK_ETC" -a -d "$FOX_RAMDISK/$NEW_RAMDISK_ETC" ]; the
    RAMDISK_ETC=$NEW_RAMDISK_ETC
 fi
 
+# workaround for some Samsung bugs
+if [ "$FOX_DYNAMIC_SAMSUNG_FIX" ]; then
+   if [ -z "$FOX_VENDOR_CMD" -o "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+      echo -e "${WHITEONGREEN} - Dealing with bugged Samsung dynamic stuff - removing \"bash\" and \"aapt\"... ${NC}"
+      echo -e "${WHITEONGREEN} - Make sure that you are doing a clean build. ${NC}"
+   fi
+   export FOX_REMOVE_BASH=1
+   export FOX_REMOVE_AAPT=1
+   unset FOX_USE_BASH_SHELL
+   unset FOX_ASH_IS_BASH
+fi
+
 # ****************************************************
 # --- embedded functions
 # ****************************************************
