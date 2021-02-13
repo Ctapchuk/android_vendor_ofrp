@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 11 February 2021
+# 13 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -256,13 +256,18 @@ fi
 # workaround for some Samsung bugs
 if [ "$FOX_DYNAMIC_SAMSUNG_FIX" = "1" ]; then
    if [ -z "$FOX_VENDOR_CMD" -o "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
-      echo -e "${WHITEONGREEN} - Dealing with bugged Samsung dynamic stuff - removing \"bash\" and \"aapt\"... ${NC}"
+      echo -e "${WHITEONGREEN} - Dealing with bugged Samsung dynamic stuff - removing stuff... ${NC}"
       echo -e "${WHITEONGREEN} - Make sure that you are doing a clean build. ${NC}"
    fi
    export FOX_REMOVE_BASH=1
    export FOX_REMOVE_AAPT=1
    unset FOX_USE_BASH_SHELL
    unset FOX_ASH_IS_BASH
+   unset FOX_USE_XZ_UTILS
+   unset FOX_USE_TAR_BINARY
+   unset FOX_USE_NANO_EDITOR
+   unset FOX_USE_UNZIP_BINARY
+   unset FOX_USE_GREP_BINARY
 fi
 
 # ****************************************************
@@ -346,6 +351,7 @@ local F=$1
    export | grep "FOX_" > $F
    export | grep "OF_" >> $F
    sed -i '/FOX_BUILD_LOG_FILE/d' $F
+   sed -i '/FOX_BUILD_DEVICE/d' $F
    sed -i '/FOX_LOCAL_CALLBACK_SCRIPT/d' $F
    sed -i '/FOX_PORTS_TMP/d' $F
    sed -i '/FOX_RAMDISK/d' $F
@@ -780,11 +786,13 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   # replace busybox lzma (and "xz") with our own
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" -o "$FOX_USE_XZ_UTILS" = "1" ]; then
-     echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
-     rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/lzma
-     rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/xz
-     $CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$NEW_RAMDISK_BIN/lzma
-     ln -s lzma $FOX_RAMDISK/$NEW_RAMDISK_BIN/xz
+     if [ "$FOX_DYNAMIC_SAMSUNG_FIX" != "1" ]; then
+     	echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
+     	rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/lzma
+     	rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/xz
+     	$CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$NEW_RAMDISK_BIN/lzma
+     	ln -s lzma $FOX_RAMDISK/$NEW_RAMDISK_BIN/xz
+     fi
   fi
 
   # system_root stuff
