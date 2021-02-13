@@ -1,10 +1,10 @@
 #!/sbin/sh
 #
-# 	/bin/foxstart.sh
+# 	/sbin/foxstart.sh
 # 	Custom script for OrangeFox Recovery
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2020 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2021 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20201026
+# * Date:   20210213
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20201026"
+SCRIPT_LASTMOD_DATE="20210213"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 DEBUG="0"  	  # enable for more debug messages
@@ -43,7 +43,13 @@ SUPER="0" # whether the rdevice has a "super" partition
 OUR_TMP="/FFiles/temp" # our "safe" temp directory
 
 # etc dir
-[ -h /etc ] && ETC_DIR=$(readlink /etc) || ETC_DIR=/etc
+if [ -h /etc ]; then 
+   ETC_DIR=$(readlink /etc)
+else
+   ETC_DIR=/etc
+   [ ! -e $ETC_DIR ] && ETC_DIR=/system/etc
+   [ ! -e $ETC_DIR ] && ETC_DIR=/etc
+fi
 CFG="$ETC_DIR/orangefox.cfg"
 
 # fstab
@@ -499,9 +505,14 @@ flashlight_Leds_config() {
 start_script()
 {
 local OPS=$(getprop "orangefox.postinit.status")
+local fox_cfg="$ETC_DIR/fox.cfg"
    [ -f "$CFG" ] || [ "$OPS" = "1" ] && exit 0
    echo "# OrangeFox live cfg" > $CFG
-   local D=$(file_getprop "$ETC_DIR/fox.cfg" "FOX_BUILD_DATE")
+   [ ! -e $fox_cfg ] && {
+      fox_cfg="/system/etc/fox.cfg"
+      [ ! -e $fox_cfg ] && fox_cfg="/etc/fox.cfg"
+   }
+   local D=$(file_getprop "$fox_cfg" "FOX_BUILD_DATE")
    [ -z "$D" ] && D=$(getprop "ro.bootimage.build.date")
    [ -z "$D" ] && D=$(getprop "ro.build.date")
    OPS=$(uname -r)
