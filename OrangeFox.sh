@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 13 February 2021
+# 16 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -667,7 +667,7 @@ local F=""
 expand_vendor_path
 
 # did we export tmp directory for OrangeFox ports?
-[ -n "$FOX_PORTS_TMP" ] && OF_WORKING_DIR="$FOX_PORTS_TMP" || OF_WORKING_DIR="$FOX_VENDOR_PATH/tmp"
+[ -n "$FOX_PORTS_TMP" ] && OF_WORKING_DIR="$FOX_PORTS_TMP" || OF_WORKING_DIR="/tmp/fox_zip_tmp"
 
 # is the working directory still there from a previous build? If so, remove it
 if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
