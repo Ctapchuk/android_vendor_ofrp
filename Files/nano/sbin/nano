@@ -3,34 +3,51 @@
 # nano: set up and run nano from recovery/terminal
 # osm0sis @ xda-developers
 # DarthJabba9  @ xda-developers
-#
+# Date: 16 February 2021
 
-if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-    echo "Usage = $0 [--term <terminal>] [arguments]"
-    F=/FFiles/nano/terminals.txt
-    [ -e $F ] && cat $F
-    exit 0
+NANO_DIR=/FFiles/nano;
+nano_bin=$NANO_DIR/bin/nano.bin;
+
+if [ -e $nano_bin ] && [ ! -x $nano_bin ]; then
+   chmod 0755 $nano_bin;
 fi
 
+# help screen
+if [ "$1" = "--help" -o "$1" = "-h" ]; then
+    echo "Usage = $0 [--help2] [--term <terminal>] [arguments]"
+    F=/FFiles/nano/terminals.txt;
+    [ -e $F ] && cat $F;
+    exit 0;
+elif [ "$1" = "--help2" -o "$1" = "-h2" ]; then
+    $nano_bin --help;
+    exit 0;
+fi
+
+# terminal
 if [ "$1" == "--term" ]; then
-   term=$2
-   shift 2
+   term=$2;
+   shift 2;
 else
-   term=pcansi
+   [ -n "$TERM"] && term=$TERM || term=pcansi;
 fi
+
+# *************************************
+#NANO_VERSION=3.2; # old version
+NANO_VERSION=5.5; # current version
+if [ "$NANO_VERSION" = "3.2" ]; then
+   DEFAULT_ARGS="-A -l -u -y -w -c -S";
+else
+   DEFAULT_ARGS="-A -l -u -y -w -c";
+fi
+# *************************************
 
 clear;
 
-# *************************************
-NANO_DIR=/FFiles/nano
-nano_bin=$NANO_DIR/bin/nano.bin
-# *************************************
-export TERMINFO=$NANO_DIR/terminfo 
-export TERM=$term 
+OLD_TERM=$TERM;
+export TERMINFO=$NANO_DIR/terminfo;
+export TERM=$term;
 
-if [ -e $nano_bin ] && [ ! -x $nano_bin ]; then
-   chmod 0755 $nano_bin
-fi
+$nano_bin $DEFAULT_ARGS "$@";
 
-$nano_bin "$@";
+export TERM=$OLD_TERM;
 #
