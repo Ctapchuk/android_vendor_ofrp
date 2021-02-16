@@ -984,8 +984,8 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
      chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/aapt
   fi
 
-  # disable the app manager?
-  if [ "$FOX_DISABLE_APP_MANAGER" = "1" ]; then
+  # enable the app manager?
+  if [ "$FOX_ENABLE_APP_MANAGER" != "1" ]; then
      echo -e "${GREEN}-- Disabling the App Manager in advanced.xml ...${NC}"
      Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
      #sed -i "/appmgr_title/I,+3 d" $Led_xml_File

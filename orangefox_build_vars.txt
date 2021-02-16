@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 13 February 2021
+# Date: 16 February 2021
 #
 # -----------------------------------
 #
@@ -487,9 +487,9 @@
 - this is for developer testing only - you must disable this before release
 - default = 0
 #
-"FOX_DISABLE_APP_MANAGER" [NEW]
-- set this to 1 to disable the OrangeFox App Manager 
-- sometimes there are issues with the App Manager - in such cases, use this variable to disable it
+"FOX_ENABLE_APP_MANAGER" [NEW]
+- set this to 1 to enable the OrangeFox App Manager (now disabled by default)
+- sometimes there are issues with the App Manager, especially with Android 11 - if you don't care, then use this variable to enable it
 - default = 0
 #
 "FOX_USE_GREP_BINARY" [NEW]
