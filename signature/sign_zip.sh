@@ -4,6 +4,10 @@
 # Note: this script requires bash, and java-8
 # --------------------------------------------------------------------
 
+if [ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ]; then
+   set -o xtrace
+fi
+
 abort() {
   echo "$@"
   exit 1
@@ -19,7 +23,12 @@ Syntax() {
 }
 
 # get java-8
-JAVA="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+if [ -n "$JAVA8" ]; then
+   JAVA="$JAVA8"
+else
+   JAVA="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+fi
+
 if [ ! -x "$JAVA" ]; then
    echo "This process requires java-8, but I can't find $JAVA. You will probably get errors!"
    JAVA=$(which java)

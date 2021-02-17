@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 16 February 2021
+# 17 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -31,6 +31,7 @@
 if [ -z "$FOX_BUILD_DEBUG_MESSAGES" ]; then
    export FOX_BUILD_DEBUG_MESSAGES="0"
 elif [ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ]; then
+   export FOX_BUILD_DEBUG_MESSAGES="1"
    set -o xtrace
 fi
 
@@ -534,9 +535,12 @@ local TDT=$(date "+%d %B %Y")
   local JAVA8="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
   [ -n "$FOX_JAVA8_PATH" ] && JAVA8="$FOX_JAVA8_PATH"
   if [ ! -x "$JAVA8" ]; then
-     JAVA8=""
+     JAVA8="/usr/lib/jvm/java-8-openjdk/jre/bin/java"
+     [ ! -x "$JAVA8" ] && JAVA8=""
   fi
 
+  export JAVA8
+  
   if [ -z "$JAVA8" ]; then
      echo -e "${WHITEONRED}-- java-8 cannot be found! The zip file will NOT be signed! ${NC}"
      echo -e "${WHITEONRED}-- This build CANNOT be released officially! ${NC}"
