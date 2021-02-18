@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 16 February 2021
+# Date: 18 February 2021
 #
 # -----------------------------------
 #
@@ -523,6 +523,10 @@
 - set this to 1 to provide a workaround for bug in Samsung exynos dynamic partition devices, which causes a bootloop on encountering some binaries
 - when enabled, certain binaries (eg, bash, aapt, etc) are removed from (or not added to) the build 
 - use this only if the recovery doesn't boot on your Samsung dynamic partition device
+- default = 0
+#
+"FOX_EXCLUDE_NANO_EDITOR" [NEW] [FOX_10.0 builds only]
+- set this to 1 to exclude every specie of nano from the build
 - default = 0
 #
 # -----------------------------------

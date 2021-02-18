@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 17 February 2021
+# 18 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -269,6 +269,11 @@ if [ "$FOX_DYNAMIC_SAMSUNG_FIX" = "1" ]; then
    unset FOX_USE_NANO_EDITOR
    unset FOX_USE_UNZIP_BINARY
    unset FOX_USE_GREP_BINARY
+fi
+
+# disable all nano editor stuff
+if [ "$FOX_EXCLUDE_NANO_EDITOR" = "1" ]; then
+   unset FOX_USE_NANO_EDITOR
 fi
 
 # ****************************************************
@@ -906,6 +911,24 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
       mkdir -p $FOX_RAMDISK/FFiles/nano/
       $CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
       $CP -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/$RAMDISK_BIN/
+  else
+      if [ -d $FOX_RAMDISK/FFiles/nano/ ]; then
+         echo -e "${GREEN}-- Removing the dangling \"$FOX_RAMDISK/FFiles/nano/\" ...${NC}"
+         rm -rf $FOX_RAMDISK/FFiles/nano/
+      fi
+  fi
+
+  # exclude all species of nano?
+  if [ "$FOX_EXCLUDE_NANO_EDITOR" = "1" ]; then
+      echo -e "${RED}-- Removing the nano files from the build ...${NC}"
+      [ -d $FOX_RAMDISK/FFiles/nano/ ] && rm -rf $FOX_RAMDISK/FFiles/nano/
+      rm -f $FOX_RAMDISK/$RAMDISK_BIN/nano
+      rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/nano
+      rm -f $FOX_RAMDISK/$RAMDISK_ETC/init/nano*
+      rm -rf $FOX_RAMDISK/$RAMDISK_ETC/nano
+      if [ -d $FOX_RAMDISK/$RAMDISK_ETC/terminfo ]; then
+         echo -e "${WHITEONRED}-- Do a clean build, or remove \"$FOX_RAMDISK/$RAMDISK_ETC/terminfo\" ...${NC}"
+      fi
   fi
 
   # Include standalone "tar" binary ?
