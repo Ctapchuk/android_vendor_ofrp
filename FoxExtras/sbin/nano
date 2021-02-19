@@ -1,0 +1,17 @@
+#!/sbin/sh
+#
+# stub to run /system/bin/nano with some useful arguments
+# DarthJabba9, 202010219
+#
+N=/system/bin/nano;
+ARGS="-A -l -u -y -w";
+
+#  are we calling from an adb shell?
+if [ -n "$ANDROID_SOCKET_adbd" ]; then
+   ARGS=$ARGS" -c";
+#  or from a terminal inside the recovery?
+elif [ -n "$ANDROID_SOCKET_recovery" ]; then
+   export TERM=pcansi;
+fi
+[ -x $N ] && $N $ARGS "$@";
+
