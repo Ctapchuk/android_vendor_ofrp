@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 18 February 2021
+# Date: 19 February 2021
 #
 # -----------------------------------
 #
@@ -33,8 +33,6 @@
 "FOX_LOCAL_CALLBACK_SCRIPT"
    - point to a custom "callback" script that will be executed just before creating the final recovery image
    - eg, a script to delete some files, or add some files to the ramdisk
-#
-"BUILD_2GB_VERSION" [As of 20210210, this is now OBSOLETE]
 #
 "FOX_REPLACE_BUSYBOX_PS"
    - set to 1 to replace the (stripped down) busybox version of the "ps" command
@@ -81,14 +79,6 @@
    - this will add about 420kb to the size of the recovery image
    - default = 0
 #
-"FOX_USE_ZIP_BINARY" [As of 20200723, this is now OBSOLETE]
-#
-"FOX_USE_NANO_EDITOR"
-   - set this to 1 if you want the nano editor to be added
-   - this must be set in a shell script, or at the command line, before building
-   - this will add about 300kb to the size of the recovery image
-   - default = 0
-#
 "FOX_USE_BASH_SHELL"
    - set this to 1 if you the bash shell to replace the busybox "sh"
    - default = 0
@@ -122,12 +112,6 @@
    - what the user has chosen) - this is for the purpose of stopping MIUI from
    - overwriting OrangeFox with its own stock recovery
    - "OF_USE_MAGISKBOOT" must also be set to "1" if you want to use this
-   - default = 0
-#
-"OF_USE_NEW_MAGISKBOOT" [ **OBSOLETE** - only v20.x magiskboot is now used]
-   - set to 1 to use the new (v20.x) magiskboot binary instead of the v1.93 binary
-   - do NOT set this, unless you are ABSOLUTELY sure that your device will NEVER
-   - have an Android version that is less than Oreo (ie, no less than SDK 26)
    - default = 0
 #
 "OF_DISABLE_UPDATEZIP"
@@ -347,12 +331,6 @@
  - This binary is 1.7mb in size, and using this variable is useful for reducing the size of the recovery
  - default = 0
 #
-"FOX_DRASTIC_SIZE_REDUCTION" [NEW] [EXPERIMENTAL!]
- - Set this to 1 for some really drastic attempts to reduce the size of the recovery image
- - This will remove source large files (including some fonts) from the build; don't worry if you see some
- - resource error messages in the recovery's debug screen
- - default = 0
-#
 "OF_CHECK_OVERWRITE_ATTEMPTS" [NEW]
  - Set this to 1 to check for attempts by a ROM's installer to overwrite OrangeFox with another recovery
  - If this is enabled, then OrangeFox will give users a 40-second countdown, to enable
@@ -379,10 +357,23 @@
 - This adds the relevant directories to the list of backup exclusions
 - default = 0 (but you really *should* enable it on devices using FBE encryption)
 #
-"OF_USE_SYSTEM_FINGERPRINT" [NEW] [EXPERIMENTAL!] [This is obsolete in fox_10.0]
-- Set this to 1 to use the system (installed ROM's) fingerprint as the recovery's fingerprint
-- Use with care, since it may cause issues with some ROM installs/OTA updates
-- default = 0
+"OF_USE_SYSTEM_FINGERPRINT" [OBSOLETE!] 
+- This is now obsolete in fox_10.0
+#
+"OF_USE_TWRP_SAR_DETECT" [OBSOLETE!]
+- This is now obsolete in fox_10.0
+#
+"OF_DISABLE_KEYMASTER2" [OBSOLETE!]
+- This is now obsolete in fox_10.0
+#
+"FOX_DRASTIC_SIZE_REDUCTION" [OBSOLETE!]
+ - This is now obsolete in fox_10.0
+#
+"FOX_USE_ZIP_BINARY" [ OBSOLETE!]
+- This is now obsolete in fox_10.0
+#
+"BUILD_2GB_VERSION" [OBSOLETE!]
+- This is now obsolete in fox_10.0
 #
 "OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [NEW]
 - Set this to 1 to create a backup of the boot.img from the ROM's zip during the OTA_BAK process when installing a ROM
@@ -400,10 +391,6 @@
 #
 "OF_DISABLE_MIUI_OTA_BY_DEFAULT" [NEW]
 - Set this to 1 to disable the OTA settings by default, meaning that users have to enable OTA manually
-- default = 0
-#
-"OF_USE_TWRP_SAR_DETECT" [NEW]
-- Set this to 1 to enable the new TWRP auto-detection of system-as-root in the installed ROM
 - default = 0
 #
 "OF_QUICK_BACKUP_LIST" [NEW]
@@ -440,11 +427,6 @@
 -   2) creating an Odin flashable tar file of the recovery image
 - this setting is only effective is FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER is set to 1
 - all decryption/recovery passwords are successfully entered)
-- default = 0
-#
-"OF_DISABLE_KEYMASTER2" [NEW]
-- set this to 1 to disable the keymaster2 support code
-- only do this if you are getting compiler errors with keymaster2 (eg, with legacy build systems)
 - default = 0
 #
 "OF_LEGACY_SHAR512" [NEW]
@@ -521,12 +503,23 @@
 #
 "FOX_DYNAMIC_SAMSUNG_FIX" [NEW] [FOX_10.0 builds only]
 - set this to 1 to provide a workaround for bug in Samsung exynos dynamic partition devices, which causes a bootloop on encountering some binaries
-- when enabled, certain binaries (eg, bash, aapt, etc) are removed from (or not added to) the build 
-- use this only if the recovery doesn't boot on your Samsung dynamic partition device
+- when enabled, certain binaries (eg, bash, nano, aapt, etc) are removed from (or not added to) the build 
+- use this only if the recovery doesn't boot on your Samsung dynamic partition exynos device
 - default = 0
+#
+"FOX_USE_NANO_EDITOR"
+   - set this to 1 if you want the OrangeFox prebuilt nano editor to be added
+   - this must be set in a shell script, or at the command line, before building
+   - this will add about 400kb to the size of the recovery image
+   - if this is not set, and "FOX_EXCLUDE_NANO_EDITOR" is not set, then there will be an attempt to compile 
+   - nano from source; if this attempt fails, then you might need to clone the nano sources from upstream
+   - default = 0
 #
 "FOX_EXCLUDE_NANO_EDITOR" [NEW] [FOX_10.0 builds only]
 - set this to 1 to exclude every specie of nano from the build
 - default = 0
 #
+"FOX_BUILD_BASH" [NEW] [FOX_10.0 builds only]
+- set this to 1 to compile bash from source during the build process; this will replace the standard OrangeFox bash binary
+- this might require cloning the bash sources from upstream (or updating them if the current version generates build errors)
 # -----------------------------------

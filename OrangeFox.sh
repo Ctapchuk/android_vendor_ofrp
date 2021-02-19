@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 18 February 2021
+# 19 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -77,18 +77,6 @@ filesize() {
   [ ! -e "$1" -a ! -h "$1" ] && { echo "0"; return; }
   stat -c %s "$1"
 }
-
-# remove all extras if FOX_DRASTIC_SIZE_REDUCTION is defined
-if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
-   export FOX_REMOVE_AAPT=1
-   export FOX_REMOVE_BASH=1
-   export FOX_REMOVE_ZIP_BINARY=1
-   export FOX_USE_BASH_SHELL=0
-   export FOX_ASH_IS_BASH=0
-   export FOX_USE_ZIP_BINARY=0
-   export FOX_USE_NANO_EDITOR=0
-   export FOX_USE_TAR_BINARY=0
-fi
 
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
 if [ -n "$4" ]; then
@@ -257,16 +245,16 @@ fi
 # workaround for some Samsung bugs
 if [ "$FOX_DYNAMIC_SAMSUNG_FIX" = "1" ]; then
    if [ -z "$FOX_VENDOR_CMD" -o "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
-      echo -e "${WHITEONGREEN} - Dealing with bugged Samsung dynamic stuff - removing stuff... ${NC}"
+      echo -e "${WHITEONGREEN} - Dealing with bugged Samsung exynos dynamic stuff - removing stuff... ${NC}"
       echo -e "${WHITEONGREEN} - Make sure that you are doing a clean build. ${NC}"
    fi
    export FOX_REMOVE_BASH=1
    export FOX_REMOVE_AAPT=1
    unset FOX_USE_BASH_SHELL
    unset FOX_ASH_IS_BASH
+   unset FOX_USE_NANO_EDITOR
    unset FOX_USE_XZ_UTILS
    unset FOX_USE_TAR_BINARY
-   unset FOX_USE_NANO_EDITOR
    unset FOX_USE_UNZIP_BINARY
    unset FOX_USE_GREP_BINARY
 fi
@@ -587,87 +575,6 @@ uses_toolbox() {
  [ "$T" = "toybox" ] && echo "1" || echo "0"
 }
 
-# try to trim the ramdisk for really small recovery partitions
-# can reduce the recovery image size by up to 3MB
-reduce_ramdisk_size() {
-local big_xml=$FOX_RAMDISK/twres/pages/customization.xml
-local small_xml=$FOX_RAMDISK/twres/pages/smaller_size.txt
-local image_xml=$FOX_RAMDISK/twres/resources/images.xml
-local C=""
-local D=""
-local F=""
-
-      echo -e "${GREEN}-- Pruning the ramdisk to reduce the size ... ${NC}"
-      local FFil="$FOX_RAMDISK/FFiles"
-      rm -rf $FFil/nano
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/aapt
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/zip
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/nano
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/gnutar
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
-      rm -f $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
-      [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
-      rm -rf $FFil/Tools
-      if [ "$OF_VANILLA_BUILD" = "1" ]; then
-         rm -rf $FFil/OF_avb20
-         rm -rf $FFil/OF_verity_crypt
-      fi
-
-      # --- some sanity checks - try to restore some originals
-      if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
-          rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
-          if [ -f $WORKING_TMP/sh ] || [ -h $WORKING_TMP/sh -a "$(readlink $WORKING_TMP/sh)" != "bash" ]; then
-             $CP -p $WORKING_TMP/sh $FOX_RAMDISK/$NEW_RAMDISK_BIN/
-          else
-             F=$(readlink $FOX_RAMDISK/$NEW_RAMDISK_BIN/umount)
-             [ -z "$F" ] && F=$(readlink $FOX_RAMDISK/$NEW_RAMDISK_BIN/uname)
-             ln -s $F $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
-          fi
-      fi
-
-      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
-          rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
-          if [ -h $WORKING_TMP/ash -a "$(readlink $WORKING_TMP/ash)" != "bash" ]; then
-             $CP -p $WORKING_TMP/ash $FOX_RAMDISK/$NEW_RAMDISK_BIN/
-          fi
-      fi
-
-      if [ "$FOX_USE_UNZIP_BINARY" = "1" ]; then
-         [ -e $WORKING_TMP/unzip -o -h $WORKING_TMP/unzip ] && {
-            rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
-            $CP -p $WORKING_TMP/unzip $FOX_RAMDISK/$NEW_RAMDISK_BIN/
-         }
-      fi
-
-      # 2GB version bail out here
-      [ "$1" = "lite" ] && return
-
-      # ----- proceeding to remove some fonts can save about 460kb in size -----
-      # remove some fonts? (only do so if we have a working "small" xml to cover the situation)
-      echo -e "${GREEN}-- Removing some fonts ... ${NC}"
-      declare -a FontFiles=(
-         "Amatic" "Chococooky" "Exo2-Medium" "Exo2-Regular"
-         "Firacode-Medium" "Firacode-Regular" "MILanPro-Medium"
-         "MILanPro-Regular")
-
-      # delete the font (*.ttf) tiles
-      for i in "${FontFiles[@]}"
-      do
-     	   C=$i".ttf"
-     	   F=$FOX_RAMDISK/twres/fonts/$C
-     	   rm -f $F
-     	   # remove references to them in images.xml
-     	   sed -i "/$C/d" $image_xml
-      done
-
-      # delete the matching line plus the next 2 lines
-      for i in {5..9}; do
-    	   F="font"$i
-     	   sed -i "/$F/I,+2 d" $big_xml
-      done
-
-}
-
 # ****************************************************
 # *** now the real work starts!
 # ****************************************************
@@ -859,50 +766,51 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
 
   # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
-     export FOX_USE_BASH_SHELL="0"
-     # remove bash if it is there from a previous build
+     [ "$FOX_BUILD_BASH" != "1" ] && export FOX_USE_BASH_SHELL="0"
+
+     # remove the /sbin/ bash if it is there from a previous build
      rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
      rm -f $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
   else
      echo -e "${GREEN}-- Copying bash ...${NC}"
-     $CP -p $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
      $CP -p $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
-     chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/bash
+     
+     if [ "$FOX_BUILD_BASH" = "1" ]; then
+        rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
+     else
+        $CP -p $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
+        chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/bash
+     fi
+     
      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
         export FOX_USE_BASH_SHELL="1"
      fi
   fi
 
   # replace busybox "sh" with bash ?
-  if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
-        if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
-           echo -e "${GREEN}-- Backing up the original \"sh\" ...${NC}"
-      	   $CP -pfP $FOX_RAMDISK/$RAMDISK_BIN/sh $WORKING_TMP/
-        fi
+  if [ "$FOX_BUILD_BASH" = "1" ]; then
+     BASH_BIN=$NEW_RAMDISK_BIN/bash
+  else
+     BASH_BIN=$RAMDISK_BIN/bash
+  fi
 
+  if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
         echo -e "${GREEN}-- Replacing the busybox \"sh\" applet with bash ...${NC}"
   	rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
-  	ln -s $RAMDISK_BIN/bash $FOX_RAMDISK/$RAMDISK_BIN/sh
+  	ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/sh
   	if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then
   	   rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
-  	   ln -s $RAMDISK_BIN/bash $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
+  	   ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
   	fi
   fi
 
 # do the same for "ash"?
   if [ "$FOX_ASH_IS_BASH" = "1" ]; then
-     if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
-        if [ -f $FOX_RAMDISK/$RAMDISK_BIN/ash -o -h $FOX_RAMDISK/$RAMDISK_BIN/ash ]; then
-           echo -e "${GREEN}-- Backing up the original \"ash\" ...${NC}"
-           $CP -pfP $FOX_RAMDISK/$RAMDISK_BIN/ash $WORKING_TMP/
-        fi
-     fi
-
      echo -e "${GREEN}-- Replacing the \"ash\" applet with bash ...${NC}"
      rm -f $FOX_RAMDISK/$RAMDISK_BIN/ash
-     ln -s $RAMDISK_BIN/bash $FOX_RAMDISK/$RAMDISK_BIN/ash
+     ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/ash
      rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
-     ln -s $RAMDISK_BIN/bash $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
+     ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
   fi
 
   # Include nano editor ?
@@ -942,11 +850,6 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
 
   # Include "unzip" binary ?
   if [ "$FOX_USE_UNZIP_BINARY" = "1" -a -x $FOX_VENDOR_PATH/Files/unzip ]; then
-      if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
-         echo -e "${GREEN}-- Backing up the original unzip ...${NC}"
-      	 $CP -p $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip $WORKING_TMP/
-      fi
-
       echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"unzip\" binary ...${NC}"
       rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
       $CP -p $FOX_VENDOR_PATH/Files/unzip $FOX_RAMDISK/$NEW_RAMDISK_BIN/
@@ -1049,13 +952,6 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
-  fi
-
-  # reduce ramdisk size drastically?
-  if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
-     echo -e "${WHITEONRED}-- Going to do some drastic size reductions! ${NC}"
-     echo -e "${WHITEONRED}-- Don't worry if you see some resource errors in the recovery's debug screen. ${NC}"
-     reduce_ramdisk_size;
   fi
 
   # save the build date
