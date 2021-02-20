@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 19 February 2021
+# Date: 20 February 2021
 #
 # -----------------------------------
 #
@@ -382,6 +382,7 @@
 "OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" [NEW]
 - Set this to 1 to enable support for block-based incremental OTA on custom ROMs that have this feature
 - If enabled, flashing a custom ROM will run the same OTA_BAK/OTA_RES processes as with MIUI
+- This setting is incompatible with OF_DISABLE_MIUI_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/OF_VANILLA_BUILD
 - The default position is to support block-based incremental OTA in MIUI ROMs only
 - default = 0
 #

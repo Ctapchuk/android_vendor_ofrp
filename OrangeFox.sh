@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 19 February 2021
+# 20 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -77,6 +77,15 @@ filesize() {
   [ ! -e "$1" -a ! -h "$1" ] && { echo "0"; return; }
   stat -c %s "$1"
 }
+
+# check out some incompatible settings
+if [ "$OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" = "1" ]; then
+   if [ "$OF_DISABLE_MIUI_SPECIFIC_FEATURES" = "1" -o "$OF_TWRP_COMPATIBILITY_MODE" = "1" -o "$OF_VANILLA_BUILD" = "1" ]; then
+      echo -e "${WHITEONRED}-- ERROR! \"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES\" is incompatible with \"OF_DISABLE_MIUI_SPECIFIC_FEATURES\" or \"OF_TWRP_COMPATIBILITY_MODE\"${NC}"
+      echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
+      abort 98
+   fi
+fi
 
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
 if [ -n "$4" ]; then
