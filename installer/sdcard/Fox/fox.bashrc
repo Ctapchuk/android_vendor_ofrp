@@ -11,6 +11,9 @@ export SHELL=/sbin/bash
 export HISTFILE=$HOME/.bash_history
 export PS1='\s-\v \w > '
 
+# if running inside the OrangeFox terminal
+[ -n "$ANDROID_SOCKET_recovery" ] && export TERM=pcansi
+
 # aliases
 alias cls="clear"
 alias seek='find . -name "$@"'
