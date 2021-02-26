@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 20 February 2021
+# 26 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -775,7 +775,11 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
 
   # Include bash shell ?
   if [ "$FOX_REMOVE_BASH" = "1" ]; then
-     [ "$FOX_BUILD_BASH" != "1" ] && export FOX_USE_BASH_SHELL="0"
+
+     if [ "$FOX_BUILD_BASH" != "1" ]; then
+         export FOX_USE_BASH_SHELL="0"
+         rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/bash
+     fi
 
      # remove the /sbin/ bash if it is there from a previous build
      rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
@@ -784,11 +788,11 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
      echo -e "${GREEN}-- Copying bash ...${NC}"
      $CP -p $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
      
-     if [ "$FOX_BUILD_BASH" = "1" ]; then
+     if [ "$FOX_BUILD_BASH" != "1" ]; then
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
-     else
-        $CP -p $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
+        $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
         chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/bash
+        rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/bash
      fi
      
      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
@@ -807,10 +811,22 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
         echo -e "${GREEN}-- Replacing the busybox \"sh\" applet with bash ...${NC}"
   	rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
   	ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/sh
-  	if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then
-  	   rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
-  	   ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
-  	fi
+  	#if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then
+  	   #rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
+  	   #ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
+  	#fi
+  else
+        echo -e "${GREEN}-- Cleaning up any bash stragglers...${NC}"
+	# cleanup any stragglers
+	if [ -h $FOX_RAMDISK/$RAMDISK_BIN/sh ]; then
+	    T=$(readlink $FOX_RAMDISK/$RAMDISK_BIN/sh)
+	    [ "$(basename $T)" = "bash" ] && rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
+	fi
+
+	# if there is no symlink for /sbin/sh create one
+	if [ ! -e $FOX_RAMDISK/$RAMDISK_BIN/sh -a ! -h $FOX_RAMDISK/$RAMDISK_BIN/sh ]; then
+	   ln -s $NEW_RAMDISK_BIN/sh $FOX_RAMDISK/$RAMDISK_BIN/sh
+	fi
   fi
 
 # do the same for "ash"?
@@ -820,6 +836,19 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
      ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/ash
      rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
      ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
+  else
+        echo -e "${GREEN}-- Cleaning up any ash stragglers...${NC}"
+	# cleanup any stragglers
+	if [ -h $FOX_RAMDISK/$RAMDISK_BIN/ash ]; then
+	    T=$(readlink $FOX_RAMDISK/$RAMDISK_BIN/ash)
+	    [ "$(basename $T)" = "bash" ] && rm -f $FOX_RAMDISK/$RAMDISK_BIN/ash
+	fi
+  fi
+
+  # create symlink for /sbin/bash of missing?
+  if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/bash" -a ! -e "$FOX_RAMDISK/$RAMDISK_BIN/bash" ]; then
+     echo -e "${GREEN}-- Creating a bash symbolic link: /sbin/bash -> /system/bin/bash ...${NC}"
+     ln -s $NEW_RAMDISK_BIN/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
   fi
 
   # Include nano editor ?
