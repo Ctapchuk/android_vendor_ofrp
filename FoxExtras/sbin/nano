@@ -1,9 +1,18 @@
 #!/sbin/sh
 #
 # stub to run /system/bin/nano with some useful arguments
-# DarthJabba9, 202010219
+# DarthJabba9, 20210226
 #
+
+# the nano binary
 N=/system/bin/nano;
+
+if [ ! -x $N ]; then
+   echo "I cannot find \"$N\". Quitting.";
+   exit 2;
+fi
+
+# default arguments
 ARGS="-A -l -u -y -w";
 
 #  are we calling from an adb shell?
