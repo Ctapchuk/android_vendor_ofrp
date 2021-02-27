@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 26 February 2021
+# 27 February 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -788,7 +788,13 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
      echo -e "${GREEN}-- Copying bash ...${NC}"
      $CP -p $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
      
-     if [ "$FOX_BUILD_BASH" != "1" ]; then
+     if [ "$FOX_BUILD_BASH" = "1" ]; then
+        if [ -z "$(cat $FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc | grep OrangeFox)" ]; then
+           echo " " >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
+           echo "# OrangeFox" >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
+           echo '[ -f /sdcard/Fox/fox.bashrc ] && source /sdcard/Fox/fox.bashrc' >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
+        fi
+     else
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
         $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
         chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/bash
@@ -808,7 +814,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   fi
 
   if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
-        echo -e "${GREEN}-- Replacing the busybox \"sh\" applet with bash ...${NC}"
+        echo -e "${GREEN}-- Replacing the \"sh\" applet with bash ...${NC}"
   	rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
   	ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/sh
   	#if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then
@@ -848,7 +854,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   # create symlink for /sbin/bash of missing?
   if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/bash" -a ! -e "$FOX_RAMDISK/$RAMDISK_BIN/bash" ]; then
      echo -e "${GREEN}-- Creating a bash symbolic link: /sbin/bash -> /system/bin/bash ...${NC}"
-     ln -s $NEW_RAMDISK_BIN/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
+     ln -sf $NEW_RAMDISK_BIN/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
   fi
 
   # Include nano editor ?
