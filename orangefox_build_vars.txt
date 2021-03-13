@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 20 February 2021
+# Date: 13 March 2021
 #
 # -----------------------------------
 #
@@ -140,39 +140,39 @@
    - the newest Xiaomi devices seem to require this
 #
 "OF_KEEP_DM_VERITY"; 
-   - set to 1 to turn OrangeFox dm-verity settings *OFF* on every bootup
+   - set to 1 to *UNTICK* the OrangeFox "Disable DM-Verity" box on every bootup
    - default = 0
 #
 "OF_KEEP_FORCED_ENCRYPTION"; 
-   - set to 1 to turn OrangeFox forced-encryption settings *OFF* on every bootup
+   - set to 1 to *UNTICK* the OrangeFox "Disable Forced Encryption" box on every bootup
    - default = 0 (in lavender, default=1)
 #
 "OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; 
-   - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *OFF* on every bootup
+   - set to 1 to *UNTICK* both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
    - default = 0
 #
 "OF_FORCE_DISABLE_DM_VERITY"; [NEW]
-   - set to 1 to turn OrangeFox dm-verity settings *ON* on every bootup
+   - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box on every bootup
    - default = 0
 #
 "OF_FORCE_DISABLE_FORCED_ENCRYPTION"; [NEW]
-   - set to 1 to turn OrangeFox forced-encryption settings *ON* on every bootup
+   - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box on every bootup
    - default = 0
 #
 "OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
-   - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings *ON* on every bootup
+   - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
    - default = 0
 #
 "OF_DISABLE_DM_VERITY"; [NEW]
-   - set to 1 to turn OrangeFox dm-verity settings on by default (on fresh installation)
+   - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box by default (on fresh installation)
    - default = 0 (should be set to "1" for older Xiaomi devices like kenzo, libra, mido)
 #
 "OF_DISABLE_FORCED_ENCRYPTION"; [NEW]
-   - set to 1 to turn OrangeFox forced-encryption settings on by default (on fresh installation)
+   - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box by default (on fresh installation)
    - default = 0
 #
 "OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
-   - set to 1 to turn OrangeFox dm-verity AND forced-encryption settings on by default (on fresh installation)
+   - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes by default (on fresh installation)
    - default = 0
 #
 "OF_CLASSIC_LEDS_FUNCTION"
@@ -523,4 +523,5 @@
 "FOX_BUILD_BASH" [NEW] [FOX_10.0 builds only]
 - set this to 1 to compile bash from source during the build process; this will replace the standard OrangeFox bash binary
 - this might require cloning the bash sources from upstream (or updating them if the current version generates build errors)
+#
 # -----------------------------------
