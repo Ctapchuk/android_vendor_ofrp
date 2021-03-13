@@ -23,14 +23,15 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20210213
+# * Date:   20210313
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20210213"
+SCRIPT_LASTMOD_DATE="20210313"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
+LOG2="/sdcard/foxstart.log"
 DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
 SYS_ROOT="0"	  # do we have system_root?
@@ -70,6 +71,20 @@ if [ "$VERBOSE_DEBUG" = "1" ]; then
    set -o xtrace
 fi
 
+# extra logs to /sdcard/foxstart.log
+extralog() {
+ [ "$VERBOSE_DEBUG" != "1" ] && return
+ local D=$(date)
+ [ ! -f $LOG2 ] && {
+    echo "---- extra logs for foxstart.sh ----" > $LOG2
+ }
+ echo "[$D]:= $@" >> $LOG2
+
+ # copy also the main logs
+ cp $LOG /sdcard/
+ [ ! -f /sdcard/dmesg.log ] && cp -a /tmp/dmesg.log /sdcard/
+}
+
 # partition mountpoints
 SYSTEM_BLOCK=/dev/block/bootdevice/by-name/system
 VENDOR_BLOCK=/dev/block/bootdevice/by-name/vendor
@@ -101,6 +116,7 @@ DebugDirList() {
 DebugMsg() {
    [ ! "$DEBUG" = "1" ] && return
    echo "DEBUG: OrangeFox: $@" >> $LOG
+   extralog "$@"
 }
 
 # is the directory mounted?
@@ -627,31 +643,43 @@ fix_dynamic() {
 }
 
 ### main() ###
+extralog "foxstart: about to start"
+
 get_setprop
+extralog "foxstart: completed get_setprop()"
 
 # have we executed once before/are we running now?
 start_script
+extralog "foxstart: completed start_script()"
 
 # if not, continue
 backup_restore_FS
+extralog "foxstart: completed backup_restore_FS()"
 
 # get kernel logs right now
 dmesg &> /tmp/dmesg.log
+extralog "foxstart: completed dmesg()"
 
 #
 Get_Details
+extralog "foxstart: completed Get_Details()"
 
 Treble_Action
+extralog "foxstart: completed Treble_Action()"
 
 MIUI_Action
+extralog "foxstart: completed MIUI_Action()"
 
 Get_Display_Panel
+extralog "foxstart: completed Get_Display_Panel()"
 
 # post-init
 post_init
+extralog "foxstart: completed post_init()"
 
 # Leds
 flashlight_Leds_config
+extralog "foxstart: completed flashlight_Leds_config()"
 
 # dynamic
 # fix_dynamic
