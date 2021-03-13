@@ -524,4 +524,14 @@
 - set this to 1 to compile bash from source during the build process; this will replace the standard OrangeFox bash binary
 - this might require cloning the bash sources from upstream (or updating them if the current version generates build errors)
 #
+"FOX_USE_SPECIFIC_MAGISK_ZIP" [NEW]
+- use this to point to an alternative Magisk addon installer zip, if the default one does not work well for your device (eg, if it causes bootloops)
+-
+- eg, export FOX_USE_SPECIFIC_MAGISK_ZIP="~/Magisk/Magisk-21.4.zip"
+-
+-     this will replace (at compile time) the default magisk addon with the one that you specified
+- it is the maintainers' responsibility to ensure that the replacement magisk zip is not corrupt, and that it works well with their device
+- do not replace the default Magisk zip installer without first having tested the one you want to use on a full
+- range of stock and custom ROMs across all Android versions available for your device
+#
 # -----------------------------------

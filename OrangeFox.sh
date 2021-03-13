@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 27 February 2021
+# 13 March 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -363,6 +363,7 @@ local F=$1
    sed -i '/FOX_VENDOR_CMD/d' $F
    sed -i '/FOX_VENDOR/d' $F
    sed -i '/OF_MAINTAINER/d' $F
+   sed -i '/FOX_USE_SPECIFIC_MAGISK_ZIP/d' $F
    sed -i "s/declare -x //g" $F
 }
 
@@ -406,12 +407,6 @@ local TDT=$(date "+%d %B %Y")
 
   # copy FoxFiles/ to sdcard/Fox/
   $CP -a $FILES_DIR/ sdcard/Fox/
-
-  if [ "$FOX_10" = "true" ]; then
-     echo -e "${WHITEONBLUE} - FOX_10 - copying new-magisk: new_magisk.zip to $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip ... ${NC}"
-     $CP -f $FOX_VENDOR_PATH/Files/new_magisk.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
-     $CP -f $FOX_VENDOR_PATH/Files/new_unrootmagisk.zip $OF_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
-  fi
 
   # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
@@ -488,6 +483,16 @@ local TDT=$(date "+%d %B %Y")
      echo -e "${GREEN}-- Deleting the magisk addon zips ...${NC}"
      rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
      rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
+  fi
+
+  # are we using a specific magisk zip?
+  if [ -n "$FOX_USE_SPECIFIC_MAGISK_ZIP" ]; then
+     if [ -e $FOX_USE_SPECIFIC_MAGISK_ZIP ]; then
+        echo -e "${WHITEONGREEN}-- Using magisk zip: \"$FOX_USE_SPECIFIC_MAGISK_ZIP\" ${NC}"
+        $CP -pf $FOX_USE_SPECIFIC_MAGISK_ZIP $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
+     else
+        echo -e "${WHITEONRED}-- I cannot find \"$FOX_USE_SPECIFIC_MAGISK_ZIP\"! Using the default.${NC}"
+     fi
   fi
 
   # --- OF_initd ---
@@ -977,14 +982,14 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
         $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_BIN/busybox
         chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/busybox
      fi
-     tmp=$FOX_VENDOR_PATH/Files/new_magisk.zip
-  else
-     tmp=$FOX_VENDOR_PATH/FoxFiles/Magisk.zip
   fi
   
   # Get Magisk version
-  MAGISK_VER=$(unzip -c $tmp common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
-  #MAGISK_VER=$(unzip -c $FOX_VENDOR_PATH/FoxFiles/Magisk.zip common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
+  tmp1=$FOX_VENDOR_PATH/FoxFiles/Magisk.zip
+  if [ -n "$FOX_USE_SPECIFIC_MAGISK_ZIP" -a -e "$FOX_USE_SPECIFIC_MAGISK_ZIP" ]; then
+     tmp1=$FOX_USE_SPECIFIC_MAGISK_ZIP
+  fi
+  MAGISK_VER=$(unzip -c $tmp1 common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
   echo -e "${GREEN}-- Detected Magisk version: ${MAGISK_VER}${NC}"
   sed -i -E "s+\"magisk_ver\" value=\"(.*)\"+\"magisk_ver\" value=\"$MAGISK_VER\"+" $FOX_RAMDISK/twres/ui.xml
 
