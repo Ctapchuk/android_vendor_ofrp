@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 13 March 2021
+# Date: 14 March 2021
 #
 # -----------------------------------
 #
@@ -527,11 +527,12 @@
 "FOX_USE_SPECIFIC_MAGISK_ZIP" [NEW]
 - use this to point to an alternative Magisk addon installer zip, if the default one does not work well for your device (eg, if it causes bootloops)
 -
-- eg, export FOX_USE_SPECIFIC_MAGISK_ZIP="~/Magisk/Magisk-21.4.zip"
+- eg, "export FOX_USE_SPECIFIC_MAGISK_ZIP=~/Magisk/Magisk-21.4.zip"
 -
 -     this will replace (at compile time) the default magisk addon with the one that you specified
 - it is the maintainers' responsibility to ensure that the replacement magisk zip is not corrupt, and that it works well with their device
 - do not replace the default Magisk zip installer without first having tested the one you want to use on a full
 - range of stock and custom ROMs across all Android versions available for your device
+- default = the version that is currently in the vendor tree
 #
 # -----------------------------------
