@@ -49,31 +49,42 @@ WORK_DIR="${BASH_SOURCE%/*}"
   cd $HERE
 }
 
-j1_jar=$WORK_DIR/signapk.jar
-j2_jar=$WORK_DIR/minsignapk.jar
-PEM=$WORK_DIR/certificate.pem
-KEY=$WORK_DIR/key.pk8
+new_jar=$WORK_DIR/zipsigner-3.0.jar
+if [ ! -f $new_jar ]; then
+  j1_jar=$WORK_DIR/signapk.jar
+  j2_jar=$WORK_DIR/minsignapk.jar
+  PEM=$WORK_DIR/certificate.pem
+  KEY=$WORK_DIR/key.pk8
+  # look for support files
+  [ ! -e $j1_jar ] || [ ! -e $j2_jar ] || [ ! -e $PEM ] || [ ! -e $KEY ] && {
+    WORK_DIR=~/Android/bin
+    j1_jar=$WORK_DIR/signapk.jar
+    j2_jar=$WORK_DIR/minsignapk.jar
+    PEM=$WORK_DIR/certificate.pem
+    KEY=$WORK_DIR/key.pk8
+  }
 
-# look for support files
-[ ! -e $j1_jar ] || [ ! -e $j2_jar ] || [ ! -e $PEM ] || [ ! -e $KEY ] && {
-   WORK_DIR=~/Android/bin
-   j1_jar=$WORK_DIR/signapk.jar
-   j2_jar=$WORK_DIR/minsignapk.jar
-   PEM=$WORK_DIR/certificate.pem
-   KEY=$WORK_DIR/key.pk8
-}
-
-[ ! -e $j1_jar ] || [ ! -e $j2_jar ] || [ ! -e $PEM ] || [ ! -e $KEY ] && {
-   abort "Error. Missing jar and/or certificate files! Quitting ..."
-}
+  [ ! -e $j1_jar ] || [ ! -e $j2_jar ] || [ ! -e $PEM ] || [ ! -e $KEY ] && {
+     [ ! -e "$new_jar" ] && abort "Error. Missing jar and/or certificate files! Quitting ..."
+  }
+fi
 
 ##
 processzip() {
   [ -z "$1" ] && abort "Syntax = $0 -z <zip_file>"
   [ ! -f $1 ] && abort "Error: \"$1\" file not found"
+  
+  # java -jar zipsigner-3.0.jar zip1.zip zip1-signed.zip
+  if [ -f $new_jar ]; then
+     rm -f "$1"_unsigned
+     mv -f $1 "$1"_unsigned
+     $JAVA $new_jar "$1"_unsigned $1
+     rm -f "$1"_unsigned
+     return
+  fi
+
   zipbase=$(basename -s .zip $1)  # strip the .zip extension
   $JAVA $j1_jar $PEM $KEY $1 "$zipbase"_tmp1
-  #echo "Adjust programe = $WORK_DIR/zipadjust "$zipbase"_tmp1 "$zipbase"_fixed"
   $WORK_DIR/zipadjust "$zipbase"_tmp1 "$zipbase"_fixed
   $JAVA $j2_jar $PEM $KEY "$zipbase"_fixed "$zipbase"-signed.zip
   rm -f "$zipbase"_tmp1 "$zipbase"_fixed

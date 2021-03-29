@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 13 March 2021
+# 29 March 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -539,7 +539,12 @@ local TDT=$(date "+%d %B %Y")
   $ZIP_CMD -z < $FOX_VENDOR_PATH/Files/INSTALL.txt
 
   #  sign zip installer
-  local JAVA8="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+  local JAVA8
+  if [ -e "$FOX_VENDOR_PATH/signature/zipsigner-3.0.jar" ]; then
+     JAVA8=$(which "java")
+  else
+     JAVA8="/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
+  fi
   [ -n "$FOX_JAVA8_PATH" ] && JAVA8="$FOX_JAVA8_PATH"
   if [ ! -x "$JAVA8" ]; then
      JAVA8="/usr/lib/jvm/java-8-openjdk/jre/bin/java"
@@ -555,8 +560,9 @@ local TDT=$(date "+%d %B %Y")
      ZIP_CMD="$FOX_VENDOR_PATH/signature/sign_zip.sh -z $ZIP_FILE"
      echo "- Running ZIP command: $ZIP_CMD"
      $ZIP_CMD
-     echo "- Adding comments (again):"
-     zip $ZIP_FILE -z <$FOX_VENDOR_PATH/Files/INSTALL.txt > /dev/null 2>&1
+     # this breaks the signature
+     #echo "- Adding comments (again):"
+     #zip $ZIP_FILE -z <$FOX_VENDOR_PATH/Files/INSTALL.txt > /dev/null 2>&1
   fi
 
   # Creating ZIP md5
