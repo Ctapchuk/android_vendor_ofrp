@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 29 March 2021
+# 30 March 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -496,22 +496,11 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # --- OF_initd ---
-  rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
-  # delete the OF_initd addon ?
   if [ "$FOX_DELETE_INITD_ADDON" = "1" ]; then
      echo -e "${GREEN}-- Deleting the initd addon ...${NC}"
      rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd*.zip
   else
-     if [ "$FOX_10" = "true" ]; then
-        rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
-        tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3-fox_10.zip
-        echo -e "${WHITEONBLUE} - FOX_10 - using OF_initd-ak3-fox_10.zip ${NC}"
-     else
-        rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3-fox_10.zip
-        tmp=$OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd-ak3.zip
-        echo -e "${GREEN}-- Using OF_initd-ak3 zip ...${NC}"
-     fi
-     mv -f $tmp $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd.zip
+     echo -e "${GREEN}-- Copying the initd addon ...${NC}"
   fi
   
   # alternative/additional device codename? (eg, "kate" (for kenzo); "willow" (for ginkgo))
