@@ -892,6 +892,15 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
       rm -f $FOX_RAMDISK/$RAMDISK_BIN/gnutar
   fi
 
+  # Include standalone "sed" binary ?
+  if [ "$FOX_USE_SED_BINARY" = "1" ]; then
+      echo -e "${GREEN}-- Copying the GNU \"sed\" binary (gnused) ...${NC}"
+      $CP -p $FOX_VENDOR_PATH/Files/gnused $FOX_RAMDISK/$RAMDISK_BIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/gnused
+  else
+      rm -f $FOX_RAMDISK/$RAMDISK_BIN/gnused
+  fi
+
   # Include "unzip" binary ?
   if [ "$FOX_USE_UNZIP_BINARY" = "1" -a -x $FOX_VENDOR_PATH/Files/unzip ]; then
       echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"unzip\" binary ...${NC}"

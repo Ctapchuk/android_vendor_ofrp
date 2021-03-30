@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 14 March 2021
+# Date: 30 March 2021
 #
 # -----------------------------------
 #
@@ -77,6 +77,12 @@
    - set this to 1 if you want the gnu tar binary to be added (/sbin/gnutar)
    - this must be set in a shell script, or at the command line, before building
    - this will add about 420kb to the size of the recovery image
+   - default = 0
+#
+"FOX_USE_SED_BINARY" [NEW]
+   - set this to 1 if you want the gnu sed binary to be added (/sbin/gnused)
+   - this must be set in a shell script, or at the command line, before building
+   - this will add about 200kb to the size of the recovery image
    - default = 0
 #
 "FOX_USE_BASH_SHELL"
