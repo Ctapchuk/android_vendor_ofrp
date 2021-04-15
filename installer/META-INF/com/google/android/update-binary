@@ -17,7 +17,16 @@ fi
 # the target device(s)
 TARGET_DEVICE="mido"
 TARGET_DEVICE_ALT="ALT_DEVICE"
-PRODUCT_DEVICE=$(getprop "ro.product.device")
+
+# getprop
+GETPROP=$(which getprop)
+if [ -z "$GETPROP" ]; then
+   GETPROP=/system/bin/getprop
+   [ ! -e "$GETPROP" ] && GETPROP=/sbin/getprop
+fi
+
+# the current device's codename
+PRODUCT_DEVICE=$($GETPROP "ro.product.device")
 
 # target partition
 RECOVERY_PARTITION=/dev/block/bootdevice/by-name/recovery
@@ -50,7 +59,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20210109"
+MOD_DATE="20210415"
   
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -71,12 +80,6 @@ TOYBOX=$(which toybox)
 if [ -z "$TOYBOX" ]; then
    TOYBOX=/system/bin/toybox
    [ ! -e "$TOYBOX" ] && TOYBOX=/sbin/toybox
-fi
-
-GETPROP=$(which getprop)
-if [ -z "$GETPROP" ]; then
-   GETPROP=/system/bin/getprop
-   [ ! -e "$GETPROP" ] && GETPROP=/sbin/getprop
 fi
 
 FLASH_IMAGE=$(which flash_image)
@@ -171,9 +174,9 @@ file_getprop() {
   grep -m1 "^$2=" "$1" | cut -d= -f2
 }
 
-# getprop <property>
-getprop() { 
-   [ -e $GETPROP ] && $GETPROP $1 || grep "^$1=" /default.prop | head -n1 | cut -d= -f2
+## xgetprop <property>
+xgetprop() { 
+   [ -e $GETPROP ] && $GETPROP $1 || grep -m1 "^$1=" /default.prop | head -n1 | cut -d= -f2
 }
 
 # abort [<message>]
@@ -688,6 +691,22 @@ Main() {
 	ui_print "- Finished installing OrangeFox!" 
 	ui_print "- Extra files are in $internal_SD/Fox/"
 	ui_print " "
+
+	# don't reboot automatically if it is an A/B device, and OrangeFox is running
+	if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
+	   F=$($GETPROP "orangefox.postinit.status")
+	   [ -z "$F" ] && F=$($GETPROP "orangefox.crash_counter")
+	   if [ -n "$F" ]; then
+	   	ui_print " "
+	   	ui_print "- Now, you need to reboot OrangeFox."
+	   	ui_print " "
+	   	ui_print "- If you have just flashed a ROM, first switch the slot before rebooting OrangeFox."
+	   	ui_print " "
+	   	ui_print " "
+	   	exit 0
+	   fi
+	fi
+
 	ui_print " >> Rebooting to Recovery in 5 seconds ..."
 	sleep 1
 	ui_print "-5s...."
@@ -705,7 +724,7 @@ Main() {
 	ui_print "- Rebooting to Recovery now ..."
 	reboot recovery
 
-# if the reboot command fails, try this instead
+	# if the reboot command fails, try this instead
 	sleep 3
 	killall recovery
 
@@ -714,4 +733,3 @@ Main() {
 # --
 Main
 # --
-
