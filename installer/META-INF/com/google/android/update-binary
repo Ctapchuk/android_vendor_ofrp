@@ -627,6 +627,7 @@ Main() {
 	ui_print "*************************************"
 	ui_print "*** |OrangeFox Recovery Project|  ***"
 	ui_print "***   |By The OrangeFox Team|     ***"
+	ui_print "***   |Installer V:$MOD_DATE|      ***"
 	ui_print "*************************************"
 	ui_print " "
 
