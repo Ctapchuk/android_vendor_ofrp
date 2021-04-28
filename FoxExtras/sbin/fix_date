@@ -6,12 +6,19 @@
 #
 # By DarthJabba9
 #
-# Usage: setdate "2020-05-12-16:31"
+# Usage: setdate "2021-04-27-16:31"
 # 
-# date format: date +%Y%m%d%H%M -s 201805181715
-# Copyright (C) 2018-2020 The OrangeFox Recovery Project
-# 30 August 2020
+# date format: date +%Y%m%d%H%M -s 202104271715
+# Copyright (C) 2018-2021 The OrangeFox Recovery Project
+# 28 April 2021
 # -------------------------
+
+bb=$(which busybox)
+if [ -n "$bb" ]; then
+   date_cmd="$bb date"
+else
+   date_cmd="date"
+fi
 
 # copy the ROM version to /sdcard/Fox/
 if [ ! -f /sdcard/Fox/fox_fix_date ]; then 
@@ -23,37 +30,47 @@ fi
 # process the arguments
 if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
    echo "Usage =  $0 YYYY-mm-dd-HH:MM"
-   echo "Example: $0 2020-05-19-16:31"
-   exit 1
+   echo "Example: $0 2021-04-27-16:31"
+   exit 0
 fi
 
+# check/save the time drift values
 save_drift() {
-local epoch_cfg=/persist/.fox_epoch_drift.cfg
-local now=$(date +%s)
-local epoch=$(cat /sys/class/rtc/rtc0/since_epoch)
-local drift=$(expr $now - $epoch)
+	[ ! -d /persist ] && return
+
+	local M=$(cat /proc/mounts | grep "/persist")
+	[ -z "$M" ] && mount /persist > /dev/null 2>&1
+
+	local epoch_cfg=/persist/.fox_epoch_drift.cfg
+	local now=$($date_cmd +%s)
+	local epoch=$(cat /sys/class/rtc/rtc0/since_epoch)
+	local drift=$(expr $now - $epoch)
 
 	# allow 5 minutes drift
 	if [ $drift -gt 600 ]; then
-	   if [ -d /persist ]; then
-	      mount /persist
-	      echo -n "$drift" > $epoch_cfg
-	      umount /persist
-	   fi
-	   echo "Drift ($now minus $epoch)=$drift"
-	   echo "Something trashed your device's RTC on $(date -ud @$drift)!"
+	    echo -n "$drift" > $epoch_cfg
 	fi
+
+	[ -z "$M" ] && umount /persist > /dev/null 2>&1
+	echo "Drift ($now minus $epoch)=$drift"
 }
 
 # configure
-DateStr="+%Y%m%d%H%M -s"
+DateStr="+%Y%m%d%H%M"
 Value="$1"
 Value=$(echo "$1" | tr -d "-")  # remove "-"
 Value=$(echo "$Value" | tr -d ":") # remove ":"
 Value=$(echo "$Value" | tr -d " ") # remove space
 
 # change the date
-CMD="date $DateStr $Value"
+set_arg=""
+if [ -n "$bb" ]; then
+   DateStr=$DateStr" -s"
+else
+   set_arg="set"
+fi
+
+CMD="$date_cmd $DateStr $Value $set_arg"
 echo "- Running command: $CMD"
 $CMD
 
@@ -61,5 +78,5 @@ $CMD
 save_drift
 
 # return
-exit 0
+exit 0;
 
