@@ -17,9 +17,9 @@ export PS1='\s-\v \w > '
 # aliases
 alias cls="clear"
 alias seek='find . -name "$@"'
-alias dirp="ls -a -F --color=auto -t | more"
-alias dirt="ls -a -F --color=auto -t"
-alias dirs="ls -a -F --color=auto -S"
+alias dirp="ls -all --color=auto -t | more"
+alias dirt="ls -all --color=auto -t"
+alias dirs="ls -all --color=auto -S"
 alias dir="ls -all --color=auto"
 alias rd="rmdir"
 alias md="mkdir"
@@ -31,6 +31,8 @@ alias diskfree="df -Ph"
 alias path="echo $PATH"
 alias mem="cat /proc/meminfo && free"
 alias ver="cat /proc/version"
+alias makediff="diff -u -d -w -B"
+alias makediff_recurse="diff -U3 -d -w -rN"
 
 # go to a neutral location
 cd /tmp
