@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 March 2021
+# 13 May 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -1032,6 +1032,11 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
 
   #  save also to /etc/fox.cfg
   echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
+  [ -z "$FOX_CURRENT_DEV_STR" ] && FOX_CURRENT_DEV_STR=$(git -C $FOX_VENDOR_PATH/../../bootable/recovery log -1 --format='%ad (%h)' --date=short) > /dev/null 2>&1
+  if [ -n "$FOX_CURRENT_DEV_STR" ]; then
+    echo "FOX_CODE_BASE=$FOX_CURRENT_DEV_STR" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
+  fi
+
   echo "ro.build.date.utc_fox=$BUILD_DATE_UTC" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   echo "ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
@@ -1043,7 +1048,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
-
+  
    # save some original file sizes
    echo -e "${GREEN}-- Saving some original file sizes ${NC}"
    F=$(filesize $recovery_uncompressed_ramdisk)
