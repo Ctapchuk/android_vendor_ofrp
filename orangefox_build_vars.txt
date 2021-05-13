@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 08 April 2021
+# Date: 13 May 2021
 #
 # -----------------------------------
 #
@@ -434,10 +434,6 @@
 -   2) creating an Odin flashable tar file of the recovery image
 - this setting is only effective is FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER is set to 1
 - all decryption/recovery passwords are successfully entered)
-- default = 0
-#
-"OF_LEGACY_SHAR512" [NEW]
-- set this to 1 to avoid compiler errors in legacy build systems
 - default = 0
 #
 "OF_DEVICE_WITHOUT_PERSIST" [NEW]
