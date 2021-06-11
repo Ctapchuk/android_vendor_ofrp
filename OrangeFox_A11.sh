@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 10 June 2021
+# 11 June 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -32,7 +32,6 @@
 FOXENV=$OUT_DIR/fox_env.sh
 if [ -f "$FOXENV" ]; then
    source "$FOXENV"
-   rm -f "$FOXENV"
 fi
 
 # whether to print extra debug messages
@@ -112,7 +111,7 @@ fi
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
 if [ -n "$4" ]; then
    echo "#########################################################################"
-   echo "Variables exported from build/core/Makefile:"
+   echo "# Android 11 manifest: variables exported from build/core/Makefile:"
    echo "$@"
    export "$@"
    #if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
@@ -142,9 +141,27 @@ fi
 START_DIR=$PWD
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
-TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
+TMP_VENDOR_PATH=$START_DIR/$FOX_VENDOR_PATH
 
-# expand
+# return "1" if the supplied path is absolute, and "0" if it is a relative path
+path_is_absolute() {
+  [[ "$1" = /* ]] && echo "1" || echo "0"
+}
+
+# convert relatives path to absolute paths, or else return the original string
+relative_to_absolute() {
+  [[ "$1" = /* ]] && echo "$1" || echo "$FOX_MANIFEST_ROOT/$1"
+}
+
+# check these important variables for relative paths, and convert to absolutes where necessary
+OUT=$(relative_to_absolute "$OUT")
+TARGET_OUT=$(relative_to_absolute "$TARGET_OUT")
+PRODUCT_OUT=$(relative_to_absolute "$PRODUCT_OUT")
+TARGET_RECOVERY_ROOT_OUT=$(relative_to_absolute "$TARGET_RECOVERY_ROOT_OUT")
+INSTALLED_RECOVERYIMAGE_TARGET=$(relative_to_absolute "$INSTALLED_RECOVERYIMAGE_TARGET")
+export OUT TARGET_RECOVERY_ROOT_OUT INSTALLED_RECOVERYIMAGE_TARGET TARGET_OUT PRODUCT_OUT 
+
+# expand the vendr path
 expand_vendor_path() {
   FOX_VENDOR_PATH=$(fullpath "$TMP_VENDOR_PATH")
   [ ! -d $FOX_VENDOR_PATH/installer ] && {
@@ -158,7 +175,6 @@ expand_vendor_path() {
 expand_vendor_path
 #
 MAGISK_BOOT="$FOX_VENDOR_PATH/tools/magiskboot"
-#MAGISK_BOOT=$(which magiskboot)
 [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
 echo -e "${BLUE}-- Setting up environment variables${NC}"
 if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
@@ -1055,7 +1071,7 @@ fi
    F=$(filesize $recovery_uncompressed_ramdisk)
    echo "ramdisk_size=$F" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg 
 
-   echo -e "${RED}-- Repacking the recovery image ...${NC}"
+   echo -e "${BLUE}-- Repacking the recovery image ...${NC}"
 #fi
 
 # this is the final stage after the recovery image has been created
