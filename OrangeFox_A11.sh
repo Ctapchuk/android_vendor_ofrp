@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 11 June 2021
+# 12 June 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -29,6 +29,7 @@
 # It is best to declare them in a script that you will use for building
 #
 #
+#set -o xtrace
 FOXENV=$OUT_DIR/fox_env.sh
 if [ -f "$FOXENV" ]; then
    source "$FOXENV"
@@ -174,38 +175,41 @@ expand_vendor_path() {
 # get the full FOX_VENDOR_PATH
 expand_vendor_path
 #
-MAGISK_BOOT="$FOX_VENDOR_PATH/tools/magiskboot"
-[ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
-echo -e "${BLUE}-- Setting up environment variables${NC}"
-if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
-	FOX_WORK="$TARGET_RECOVERY_ROOT_OUT"
-	FOX_RAMDISK="$TARGET_RECOVERY_ROOT_OUT"
-	DEFAULT_PROP_ROOT="$TARGET_RECOVERY_ROOT_OUT/../../root/default.prop"
-else
-	FOX_WORK=$OUT/FOX_AIK
-	FOX_RAMDISK="$FOX_WORK/ramdisk"
-	DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
-	echo -e "${BLUE}-- Cleaning out $FOX_WORK ...${NC}"
-	rm -rf $FOX_WORK
-	mkdir -p $FOX_RAMDISK
-	cd $FOX_WORK
-	echo -e "${BLUE}-- Unpacking the recovery image ...${NC}"
-	$MAGISK_BOOT unpack $INSTALLED_RECOVERYIMAGE_TARGET > /dev/null 2>&1
-	cd $FOX_RAMDISK 
-	$MAGISK_BOOT cpio $FOX_WORK/ramdisk.cpio extract > /dev/null 2>&1
-	cd $START_DIR
 
- 	if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     		$FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
- 	fi
-fi
+# core variables
+FOX_WORK=$OUT/FOX_AIK
+FOX_RAMDISK="$FOX_WORK/ramdisk"
+DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
+
+# first unpack the image with magiskboot and then do all our customisation
+  MAGISK_BOOT="$FOX_VENDOR_PATH/tools/magiskboot"
+  echo -e "${RED}Building OrangeFox...${NC}"
+  
+  echo -e "${BLUE}-- Cleaning out $FOX_WORK ...${NC}"
+  rm -rf $FOX_WORK
+  mkdir -p $FOX_RAMDISK
+  cd $FOX_WORK
+
+  echo -e "${BLUE}-- Making a backup of the original recovery image ...${NC}"
+  $CP "$INSTALLED_RECOVERYIMAGE_TARGET" "$INSTALLED_RECOVERYIMAGE_TARGET".original
+  
+  echo -e "${BLUE}-- Unpacking the recovery image ...${NC}"
+  $MAGISK_BOOT unpack $INSTALLED_RECOVERYIMAGE_TARGET > /dev/null 2>&1
+  cd $FOX_RAMDISK
+  $MAGISK_BOOT cpio $FOX_WORK/ramdisk.cpio extract > /dev/null 2>&1
+  cd $START_DIR
+
+  # if there is a callback script, run it for the first call
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+	$FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
+  fi
 
 # default prop
-if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.prop" ]; then
-   DEFAULT_PROP="$TARGET_RECOVERY_ROOT_OUT/default.prop"
-else
-   [ -e "$FOX_RAMDISK/prop.default" ] && DEFAULT_PROP="$FOX_RAMDISK/prop.default" || DEFAULT_PROP="$FOX_RAMDISK/default.prop"
-fi
+  if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.prop" ]; then
+     DEFAULT_PROP="$TARGET_RECOVERY_ROOT_OUT/default.prop"
+  else
+     [ -e "$FOX_RAMDISK/prop.default" ] && DEFAULT_PROP="$FOX_RAMDISK/prop.default" || DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+  fi
 
 # some things are changing in native Android 10.0+ devices
 RAMDISK_BIN=/sbin
