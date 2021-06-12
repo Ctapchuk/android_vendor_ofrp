@@ -826,6 +826,8 @@ fi
            echo "# OrangeFox" >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
            echo '[ -f /sdcard/Fox/fox.bashrc ] && source /sdcard/Fox/fox.bashrc' >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
         fi
+        echo -e "${GREEN}-- Copying terminal files for bash ...${NC}"
+      	$CP -af $FOX_VENDOR_PATH/Files/nano/terminfo/ $FOX_RAMDISK/$RAMDISK_ETC/
      else
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
         $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
@@ -892,7 +894,10 @@ fi
       $CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
       $CP -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/$RAMDISK_BIN/
   else
-      if [ -d $FOX_RAMDISK/FFiles/nano/ ]; then
+      if [ "$FOX_EXCLUDE_NANO_EDITOR" != "1" ]; then
+         echo -e "${GREEN}-- Copying terminal files for nano ...${NC}"
+      	 $CP -af $FOX_VENDOR_PATH/Files/nano/terminfo/ $FOX_RAMDISK/$RAMDISK_ETC/
+      elif [ -d $FOX_RAMDISK/FFiles/nano/ ]; then
          echo -e "${GREEN}-- Removing the dangling \"$FOX_RAMDISK/FFiles/nano/\" ...${NC}"
          rm -rf $FOX_RAMDISK/FFiles/nano/
       fi
