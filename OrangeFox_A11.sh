@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 12 June 2021
+# 13 June 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -766,11 +766,11 @@ fi
 
      # remove the "green LED" tick box (the line where it is found + the next 2 lines)
      green_setting="fox_use_green_led"
-     sed -i "/$green_setting/I,+2 d" $Led_xml_File
+#     sed -i "/$green_setting/I,+2 d" $Led_xml_File
 
      # remove the text label
      green_setting="fox_led_title"
-     sed -i "/$green_setting/I,+0 d" $Led_xml_File
+#     sed -i "/$green_setting/I,+0 d" $Led_xml_File
   fi
 
   # remove extra "More..." link in the "About" screen?
@@ -778,10 +778,10 @@ fi
      echo -e "${GREEN}-- Disabling the \"More...\" link in the \"About\" page ...${NC}"
      Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
      green_setting="btn_about_credits"
-     sed -i "/$green_setting/I,+8 d" $Led_xml_File
+#     sed -i "/$green_setting/I,+8 d" $Led_xml_File
 
      green_setting="floating_btn"
-     sed -i "/$green_setting/I,+6 d" $Led_xml_File
+#     sed -i "/$green_setting/I,+6 d" $Led_xml_File
   fi
 
   # remove the "splash" setting?
@@ -791,15 +791,14 @@ fi
 
      # remove the "splash" setting (the line where it is found + the next 8 lines)
      green_setting="sph_sph"
-     sed -i "/$green_setting/I,+8 d" $Led_xml_File
+ #    sed -i "/$green_setting/I,+8 d" $Led_xml_File
   fi
 
   # disable the magisk addon ui entries?
   if [ "$FOX_DELETE_MAGISK_ADDON" = "1" ]; then
      echo -e "${GREEN}-- Disabling the magisk addon entries in advanced.xml ...${NC}"
      Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
-     sed -i "/Magisk Manager/I,+5 d" $Led_xml_File
-     #sed -i "/magisk_ver/I,+7 d" $Led_xml_File
+#     sed -i "/Magisk Manager/I,+5 d" $Led_xml_File
      sed -i "/>mod_magisk</I,+0 d" $Led_xml_File
      sed -i "/>mod_unmagisk</I,+0 d" $Led_xml_File
      sed -i "s/>Magisk</>Magisk ({@disabled})</" $Led_xml_File
@@ -1001,15 +1000,14 @@ fi
   fi
 
   # enable the app manager?
-#  if [ "$FOX_ENABLE_APP_MANAGER" != "1" ]; then
-#     echo -e "${GREEN}-- Disabling the App Manager in advanced.xml ...${NC}"
+  if [ "$FOX_ENABLE_APP_MANAGER" != "1" ]; then
+     echo -e "${GREEN}-- Disabling the App Manager ...${NC}"
 #     Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
-#     #sed -i "/appmgr_title/I,+3 d" $Led_xml_File
 #     sed -i '/name="{@appmgr_title}"/I,+3 d' $Led_xml_File
-#     # remove aapt also, as it would be redundant
-#     echo -e "${GREEN}-- Omitting the aapt binary ...${NC}"
-#     rm -f $FOX_RAMDISK/$RAMDISK_BIN/aapt
-#  fi
+     # remove aapt also, as it would be redundant
+     echo -e "${GREEN}-- Omitting the aapt binary ...${NC}"
+     rm -f $FOX_RAMDISK/$RAMDISK_BIN/aapt
+  fi
 
   # fox_10 - include some stuff (busybox, new magisk)
   if [ "$FOX_REMOVE_BUSYBOX_BINARY" = "1" ]; then
