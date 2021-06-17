@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 13 June 2021
+# 17 June 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -30,9 +30,16 @@
 #
 #
 #set -o xtrace
-FOXENV=$OUT_DIR/fox_env.sh
+#FOXENV=$OUT_DIR/fox_env.sh
+THISFOXDEV=${TARGET_PRODUCT//omni_/}
+THISFOXDEV=${THISFOXDEV//twrp_/}
+FOXENV=/tmp/$THISFOXDEV/fox_env.sh
 if [ -f "$FOXENV" ]; then
    source "$FOXENV"
+   #rm -f "$FOXENV"
+else
+   echo "** WARNING: $FOXENV is not found. Your build vars will probably notbe implemented. **"
+   echo "** You need an up-to-date OrangeFox patch for the AOSP 11.0 manifest. **"
 fi
 
 # whether to print extra debug messages
@@ -70,6 +77,7 @@ CP=/bin/cp
 abort() {
   [ -d $WORKING_TMP ] && rm -rf $WORKING_TMP
   [ -f $TMP_SCRATCH ] && rm -f $TMP_SCRATCH
+  [ -f $FOXENV ] && rm -f $FOXENV
   exit $1
 }
 
@@ -143,6 +151,8 @@ START_DIR=$PWD
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
 TMP_VENDOR_PATH=$START_DIR/$FOX_VENDOR_PATH
+[ -z "$FOX_MANIFEST_ROOT" ] && FOX_MANIFEST_ROOT="$ANDROID_BUILD_TOP"
+[ -z "$FOX_MANIFEST_ROOT" ] && FOX_MANIFEST_ROOT="$START_DIR"
 
 # return "1" if the supplied path is absolute, and "0" if it is a relative path
 path_is_absolute() {
@@ -392,8 +402,10 @@ local F=$1
    sed -i '/FOX_VENDOR_DIR/d' $F
    sed -i '/FOX_VENDOR_CMD/d' $F
    sed -i '/FOX_VENDOR/d' $F
-   sed -i '/OF_MAINTAINER/d' $F
    sed -i '/FOX_USE_SPECIFIC_MAGISK_ZIP/d' $F
+   sed -i '/FOX_MANIFEST_ROOT/d' $F
+   sed -i '/FOX_OUT_NAME/d' $F
+   sed -i '/OF_MAINTAINER/d' $F
    sed -i "s/declare -x //g" $F
 }
 
