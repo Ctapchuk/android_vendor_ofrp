@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 17 June 2021
+# 18 June 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -31,14 +31,16 @@
 #
 #set -o xtrace
 #FOXENV=$OUT_DIR/fox_env.sh
-THISFOXDEV=${TARGET_PRODUCT//omni_/}
-THISFOXDEV=${THISFOXDEV//twrp_/}
-FOXENV=/tmp/$THISFOXDEV/fox_env.sh
+
+# device name
+FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
+
+# environment/build-var imports
+FOXENV=/tmp/$FOX_DEVICE/fox_env.sh
 if [ -f "$FOXENV" ]; then
    source "$FOXENV"
-   #rm -f "$FOXENV"
 else
-   echo "** WARNING: $FOXENV is not found. Your build vars will probably notbe implemented. **"
+   echo "** WARNING: $FOXENV is not found. Your build vars will probably not be implemented. **"
    echo "** You need an up-to-date OrangeFox patch for the AOSP 11.0 manifest. **"
 fi
 
@@ -67,7 +69,6 @@ WHITEONBLUE='\033[0;44m'
 WHITEONPURPLE='\033[0;46m'
 NC='\033[0m'
 TMP_SCRATCH=/tmp/fox_build_000tmp.txt
-WORKING_TMP=/tmp/Fox_000_tmp
 
 # make sure we know exactly which "cp" command we are running
 CP=/bin/cp
@@ -75,7 +76,6 @@ CP=/bin/cp
 
 # exit function (cleanup first), and return status code
 abort() {
-  [ -d $WORKING_TMP ] && rm -rf $WORKING_TMP
   [ -f $TMP_SCRATCH ] && rm -f $TMP_SCRATCH
   [ -f $FOXENV ] && rm -f $FOXENV
   exit $1
@@ -210,8 +210,8 @@ DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
   cd $START_DIR
 
   # if there is a callback script, run it for the first call
-  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-	$FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" -a -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
   fi
 
 # default prop
@@ -252,9 +252,6 @@ if [ "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
    fi
 fi
 
-# device name
-FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
-
 # build_type
 if [ -z "$FOX_BUILD_TYPE" ]; then
    export FOX_BUILD_TYPE=Unofficial
@@ -275,6 +272,7 @@ else
 fi
 
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
+rm -f $RECOVERY_IMAGE
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
 
 # FOX_REPLACE_BUSYBOX_PS: default to 0
@@ -303,17 +301,8 @@ fi
 # alternative devices
 [ -n "$OF_TARGET_DEVICES" -a -z "$TARGET_DEVICE_ALT" ] && export TARGET_DEVICE_ALT="$OF_TARGET_DEVICES"
 
-# copy recovery.img
-[ -f $OUT/recovery.img ] && $CP $OUT/recovery.img $RECOVERY_IMAGE
-
 # exports
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
-
-# create working tmp
-if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" -o -z "$FOX_VENDOR_CMD" ]; then
-   rm -rf $WORKING_TMP
-   mkdir -p $WORKING_TMP
-fi
 
 # check whether the /etc/ directory is a symlink to /system/etc/
 if [ -h "$FOX_RAMDISK/$RAMDISK_ETC" -a -d "$FOX_RAMDISK/$NEW_RAMDISK_ETC" ]; then
@@ -418,14 +407,13 @@ local TDT=$(date "+%d %B %Y")
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
 
-  # names of output zip file(s)
+  # names of output zip file
   ZIP_FILE=$OUT/$FOX_OUT_NAME.zip
-  ZIP_FILE_GO=$OUT/$FOX_OUT_NAME"_lite.zip"
   echo "- Creating $ZIP_FILE for deployment ..."
 
   # clean any existing files
   rm -rf $OF_WORKING_DIR
-  rm -f $ZIP_FILE_GO $ZIP_FILE
+  rm -f $ZIP_FILE
 
   # recreate dir
   mkdir -p $OF_WORKING_DIR
@@ -434,9 +422,6 @@ local TDT=$(date "+%d %B %Y")
   # create some others
   mkdir -p $OF_WORKING_DIR/sdcard/Fox
   mkdir -p $OF_WORKING_DIR/META-INF/debug
-
-  # copy busybox
-#  $CP -p $FOX_VENDOR_PATH/Files/busybox .
 
   # copy documentation
   $CP -p $FOX_VENDOR_PATH/Files/INSTALL.txt .
@@ -553,7 +538,7 @@ local TDT=$(date "+%d %B %Y")
 
   # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
   # "--last-call" = just before creating the OrangeFox update zip file
-  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" -a -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$OF_WORKING_DIR" "--last-call"
   fi
 
@@ -638,17 +623,6 @@ uses_toolbox() {
 # is the working directory still there from a previous build? If so, remove it
 if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
    echo ""
-#   if [ -d "$FOX_WORK" ]; then
-#      echo -e "${BLUE}-- Working folder found (\"$FOX_WORK\"). Cleaning up...${NC}"
-#      rm -rf "$FOX_WORK"
-#   fi
-
-   # unpack recovery image into working directory
-#   echo -e "${BLUE}-- Unpacking recovery image${NC}"
-#   bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
-#/bin/ls -all "$OUT/recovery.img"
-#/bin/ls -all "$FOX_WORK"
-#/bin/ls -all "$FOX_RAMDISK"
 
   # perhaps we don't need some "Tools" ?
   if [ "$(SAR_BUILD)" = "1" ]; then
@@ -695,9 +669,8 @@ fi
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
   esac
 
-  # build standard (3GB) version
+  # build
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
-  #[ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ] && echo "- FOX_BUILD_DEBUG_MESSAGES: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   $CP -pr $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
   # if these directories don't already exist
@@ -1085,29 +1058,28 @@ fi
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
   
-   # save some original file sizes
-   echo -e "${GREEN}-- Saving some original file sizes ${NC}"
-   F=$(filesize $recovery_uncompressed_ramdisk)
-   echo "ramdisk_size=$F" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg 
+  # stamp our identity in the prop
+  sed -i -e "s/$TARGET_PRODUCT/fox_$FOX_DEVICE/g" $DEFAULT_PROP_ROOT
+   
+  # save some original file sizes
+  echo -e "${GREEN}-- Saving some original file sizes ${NC}"
+  F=$(filesize $recovery_uncompressed_ramdisk)
+  echo "ramdisk_size=$F" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg 
 
-   echo -e "${BLUE}-- Repacking the recovery image ...${NC}"
 #fi
 
 # this is the final stage after the recovery image has been created
-# repack the recovery image
-	STARTDIR=$PWD
-	NEW_IMAGE=/tmp/new_recovery.img
-	cd $FOX_RAMDISK
-	rm -f $FOX_WORK/ramdisk.cpio
-	find | cpio -o -H newc > $FOX_WORK/ramdisk.cpio
-	cd $FOX_WORK
-	#rm -rf $FOX_RAMDISK
-	rm -f $NEW_IMAGE
-	$MAGISK_BOOT repack $INSTALLED_RECOVERYIMAGE_TARGET $NEW_IMAGE > /dev/null 2>&1
-	$MAGISK_BOOT cleanup > /dev/null 2>&1
-	$CP -p "$NEW_IMAGE" "$INSTALLED_RECOVERYIMAGE_TARGET"
-	cd $STARTDIR
-	rm -f $NEW_IMAGE
+     # repack the recovery image
+     echo -e "${BLUE}-- Repacking the recovery image ...${NC}"     
+     STARTDIR=$PWD
+     cd $FOX_RAMDISK
+     rm -f "$RECOVERY_IMAGE"
+     rm -f $FOX_WORK/ramdisk.cpio
+     find | cpio -o -H newc > $FOX_WORK/ramdisk.cpio
+     cd $FOX_WORK
+     $MAGISK_BOOT repack $INSTALLED_RECOVERYIMAGE_TARGET $RECOVERY_IMAGE > /dev/null 2>&1
+     $MAGISK_BOOT cleanup > /dev/null 2>&1
+     cd $STARTDIR
 
 #if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      if [ "$OF_SAMSUNG_DEVICE" = "1" -o "$OF_SAMSUNG_DEVICE" = "true" ]; then
@@ -1121,8 +1093,6 @@ fi
         [ -n "$SAMSUNG_DEVICE" ] && SAMSUNG_DEVICE="samsung"
      fi
      
-     echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
-     $CP -p "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
      if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
      	echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
      	echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
