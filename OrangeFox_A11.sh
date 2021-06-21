@@ -618,13 +618,17 @@ add_avb_footer() {
    if [ "$FOX_BOARD_AVB_ENABLE" != "1" ]; then
       return
    fi
- 
+
    if [ -z "$AVBTOOL" ]; then
      local AVBTOOL=$(dirname "$MKBOOTIMG")/avbtool
-     if [ ! -x "$AVBTOOL" ]; then
-     	echo -e "${RED}-- I cannot find avbtool. Quitting! ...${NC}"
-        return     
-     fi
+   fi
+
+   if [ ! -x "$AVBTOOL" ]; then
+      AVBTOOL=$ANDROID_BUILD_TOP/external/avb/avbtool
+      if [ ! -x "$AVBTOOL" ]; then
+      	echo -e "${RED}-- I cannot find avbtool. Quitting! ...${NC}"
+      	return
+      fi
    fi
 
    if [ -z "$TRUNCATE" ]; then
