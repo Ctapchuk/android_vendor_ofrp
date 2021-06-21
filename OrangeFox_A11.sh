@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 18 June 2021
+# 21 June 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -73,6 +73,8 @@ TMP_SCRATCH=/tmp/fox_build_000tmp.txt
 # make sure we know exactly which "cp" command we are running
 CP=/bin/cp
 [ ! -x "$CP" ] && CP=cp
+TRUNCATE=/usr/bin/truncate
+[ ! -x "$TRUNCATE" ] && TRUNCATE=truncate
 
 # exit function (cleanup first), and return status code
 abort() {
@@ -611,6 +613,43 @@ uses_toolbox() {
  [ "$T" = "toybox" ] && echo "1" || echo "0"
 }
 
+# add avb hash footer
+add_avb_footer() {
+   if [ "$FOX_BOARD_AVB_ENABLE" != "1" ]; then
+      return
+   fi
+ 
+   if [ -z "$AVBTOOL" ]; then
+     local AVBTOOL=$(dirname "$MKBOOTIMG")/avbtool
+     if [ ! -x "$AVBTOOL" ]; then
+     	echo -e "${RED}-- I cannot find avbtool. Quitting! ...${NC}"
+        return     
+     fi
+   fi
+
+   if [ -z "$TRUNCATE" ]; then
+      local TRUNCATE=/usr/bin/truncate
+   fi
+   
+   echo -e "${RED}-- Writing the AVB footer ...${NC}"
+   
+   [ -z "$_hash_meta_size" ] && _hash_meta_size=69632
+   [ -z "$BOOT_SECURITY_PATCH" ] && BOOT_SECURITY_PATCH=2099-12-31
+   [ -z "$BOARD_RECOVERYIMAGE_PARTITION_SIZE" ] && local BOARD_RECOVERYIMAGE_PARTITION_SIZE=$(filesize $RECOVERY_IMAGE)
+
+   [ ! -x "$TRUNCATE" ] && TRUNCATE=truncate
+
+   $TRUNCATE --size=-$_hash_meta_size $RECOVERY_IMAGE
+
+   python2 $AVBTOOL add_hash_footer \
+	--partition_name recovery \
+	--partition_size $BOARD_RECOVERYIMAGE_PARTITION_SIZE \
+	--prop com.android.build.boot.os_version:11 \
+	--prop com.android.build.boot.security_patch:$BOOT_SECURITY_PATCH \
+	--prop com.android.build.recovery.fingerprint:$BUILD_FINGERPRINT_FROM_FILE \
+	--image $RECOVERY_IMAGE
+}
+
 # ****************************************************
 # *** now the real work starts!
 # ****************************************************
@@ -1079,6 +1118,11 @@ fi
      cd $FOX_WORK
      $MAGISK_BOOT repack $INSTALLED_RECOVERYIMAGE_TARGET $RECOVERY_IMAGE > /dev/null 2>&1
      $MAGISK_BOOT cleanup > /dev/null 2>&1
+
+     # rewrite the AVB footer with updated information
+     add_avb_footer
+
+     # 
      cd $STARTDIR
 
 #if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
