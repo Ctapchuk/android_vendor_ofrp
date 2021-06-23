@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 13 May 2021
+# Date: 23 June 2021
 #
 # -----------------------------------
 #
@@ -372,8 +372,17 @@
 "OF_DISABLE_KEYMASTER2" [OBSOLETE!]
 - This is now obsolete in fox_10.0
 #
-"FOX_DRASTIC_SIZE_REDUCTION" [OBSOLETE!]
- - This is now obsolete in fox_10.0
+"FOX_DRASTIC_SIZE_REDUCTION" [NEW] [EXPERIMENTAL!]
+ - Set this to 1 for some really drastic attempts to reduce the size of the recovery image
+ - This will remove source large files (including some fonts) from the build; don't worry if you see some
+ - resource error messages in the recovery's debug screen
+ - default = 0
+#
+"FOX_EXTREME_SIZE_REDUCTION" [NEW] [HIGHLY EXPERIMENTAL!]
+ - Set this to 1 for some extreme attempts to reduce the size of the recovery image (if FOX_DRASTIC_SIZE_REDUCTION does not achieve enough reduction)
+ - Use this with EXTREME CAUTION and test the result carefully - a bootloop is a possibility
+ - One effect of using this is a change the terminal font, and you may not like the look of the font
+ - default = 0
 #
 "FOX_USE_ZIP_BINARY" [ OBSOLETE!]
 - This is now obsolete in fox_10.0

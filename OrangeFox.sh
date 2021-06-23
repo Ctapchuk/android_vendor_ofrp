@@ -237,6 +237,29 @@ fi
 # copy recovery.img
 [ -f $OUT/recovery.img ] && $CP $OUT/recovery.img $RECOVERY_IMAGE
 
+# extreme reduction
+if [ "$FOX_EXTREME_SIZE_REDUCTION" = "1" ]; then
+   export FOX_DRASTIC_SIZE_REDUCTION=1
+fi
+
+# remove all extras if FOX_DRASTIC_SIZE_REDUCTION is defined
+if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
+   export FOX_USE_BASH_SHELL=0
+   export FOX_ASH_IS_BASH=0
+   export FOX_USE_UNZIP_BINARY=0
+   export FOX_USE_TAR_BINARY=0
+   export FOX_USE_SED_BINARY=0
+   export FOX_USE_GREP_BINARY=0
+   export FOX_USE_NANO_EDITOR=0
+   export BUILD_2GB_VERSION=0
+   export FOX_USE_XZ_UTILS=0
+   export FOX_REMOVE_BASH=1
+   export FOX_REMOVE_AAPT=1
+   export FOX_REMOVE_ZIP_BINARY=1
+   export FOX_EXCLUDE_NANO_EDITOR=1
+   export FOX_REMOVE_BUSYBOX_BINARY=1
+fi
+
 # exports
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 
@@ -584,6 +607,99 @@ uses_toolbox() {
  [ "$T" = "toybox" ] && echo "1" || echo "0"
 }
 
+# drastic size reduction
+# This can reduce the recovery image size by up to 3 MB
+reduce_ramdisk_size() {
+local custom_xml=$FOX_RAMDISK/twres/pages/customization.xml
+local image_xml=$FOX_RAMDISK/twres/resources/images.xml
+local CURRDIR=$PWD
+local TWRES_DIR=$FOX_RAMDISK/twres
+local FFil="$FOX_RAMDISK/FFiles"
+local C=""
+local F=""
+
+      echo -e "${GREEN}-- Pruning the ramdisk to reduce the size ... ${NC}"
+
+      # remove some large files
+      rm -rf $FFil/nano
+      rm -f $FOX_RAMDISK/sbin/aapt
+      rm -f $FOX_RAMDISK/sbin/zip
+      rm -f $FOX_RAMDISK/sbin/nano
+      rm -f $FOX_RAMDISK/sbin/gnutar
+      rm -f $FOX_RAMDISK/sbin/gnused
+      rm -f $FOX_RAMDISK/sbin/bash
+      rm -f $FOX_RAMDISK/sbin/busybox      
+      rm -f $FOX_RAMDISK/etc/bash.bashrc
+      rm -rf $FOX_RAMDISK/$RAMDISK_ETC/terminfo
+      [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
+      rm -rf $FFil/Tools
+      if [ "$OF_VANILLA_BUILD" = "1" ]; then
+         rm -rf $FFil/OF_avb20
+         rm -rf $FFil/OF_verity_crypt
+      fi
+      
+      if [ "$FOX_EXTREME_SIZE_REDUCTION" != "1" ]; then
+         return
+      fi
+      
+      # fonts to be deleted      
+      declare -a FontFiles=(
+        "Amatic" 
+	"Chococooky" 
+	"Exo2-Medium"
+	"Exo2-Regular"
+	"EuclidFlex-Medium"
+	"EuclidFlex-Regular"
+	"GoogleSans-Medium"
+	"GoogleSans-Regular"
+        "FiraCode-Medium" 
+	"MILanPro-Medium"
+        "MILanPro-Regular")
+
+	# first of all, substitute the fonts that will be deleted
+	XML=$TWRES_DIR/themes/font.xml
+	sed -i -e "s/GoogleSans/Roboto/g" $XML
+
+	XML=$TWRES_DIR/resources/images.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+	sed -i -e "s/GoogleSans/Roboto/g" $XML
+
+	XML=$TWRES_DIR/splash.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+	sed -i -e "s/GoogleSans/Roboto/g" $XML
+
+	XML=$TWRES_DIR/themes/sed/splash.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+
+	XML=$TWRES_DIR/themes/sed/splash_orig.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+
+	if [ "$FOX_EXTREME_SIZE_REDUCTION" = "1" ]; then
+     	   sed -i -e "s/FiraCode/Roboto/g" $TWRES_DIR/resources/images.xml
+     	   sed -i -e "s/FiraCode/Roboto/g" $TWRES_DIR/splash.xml
+     	fi
+
+      	# delete the font files
+      	for i in "${FontFiles[@]}"
+      	do
+     	   C=$i".ttf"
+     	   F=$TWRES_DIR/fonts/$C
+     	   rm -f $F
+     	   # remove references to them in resources/images.xml 
+     	   sed -i "/$C/d" $image_xml
+      	done
+
+      	# delete the matching line plus the next 2 lines
+      	for i in {3..9}; do
+    	   F="font"$i
+     	   # remove references to them in customization.xml		   
+     	   sed -i "/$F/I,+2 d" $custom_xml
+      	done
+
+	# return to where we started from
+	cd $CURRDIR
+}
+
 # ****************************************************
 # *** now the real work starts!
 # ****************************************************
@@ -878,7 +994,7 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
       rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/nano
       rm -f $FOX_RAMDISK/$RAMDISK_ETC/init/nano*
       rm -rf $FOX_RAMDISK/$RAMDISK_ETC/nano
-      if [ -d $FOX_RAMDISK/$RAMDISK_ETC/terminfo ]; then
+      if [ -d $FOX_RAMDISK/$RAMDISK_ETC/terminfo -a "$FOX_DRASTIC_SIZE_REDUCTION" != "1" ]; then
          echo -e "${WHITEONRED}-- Do a clean build, or remove \"$FOX_RAMDISK/$RAMDISK_ETC/terminfo\" ...${NC}"
       fi
   fi
@@ -1005,6 +1121,13 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
+  fi
+
+  # reduce ramdisk size drastically?
+  if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
+     echo -e "${WHITEONRED}-- Going to do some drastic size reductions! ${NC}"
+     echo -e "${WHITEONRED}-- Don't worry if you see some resource errors in the recovery's debug screen. ${NC}"
+     reduce_ramdisk_size;
   fi
 
   # save the build date
