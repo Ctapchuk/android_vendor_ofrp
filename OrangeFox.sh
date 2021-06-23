@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 13 May 2021
+# 23 June 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -1048,7 +1048,10 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
-  
+
+   # stamp our identity in the prop
+   sed -i -e "s/$TARGET_PRODUCT/fox_$FOX_DEVICE/g" $DEFAULT_PROP
+
    # save some original file sizes
    echo -e "${GREEN}-- Saving some original file sizes ${NC}"
    F=$(filesize $recovery_uncompressed_ramdisk)
