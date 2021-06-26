@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 21 June 2021
+# 26 June 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -29,8 +29,8 @@
 # It is best to declare them in a script that you will use for building
 #
 #
+
 #set -o xtrace
-#FOXENV=$OUT_DIR/fox_env.sh
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
@@ -69,15 +69,15 @@ WHITEONBLUE='\033[0;44m'
 WHITEONPURPLE='\033[0;46m'
 NC='\033[0m'
 TMP_SCRATCH=/tmp/fox_build_000tmp.txt
+WORKING_TMP=/tmp/Fox_000_tmp
 
 # make sure we know exactly which "cp" command we are running
 CP=/bin/cp
 [ ! -x "$CP" ] && CP=cp
-TRUNCATE=/usr/bin/truncate
-[ ! -x "$TRUNCATE" ] && TRUNCATE=truncate
 
 # exit function (cleanup first), and return status code
 abort() {
+  [ -d $WORKING_TMP ] && rm -rf $WORKING_TMP
   [ -f $TMP_SCRATCH ] && rm -f $TMP_SCRATCH
   [ -f $FOXENV ] && rm -f $FOXENV
   exit $1
@@ -96,20 +96,6 @@ filesize() {
   stat -c %s "$1"
 }
 
-# expand a directory path
-fullpath() {
-local T1=$PWD
-  [ -z "$1" ] && return
-  [ ! -d "$1" ] && {
-    echo "$1"
-    return
-  }
-  cd "$1"
-  local T2=$PWD
-  cd $T1
-  echo "$T2"
-}
-
 # check out some incompatible settings
 if [ "$OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" = "1" ]; then
    if [ "$OF_DISABLE_MIUI_SPECIFIC_FEATURES" = "1" -o "$OF_TWRP_COMPATIBILITY_MODE" = "1" -o "$OF_VANILLA_BUILD" = "1" ]; then
@@ -122,10 +108,10 @@ fi
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
 if [ -n "$4" ]; then
    echo "#########################################################################"
-   echo "# Android 11 manifest: variables exported from build/core/Makefile:"
+   echo "Variables exported from build/core/Makefile:"
    echo "$@"
    export "$@"
-   #if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+   if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       echo "# - save the vars that we might need later - " &> $TMP_SCRATCH
       echo "MKBOOTFS=\"$MKBOOTFS\"" >>  $TMP_SCRATCH
       echo "TARGET_OUT=\"$TARGET_OUT\"" >>  $TMP_SCRATCH
@@ -135,10 +121,10 @@ if [ -n "$4" ]; then
       echo "INTERNAL_RECOVERYIMAGE_ARGS='$INTERNAL_RECOVERYIMAGE_ARGS'" >>  $TMP_SCRATCH
       echo "INTERNAL_MKBOOTIMG_VERSION_ARGS=\"$INTERNAL_MKBOOTIMG_VERSION_ARGS\"" >>  $TMP_SCRATCH
       echo "BOARD_MKBOOTIMG_ARGS=\"$BOARD_MKBOOTIMG_ARGS\"" >>  $TMP_SCRATCH
-      echo "RECOVERY_RAMDISK=\"$RECOVERY_RAMDISK\"" >>  $TMP_SCRATCH
+      echo "recovery_ramdisk=\"$recovery_ramdisk\"" >>  $TMP_SCRATCH
       echo "recovery_uncompressed_ramdisk=\"$recovery_uncompressed_ramdisk\"" >>  $TMP_SCRATCH
       echo "#" >>  $TMP_SCRATCH
-   #fi
+   fi
    echo "#########################################################################"
 else
    if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
@@ -149,81 +135,31 @@ else
 fi
 
 #
-START_DIR=$PWD
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
-TMP_VENDOR_PATH=$START_DIR/$FOX_VENDOR_PATH
-[ -z "$FOX_MANIFEST_ROOT" ] && FOX_MANIFEST_ROOT="$ANDROID_BUILD_TOP"
-[ -z "$FOX_MANIFEST_ROOT" ] && FOX_MANIFEST_ROOT="$START_DIR"
 
-# return "1" if the supplied path is absolute, and "0" if it is a relative path
-path_is_absolute() {
-  [[ "$1" = /* ]] && echo "1" || echo "0"
-}
-
-# convert relatives path to absolute paths, or else return the original string
-relative_to_absolute() {
-  [[ "$1" = /* ]] && echo "$1" || echo "$FOX_MANIFEST_ROOT/$1"
-}
-
-# check these important variables for relative paths, and convert to absolutes where necessary
-OUT=$(relative_to_absolute "$OUT")
-TARGET_OUT=$(relative_to_absolute "$TARGET_OUT")
-PRODUCT_OUT=$(relative_to_absolute "$PRODUCT_OUT")
-TARGET_RECOVERY_ROOT_OUT=$(relative_to_absolute "$TARGET_RECOVERY_ROOT_OUT")
-INSTALLED_RECOVERYIMAGE_TARGET=$(relative_to_absolute "$INSTALLED_RECOVERYIMAGE_TARGET")
-export OUT TARGET_RECOVERY_ROOT_OUT INSTALLED_RECOVERYIMAGE_TARGET TARGET_OUT PRODUCT_OUT 
-
-# expand the vendr path
-expand_vendor_path() {
-  FOX_VENDOR_PATH=$(fullpath "$TMP_VENDOR_PATH")
-  [ ! -d $FOX_VENDOR_PATH/installer ] && {
-     local T="${BASH_SOURCE%/*}"
-     T=$(fullpath $T)
-     [ -x $T/OrangeFox.sh ] && FOX_VENDOR_PATH=$T
-  }
-}
-
-# get the full FOX_VENDOR_PATH
-expand_vendor_path
 #
-
-# core variables
-FOX_WORK=$OUT/FOX_AIK
-FOX_RAMDISK="$FOX_WORK/ramdisk"
-DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
-
-# first unpack the image with magiskboot and then do all our customisation
-  MAGISK_BOOT="$FOX_VENDOR_PATH/tools/magiskboot"
-  echo -e "${RED}Building OrangeFox...${NC}"
-  
-  echo -e "${BLUE}-- Cleaning out $FOX_WORK ...${NC}"
-  rm -rf $FOX_WORK
-  mkdir -p $FOX_RAMDISK
-  cd $FOX_WORK
-
-  echo -e "${BLUE}-- Making a backup of the original recovery image ...${NC}"
-  $CP "$INSTALLED_RECOVERYIMAGE_TARGET" "$INSTALLED_RECOVERYIMAGE_TARGET".original
-  
-  echo -e "${BLUE}-- Unpacking the recovery image ...${NC}"
-  $MAGISK_BOOT unpack $INSTALLED_RECOVERYIMAGE_TARGET > /dev/null 2>&1
-  cd $FOX_RAMDISK
-  $MAGISK_BOOT cpio $FOX_WORK/ramdisk.cpio extract > /dev/null 2>&1
-  cd $START_DIR
-
-  # if there is a callback script, run it for the first call
-  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" -a -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
-  fi
+[ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
+echo -e "${BLUE}-- Setting up environment variables${NC}"
+if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+	FOX_WORK="$TARGET_RECOVERY_ROOT_OUT"
+	FOX_RAMDISK="$TARGET_RECOVERY_ROOT_OUT"
+	DEFAULT_PROP_ROOT="$TARGET_RECOVERY_ROOT_OUT/../../root/default.prop"
+else
+	FOX_WORK=$OUT/FOX_AIK
+	FOX_RAMDISK="$FOX_WORK/ramdisk"
+	DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
+fi
 
 # default prop
-  if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.prop" ]; then
-     DEFAULT_PROP="$TARGET_RECOVERY_ROOT_OUT/default.prop"
-  else
-     [ -e "$FOX_RAMDISK/prop.default" ] && DEFAULT_PROP="$FOX_RAMDISK/prop.default" || DEFAULT_PROP="$FOX_RAMDISK/default.prop"
-  fi
+if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.prop" ]; then
+   DEFAULT_PROP="$TARGET_RECOVERY_ROOT_OUT/default.prop"
+else
+   [ -e "$FOX_RAMDISK/prop.default" ] && DEFAULT_PROP="$FOX_RAMDISK/prop.default" || DEFAULT_PROP="$FOX_RAMDISK/default.prop"
+fi
 
-# some things are changing in native Android 10.0+ devices
+# some things are changing in native Android 10.0 devices
+[ "$FOX_MANIFEST_VER" = "10.0" -o "$FOX_MANIFEST_VER" = "11.0" ] && FOX_LEGACY_MANIFEST="0" || FOX_LEGACY_MANIFEST="1"
 RAMDISK_BIN=/sbin
 RAMDISK_ETC=/etc
 NEW_RAMDISK_BIN=/system/bin
@@ -240,15 +176,25 @@ elif [ -e "$FOX_RAMDISK/default.prop" ]; then
 else
    tmp01=$(file_getprop "$DEFAULT_PROP" "ro.build.version.sdk")
 fi
+[ -z "$tmp01" ] && tmp01=28
+[  $tmp01 -ge 29 ] && FOX_LEGACY_MANIFEST="0" || FOX_LEGACY_MANIFEST="1"
+if [ "$FOX_LEGACY_SBIN_ETC" = "1" -o "$FOX_LEGACY_MANIFEST" = "1" ]; then
+   NEW_RAMDISK_BIN=$RAMDISK_BIN
+   NEW_RAMDISK_ETC=$RAMDISK_ETC
+   FOX_LEGACY_MANIFEST="1"; # set this in case it's not already set
+fi
 
-FOX_10="true"
-# fox_10+ has a proper zip binary, so no need to use our own
-if [ -z "$FOX_SKIP_ZIP_BINARY" ]; then
+# are we using a 10.0 (or higher) manifest? TODO - is there a better way to determine this?
+FOX_10=""
+[ "$FOX_MANIFEST_VER" = "10.0"  -o "$FOX_MANIFEST_VER" = "11.0" -o $tmp01 -ge 29 ] && FOX_10="true"
+
+# fox_10 has a proper zip binary, so no need to use our own
+if [ "$FOX_10" = "true" -a -z "$FOX_SKIP_ZIP_BINARY" ]; then
    export FOX_SKIP_ZIP_BINARY="1"
 fi
 
 # there are too many prop files around!
-if [ "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
+if [ "$FOX_LEGACY_MANIFEST" != "1" -a "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
    if [ $(filesize $PROP_DEFAULT) -gt $(filesize $DEFAULT_PROP) ]; then
       DEFAULT_PROP=$PROP_DEFAULT
    fi
@@ -274,7 +220,7 @@ else
 fi
 
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
-rm -f $RECOVERY_IMAGE
+TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
 
 # FOX_REPLACE_BUSYBOX_PS: default to 0
@@ -303,8 +249,40 @@ fi
 # alternative devices
 [ -n "$OF_TARGET_DEVICES" -a -z "$TARGET_DEVICE_ALT" ] && export TARGET_DEVICE_ALT="$OF_TARGET_DEVICES"
 
+# copy recovery.img
+[ -f $OUT/recovery.img ] && $CP $OUT/recovery.img $RECOVERY_IMAGE
+
+# extreme reduction
+if [ "$FOX_EXTREME_SIZE_REDUCTION" = "1" ]; then
+   export FOX_DRASTIC_SIZE_REDUCTION=1
+fi
+
+# remove all extras if FOX_DRASTIC_SIZE_REDUCTION is defined
+if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
+   export FOX_USE_BASH_SHELL=0
+   export FOX_ASH_IS_BASH=0
+   export FOX_USE_UNZIP_BINARY=0
+   export FOX_USE_TAR_BINARY=0
+   export FOX_USE_SED_BINARY=0
+   export FOX_USE_GREP_BINARY=0
+   export FOX_USE_NANO_EDITOR=0
+   export BUILD_2GB_VERSION=0
+   export FOX_USE_XZ_UTILS=0
+   export FOX_REMOVE_BASH=1
+   export FOX_REMOVE_AAPT=1
+   export FOX_REMOVE_ZIP_BINARY=1
+   export FOX_EXCLUDE_NANO_EDITOR=1
+   export FOX_REMOVE_BUSYBOX_BINARY=1
+fi
+
 # exports
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
+
+# create working tmp
+if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" -o -z "$FOX_VENDOR_CMD" ]; then
+   rm -rf $WORKING_TMP
+   mkdir -p $WORKING_TMP
+fi
 
 # check whether the /etc/ directory is a symlink to /system/etc/
 if [ -h "$FOX_RAMDISK/$RAMDISK_ETC" -a -d "$FOX_RAMDISK/$NEW_RAMDISK_ETC" ]; then
@@ -341,6 +319,11 @@ fi
 Save_Build_Date() {
 local DT="$1"
 local F="$DEFAULT_PROP"
+
+  if [ "$FOX_LEGACY_MANIFEST" = "1" ]; then
+     F="$DEFAULT_PROP_ROOT"
+     [ ! -f  "$F" ] && F="$DEFAULT_PROP"
+  fi
 
    grep -q "ro.build.date.utc=" $F && \
    	sed -i -e "s/ro.build.date.utc=.*/ro.build.date.utc=$DT/g" $F || \
@@ -379,6 +362,30 @@ SAR_BUILD() {
   [ -d "$FOX_RAMDISK/system_root/" ] && echo "1" || echo "0"
 }
 
+# expand a directory path
+fullpath() {
+local T1=$PWD
+  [ -z "$1" ] && return
+  [ ! -d "$1" ] && {
+    echo "$1"
+    return
+  }
+  cd "$1"
+  local T2=$PWD
+  cd $T1
+  echo "$T2"
+}
+
+# expand
+expand_vendor_path() {
+  FOX_VENDOR_PATH=$(fullpath "$TMP_VENDOR_PATH")
+  [ ! -d $FOX_VENDOR_PATH/installer ] && {
+     local T="${BASH_SOURCE%/*}"
+     T=$(fullpath $T)
+     [ -x $T/OrangeFox.sh ] && FOX_VENDOR_PATH=$T
+  }
+}
+
 # save build vars
 save_build_vars() {
 local F=$1
@@ -393,10 +400,8 @@ local F=$1
    sed -i '/FOX_VENDOR_DIR/d' $F
    sed -i '/FOX_VENDOR_CMD/d' $F
    sed -i '/FOX_VENDOR/d' $F
-   sed -i '/FOX_USE_SPECIFIC_MAGISK_ZIP/d' $F
-   sed -i '/FOX_MANIFEST_ROOT/d' $F
-   sed -i '/FOX_OUT_NAME/d' $F
    sed -i '/OF_MAINTAINER/d' $F
+   sed -i '/FOX_USE_SPECIFIC_MAGISK_ZIP/d' $F
    sed -i "s/declare -x //g" $F
 }
 
@@ -409,13 +414,14 @@ local TDT=$(date "+%d %B %Y")
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
   INST_DIR=$FOX_VENDOR_PATH/installer
 
-  # names of output zip file
+  # names of output zip file(s)
   ZIP_FILE=$OUT/$FOX_OUT_NAME.zip
+  ZIP_FILE_GO=$OUT/$FOX_OUT_NAME"_lite.zip"
   echo "- Creating $ZIP_FILE for deployment ..."
 
   # clean any existing files
   rm -rf $OF_WORKING_DIR
-  rm -f $ZIP_FILE
+  rm -f $ZIP_FILE_GO $ZIP_FILE
 
   # recreate dir
   mkdir -p $OF_WORKING_DIR
@@ -424,6 +430,9 @@ local TDT=$(date "+%d %B %Y")
   # create some others
   mkdir -p $OF_WORKING_DIR/sdcard/Fox
   mkdir -p $OF_WORKING_DIR/META-INF/debug
+
+  # copy busybox
+#  $CP -p $FOX_VENDOR_PATH/Files/busybox .
 
   # copy documentation
   $CP -p $FOX_VENDOR_PATH/Files/INSTALL.txt .
@@ -540,7 +549,7 @@ local TDT=$(date "+%d %B %Y")
 
   # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
   # "--last-call" = just before creating the OrangeFox update zip file
-  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" -a -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
      $FOX_LOCAL_CALLBACK_SCRIPT "$OF_WORKING_DIR" "--last-call"
   fi
 
@@ -613,59 +622,119 @@ uses_toolbox() {
  [ "$T" = "toybox" ] && echo "1" || echo "0"
 }
 
-# add avb hash footer
-add_avb_footer() {
-   if [ "$FOX_BOARD_AVB_ENABLE" != "1" ]; then
-      return
-   fi
+# drastic size reduction
+# This can reduce the recovery image size by up to 3 MB
+reduce_ramdisk_size() {
+local custom_xml=$FOX_RAMDISK/twres/pages/customization.xml
+local image_xml=$FOX_RAMDISK/twres/resources/images.xml
+local CURRDIR=$PWD
+local TWRES_DIR=$FOX_RAMDISK/twres
+local FFil="$FOX_RAMDISK/FFiles"
+local C=""
+local F=""
 
-   if [ -z "$AVBTOOL" ]; then
-     local AVBTOOL=$(dirname "$MKBOOTIMG")/avbtool
-   fi
+      echo -e "${GREEN}-- Pruning the ramdisk to reduce the size ... ${NC}"
 
-   if [ ! -x "$AVBTOOL" ]; then
-      AVBTOOL=$ANDROID_BUILD_TOP/external/avb/avbtool
-      if [ ! -x "$AVBTOOL" ]; then
-      	echo -e "${RED}-- I cannot find avbtool. Quitting! ...${NC}"
-      	return
+      # remove some large files
+      rm -rf $FFil/nano
+      rm -f $FOX_RAMDISK/sbin/aapt
+      rm -f $FOX_RAMDISK/sbin/zip
+      rm -f $FOX_RAMDISK/sbin/nano
+      rm -f $FOX_RAMDISK/sbin/gnutar
+      rm -f $FOX_RAMDISK/sbin/gnused
+      rm -f $FOX_RAMDISK/sbin/bash
+      rm -f $FOX_RAMDISK/sbin/busybox      
+      rm -f $FOX_RAMDISK/etc/bash.bashrc
+      rm -rf $FOX_RAMDISK/$RAMDISK_ETC/terminfo
+      [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
+      rm -rf $FFil/Tools
+      if [ "$OF_VANILLA_BUILD" = "1" ]; then
+         rm -rf $FFil/OF_avb20
+         rm -rf $FFil/OF_verity_crypt
       fi
-   fi
+      
+      if [ "$FOX_EXTREME_SIZE_REDUCTION" != "1" ]; then
+         return
+      fi
+      
+      # fonts to be deleted      
+      declare -a FontFiles=(
+        "Amatic" 
+	"Chococooky" 
+	"Exo2-Medium"
+	"Exo2-Regular"
+	"EuclidFlex-Medium"
+	"EuclidFlex-Regular"
+	"GoogleSans-Medium"
+	"GoogleSans-Regular"
+        "FiraCode-Medium" 
+	"MILanPro-Medium"
+        "MILanPro-Regular")
 
-   if [ -z "$TRUNCATE" ]; then
-      local TRUNCATE=/usr/bin/truncate
-   fi
-   
-   echo -e "${RED}-- Writing the AVB footer ...${NC}"
-   
-   [ -z "$_hash_meta_size" ] && _hash_meta_size=69632
-   [ -z "$BOOT_SECURITY_PATCH" ] && BOOT_SECURITY_PATCH=2099-12-31
-   [ -z "$BOARD_RECOVERYIMAGE_PARTITION_SIZE" ] && local BOARD_RECOVERYIMAGE_PARTITION_SIZE=$(filesize $RECOVERY_IMAGE)
+	# first of all, substitute the fonts that will be deleted
+	XML=$TWRES_DIR/themes/font.xml
+	sed -i -e "s/GoogleSans/Roboto/g" $XML
 
-   [ ! -x "$TRUNCATE" ] && TRUNCATE=truncate
+	XML=$TWRES_DIR/resources/images.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+	sed -i -e "s/GoogleSans/Roboto/g" $XML
 
-   $TRUNCATE --size=-$_hash_meta_size $RECOVERY_IMAGE
+	XML=$TWRES_DIR/splash.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+	sed -i -e "s/GoogleSans/Roboto/g" $XML
 
-   python2 $AVBTOOL add_hash_footer \
-	--partition_name recovery \
-	--partition_size $BOARD_RECOVERYIMAGE_PARTITION_SIZE \
-	--prop com.android.build.boot.os_version:11 \
-	--prop com.android.build.boot.security_patch:$BOOT_SECURITY_PATCH \
-	--prop com.android.build.recovery.fingerprint:$BUILD_FINGERPRINT_FROM_FILE \
-	--image $RECOVERY_IMAGE
+	XML=$TWRES_DIR/themes/sed/splash.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+
+	XML=$TWRES_DIR/themes/sed/splash_orig.xml
+	sed -i -e "s/EuclidFlex/Roboto/g" $XML
+
+	if [ "$FOX_EXTREME_SIZE_REDUCTION" = "1" ]; then
+     	   sed -i -e "s/FiraCode/Roboto/g" $TWRES_DIR/resources/images.xml
+     	   sed -i -e "s/FiraCode/Roboto/g" $TWRES_DIR/splash.xml
+     	fi
+
+      	# delete the font files
+      	for i in "${FontFiles[@]}"
+      	do
+     	   C=$i".ttf"
+     	   F=$TWRES_DIR/fonts/$C
+     	   rm -f $F
+     	   # remove references to them in resources/images.xml 
+     	   sed -i "/$C/d" $image_xml
+      	done
+
+      	# delete the matching line plus the next 2 lines
+      	for i in {3..9}; do
+    	   F="font"$i
+     	   # remove references to them in customization.xml		   
+     	   sed -i "/$F/I,+2 d" $custom_xml
+      	done
+
+	# return to where we started from
+	cd $CURRDIR
 }
 
 # ****************************************************
 # *** now the real work starts!
 # ****************************************************
 
-#expand_vendor_path
+# get the full FOX_VENDOR_PATH
+expand_vendor_path
 
 # did we export tmp directory for OrangeFox ports?
 [ -n "$FOX_PORTS_TMP" ] && OF_WORKING_DIR="$FOX_PORTS_TMP" || OF_WORKING_DIR="/tmp/fox_zip_tmp"
 
 # is the working directory still there from a previous build? If so, remove it
 if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
-   echo ""
+   if [ -d "$FOX_WORK" ]; then
+      echo -e "${BLUE}-- Working folder found (\"$FOX_WORK\"). Cleaning up...${NC}"
+      rm -rf "$FOX_WORK"
+   fi
+
+   # unpack recovery image into working directory
+   echo -e "${BLUE}-- Unpacking recovery image${NC}"
+   bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
 
   # perhaps we don't need some "Tools" ?
   if [ "$(SAR_BUILD)" = "1" ]; then
@@ -678,7 +747,8 @@ fi
 
 ###############################################################
 # copy stuff to the ramdisk and do all necessary patches before the build system creates the recovery image
-#if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+#if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
    echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
 
    if [ -z "$TARGET_ARCH" ]; then
@@ -712,8 +782,9 @@ fi
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
   esac
 
-  # build
+  # build standard (3GB) version
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
+  #[ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ] && echo "- FOX_BUILD_DEBUG_MESSAGES: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   $CP -pr $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
   # if these directories don't already exist
@@ -790,36 +861,35 @@ fi
   # remove the green LED setting?
   if [ "$OF_USE_GREEN_LED" = "0" ]; then
      echo -e "${GREEN}-- Removing the \"green LED\" setting ...${NC}"
-     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
-
-     # remove the "green LED" tick box (the line where it is found + the next 2 lines)
-     green_setting="fox_use_green_led"
+#     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
+#     # remove the "green LED" tick box (the line where it is found + the next 2 lines)
+#     green_setting="fox_use_green_led"
 #     sed -i "/$green_setting/I,+2 d" $Led_xml_File
-
-     # remove the text label
-     green_setting="fox_led_title"
+#
+#     # remove the text label
+#     green_setting="fox_led_title"
 #     sed -i "/$green_setting/I,+0 d" $Led_xml_File
   fi
 
   # remove extra "More..." link in the "About" screen?
   if [ "$OF_DISABLE_EXTRA_ABOUT_PAGE" = "1" ]; then
      echo -e "${GREEN}-- Disabling the \"More...\" link in the \"About\" page ...${NC}"
-     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
-     green_setting="btn_about_credits"
+#     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
+#     green_setting="btn_about_credits"
 #     sed -i "/$green_setting/I,+8 d" $Led_xml_File
-
-     green_setting="floating_btn"
+#
+#     green_setting="floating_btn"
 #     sed -i "/$green_setting/I,+6 d" $Led_xml_File
   fi
 
   # remove the "splash" setting?
   if [ "$OF_NO_SPLASH_CHANGE" = "1" ]; then
      echo -e "${GREEN}-- Removing the \"splash image\" setting ...${NC}"
-     Led_xml_File=$FOX_RAMDISK/twres/pages/customization.xml
-
-     # remove the "splash" setting (the line where it is found + the next 8 lines)
-     green_setting="sph_sph"
- #    sed -i "/$green_setting/I,+8 d" $Led_xml_File
+#     Led_xml_File=$FOX_RAMDISK/twres/pages/customization.xml
+#
+#     # remove the "splash" setting (the line where it is found + the next 8 lines)
+#     green_setting="sph_sph"
+#     sed -i "/$green_setting/I,+8 d" $Led_xml_File
   fi
 
   # disable the magisk addon ui entries?
@@ -853,8 +923,6 @@ fi
            echo "# OrangeFox" >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
            echo '[ -f /sdcard/Fox/fox.bashrc ] && source /sdcard/Fox/fox.bashrc' >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
         fi
-        echo -e "${GREEN}-- Copying terminal files for bash ...${NC}"
-      	$CP -af $FOX_VENDOR_PATH/Files/nano/terminfo/ $FOX_RAMDISK/$RAMDISK_ETC/
      else
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
         $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
@@ -878,6 +946,10 @@ fi
         echo -e "${GREEN}-- Replacing the \"sh\" applet with bash ...${NC}"
   	rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
   	ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/sh
+  	#if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then
+  	   #rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
+  	   #ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
+  	#fi
   else
         echo -e "${GREEN}-- Cleaning up any bash stragglers...${NC}"
 	# cleanup any stragglers
@@ -921,10 +993,7 @@ fi
       $CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
       $CP -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/$RAMDISK_BIN/
   else
-      if [ "$FOX_EXCLUDE_NANO_EDITOR" != "1" ]; then
-         echo -e "${GREEN}-- Copying terminal files for nano ...${NC}"
-      	 $CP -af $FOX_VENDOR_PATH/Files/nano/terminfo/ $FOX_RAMDISK/$RAMDISK_ETC/
-      elif [ -d $FOX_RAMDISK/FFiles/nano/ ]; then
+      if [ -d $FOX_RAMDISK/FFiles/nano/ ]; then
          echo -e "${GREEN}-- Removing the dangling \"$FOX_RAMDISK/FFiles/nano/\" ...${NC}"
          rm -rf $FOX_RAMDISK/FFiles/nano/
       fi
@@ -938,7 +1007,7 @@ fi
       rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/nano
       rm -f $FOX_RAMDISK/$RAMDISK_ETC/init/nano*
       rm -rf $FOX_RAMDISK/$RAMDISK_ETC/nano
-      if [ -d $FOX_RAMDISK/$RAMDISK_ETC/terminfo ]; then
+      if [ -d $FOX_RAMDISK/$RAMDISK_ETC/terminfo -a "$FOX_DRASTIC_SIZE_REDUCTION" != "1" ]; then
          echo -e "${WHITEONRED}-- Do a clean build, or remove \"$FOX_RAMDISK/$RAMDISK_ETC/terminfo\" ...${NC}"
       fi
   fi
@@ -1028,21 +1097,25 @@ fi
   fi
 
   # enable the app manager?
-  if [ "$FOX_ENABLE_APP_MANAGER" != "1" ]; then
-     echo -e "${GREEN}-- Disabling the App Manager ...${NC}"
+  if [ "$FOX_ENABLE_APP_MANAGER" = "1" ]; then
+     echo -e "${GREEN}-- Enabling the App Manager ...${NC}"
 #     Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
+#     #sed -i "/appmgr_title/I,+3 d" $Led_xml_File
 #     sed -i '/name="{@appmgr_title}"/I,+3 d' $Led_xml_File
      # remove aapt also, as it would be redundant
-     echo -e "${GREEN}-- Omitting the aapt binary ...${NC}"
+  else
+     echo -e "${GREEN}-- Omitting the aapt binary (it useless if the app manager is not enabled) ...${NC}"
      rm -f $FOX_RAMDISK/$RAMDISK_BIN/aapt
   fi
 
   # fox_10 - include some stuff (busybox, new magisk)
-  if [ "$FOX_REMOVE_BUSYBOX_BINARY" = "1" ]; then
+  if [ "$FOX_10" = "true" ]; then
+     if [ "$FOX_REMOVE_BUSYBOX_BINARY" = "1" ]; then
         rm -f $FOX_RAMDISK/$RAMDISK_BIN/busybox
-  else
+     else
         $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_BIN/busybox
         chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/busybox
+     fi
   fi
   
   # Get Magisk version
@@ -1058,6 +1131,18 @@ fi
   $CP -p $FOX_VENDOR_PATH/Files/credits.txt $FOX_RAMDISK/twres/credits.txt
   $CP -p $FOX_VENDOR_PATH/Files/translators.txt $FOX_RAMDISK/twres/translators.txt
   $CP -p $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
+
+  # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
+  fi
+
+  # reduce ramdisk size drastically?
+  if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
+     echo -e "${WHITEONRED}-- Going to do some drastic size reductions! ${NC}"
+     echo -e "${WHITEONRED}-- Don't worry if you see some resource errors in the recovery's debug screen. ${NC}"
+     reduce_ramdisk_size;
+  fi
 
   # save the build date
   BUILD_DATE=$(date -u "+%c")
@@ -1100,36 +1185,26 @@ fi
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
-  
-  # stamp our identity in the prop
-  sed -i -e "s/$TARGET_PRODUCT/fox_$FOX_DEVICE/g" $DEFAULT_PROP_ROOT
-   
-  # save some original file sizes
-  echo -e "${GREEN}-- Saving some original file sizes ${NC}"
-  F=$(filesize $recovery_uncompressed_ramdisk)
-  echo "ramdisk_size=$F" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg 
 
-#fi
+   # stamp our identity in the prop
+   sed -i -e "s/$TARGET_PRODUCT/fox_$FOX_DEVICE/g" $DEFAULT_PROP
+
+   # save some original file sizes
+   echo -e "${GREEN}-- Saving some original file sizes ${NC}"
+   [ -n "$recovery_uncompressed_ramdisk" ] && F=$(filesize $recovery_uncompressed_ramdisk) || F=0
+   echo "ramdisk_size=$F" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg 
+
+  # let's be clear where we are ...
+  if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+     echo -e "${RED}-- Building the recovery image, using the official TWRP recovery image builder ...${NC}"
+  else
+     echo -e "${WHITEONRED}-- Building the recovery image - but NOT using the official TWRP recovery image builder ...${NC}"
+  fi
+fi
 
 # this is the final stage after the recovery image has been created
-     # repack the recovery image
-     echo -e "${BLUE}-- Repacking the recovery image ...${NC}"     
-     STARTDIR=$PWD
-     cd $FOX_RAMDISK
-     rm -f "$RECOVERY_IMAGE"
-     rm -f $FOX_WORK/ramdisk.cpio
-     find | cpio -o -H newc > $FOX_WORK/ramdisk.cpio
-     cd $FOX_WORK
-     $MAGISK_BOOT repack $INSTALLED_RECOVERYIMAGE_TARGET $RECOVERY_IMAGE > /dev/null 2>&1
-     $MAGISK_BOOT cleanup > /dev/null 2>&1
-
-     # rewrite the AVB footer with updated information
-     add_avb_footer
-
-     # 
-     cd $STARTDIR
-
-#if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+# process the recovery image where necessary (and repack where necessary)
+if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      if [ "$OF_SAMSUNG_DEVICE" = "1" -o "$OF_SAMSUNG_DEVICE" = "true" ]; then
         SAMSUNG_DEVICE="samsung"
      else
@@ -1140,16 +1215,35 @@ fi
         SAMSUNG_DEVICE=$(grep "manufacturer=samsung" "$DEFAULT_PROP")
         [ -n "$SAMSUNG_DEVICE" ] && SAMSUNG_DEVICE="samsung"
      fi
-     
-     if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
-     	echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
-     	echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
+
+     if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
+  	  echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
+          $CP -p "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
+  	  if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     	      echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
+     	      echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
+  	  fi
+  	  cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
+     else # using a manual repacking method (NOT recommended)
+  	  echo -e "${BLUE}-- Repacking and copying recovery${NC}"
+ 	
+ 	  if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     	      echo -e "${RED}-- Appending SEANDROIDENFORCE to $FOX_WORK/kernel ${NC}"
+     	      [ -e "$FOX_WORK/kernel" ] && echo -n "SEANDROIDENFORCE" >> "$FOX_WORK/kernel"
+  	  fi
+  	
+  	  bash "$FOX_VENDOR_PATH/tools/mkboot" "$FOX_WORK" "$RECOVERY_IMAGE" > /dev/null 2>&1
+ 	  if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     	      echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
+     	      echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
+  	  fi
+  	  cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
      fi
-     cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
      
      #
      if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
      	echo -e "${RED}-- Creating Odin flashable recovery tar ($RECOVERY_IMAGE.tar) ... ${NC}"
+     	#tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c $(basename "$RECOVERY_IMAGE") > $RECOVERY_IMAGE".tar"
      	tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c recovery.img > $RECOVERY_IMAGE".tar"
      fi
 
@@ -1184,5 +1278,5 @@ fi
 
    # clean up, with success code
    abort 0
-#fi
+fi
 # end!
