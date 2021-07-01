@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 26 June 2021
+# 1 July 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -439,6 +439,11 @@ local TDT=$(date "+%d %B %Y")
 
   # copy recovery image
   $CP -p $RECOVERY_IMAGE ./recovery.img
+
+  # copy the Samsung .tar file if it exists
+  if [ -f $RECOVERY_IMAGE".tar" ]; then
+     $CP -p $RECOVERY_IMAGE".tar" .
+  fi
 
   # copy installer bins and script
   $CP -pr $INST_DIR/* .
@@ -1243,7 +1248,9 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" 
      #
      if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
      	echo -e "${RED}-- Creating Odin flashable recovery tar ($RECOVERY_IMAGE.tar) ... ${NC}"
-     	#tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c $(basename "$RECOVERY_IMAGE") > $RECOVERY_IMAGE".tar"
+
+     	# make sure that the image being tarred is the correct one
+     	$CP -pf "$RECOVERY_IMAGE" $INSTALLED_RECOVERYIMAGE_TARGET
      	tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c recovery.img > $RECOVERY_IMAGE".tar"
      fi
 
