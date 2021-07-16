@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 13 May 2021
+# Date: 16 July 2021
 #
 # -----------------------------------
 #
@@ -541,4 +541,10 @@
 - set this to 1 to recreate automatically the Fox folders in /sdcard/ after formatting data
 - this can be helpful for those who wish to use MTP to copy files from their PC to the device immediately after formatting data
 - default = 0
+#
+"FOX_VARIANT" [NEW]
+- Use this if building a specific variant for your device (eg, for MIUI, or FBE, or whatever variant for which the build is specific)
+- eg, export FOX_VARIANT=MIUI
+- default = default
+#
 # -----------------------------------

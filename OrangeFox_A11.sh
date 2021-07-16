@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 1 July 2021
+# 16 July 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -186,7 +186,7 @@ fi
 
 # are we using a 10.0 (or higher) manifest? TODO - is there a better way to determine this?
 FOX_10=""
-[ "$FOX_MANIFEST_VER" = "10.0"  -o "$FOX_MANIFEST_VER" = "11.0" -o $tmp01 -ge 29 ] && FOX_10="true"
+[ "$FOX_MANIFEST_VER" = "10.0" -o "$FOX_MANIFEST_VER" = "11.0" -o $tmp01 -ge 29 ] && FOX_10="true"
 
 # fox_10 has a proper zip binary, so no need to use our own
 if [ "$FOX_10" = "true" -a -z "$FOX_SKIP_ZIP_BINARY" ]; then
@@ -216,7 +216,11 @@ fi
 if [ "$FOX_BUILD_TYPE" = "Unofficial" ] && [ "$FOX_BUILD" = "Unofficial" ]; then
    FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
 else
-   FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
+   if [ -z "$FOX_VARIANT" -o "$FOX_VARIANT" = "default" ]; then
+      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
+   else
+      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"_"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
+   fi
 fi
 
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
