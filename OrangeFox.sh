@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 16 July 2021
+# 17 July 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -197,11 +197,16 @@ else
    FOX_BUILD=$FOX_VERSION
 fi
 
+# variant
+if [ -z "$FOX_VARIANT" ]; then
+   export FOX_VARIANT="default"
+fi
+
 # sort out the out_name
 if [ "$FOX_BUILD_TYPE" = "Unofficial" ] && [ "$FOX_BUILD" = "Unofficial" ]; then
    FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
 else
-   if [ -z "$FOX_VARIANT" -o "$FOX_VARIANT" = "default" ]; then
+   if [ "$FOX_VARIANT" = "default" ]; then
       FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
    else
       FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"_"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
