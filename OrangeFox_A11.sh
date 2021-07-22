@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 17 July 2021
+# 22 July 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -1079,6 +1079,11 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
          $CP -pf $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/$RAMDISK_BIN/
          chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/zip
       fi
+  fi
+
+  # if zip is built from source (in /system/bin/) create a symlink to it if necessary
+  if [ -x "$FOX_RAMDISK/$NEW_RAMDISK_BIN/zip" ]; then
+     [ ! -e "$FOX_RAMDISK/$RAMDISK_BIN/zip" ] && ln -sf /system/bin/zip $FOX_RAMDISK/$RAMDISK_BIN/zip
   fi
 
   # embed the system partition (in foxstart.sh)
