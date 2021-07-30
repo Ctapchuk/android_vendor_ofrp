@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 22 July 2021
+# 30 July 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -270,7 +270,6 @@ fi
 if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
    export FOX_USE_BASH_SHELL=0
    export FOX_ASH_IS_BASH=0
-   export FOX_USE_UNZIP_BINARY=0
    export FOX_USE_TAR_BINARY=0
    export FOX_USE_SED_BINARY=0
    export FOX_USE_GREP_BINARY=0
@@ -311,7 +310,6 @@ if [ "$FOX_DYNAMIC_SAMSUNG_FIX" = "1" ]; then
    unset FOX_USE_NANO_EDITOR
    unset FOX_USE_XZ_UTILS
    unset FOX_USE_TAR_BINARY
-   unset FOX_USE_UNZIP_BINARY
    unset FOX_USE_GREP_BINARY
 fi
 
@@ -1042,14 +1040,6 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
       chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/gnused
   else
       rm -f $FOX_RAMDISK/$RAMDISK_BIN/gnused
-  fi
-
-  # Include "unzip" binary ?
-  if [ "$FOX_USE_UNZIP_BINARY" = "1" -a -x $FOX_VENDOR_PATH/Files/unzip ]; then
-      echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"unzip\" binary ...${NC}"
-      rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
-      $CP -p $FOX_VENDOR_PATH/Files/unzip $FOX_RAMDISK/$NEW_RAMDISK_BIN/
-      chmod 0755 $FOX_RAMDISK/$NEW_RAMDISK_BIN/unzip
   fi
 
   # Include standalone "grep" binary ?
