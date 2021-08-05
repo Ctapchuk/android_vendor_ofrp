@@ -31,6 +31,9 @@ PRODUCT_DEVICE=$($GETPROP "ro.product.device")
 # target partition
 RECOVERY_PARTITION=/dev/block/bootdevice/by-name/recovery
 
+# boot partition
+BOOT_PARTITION=/dev/block/bootdevice/by-name/boot
+
 # default system mount point
 SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
 
@@ -59,7 +62,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20210415"
+MOD_DATE="20210805"
   
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -134,7 +137,7 @@ umount_part() {
 
   local F=$(is_mounted "$1")
   if [ "$F" = "1" ]; then
-     umount "$1"
+     umount "$1" > /dev/null 2>&1
   fi
 }
 
@@ -174,7 +177,7 @@ file_getprop() {
   grep -m1 "^$2=" "$1" | cut -d= -f2
 }
 
-## xgetprop <property>
+# xgetprop <property>
 xgetprop() { 
    [ -e $GETPROP ] && $GETPROP $1 || grep -m1 "^$1=" /default.prop | head -n1 | cut -d= -f2
 }
@@ -420,13 +423,18 @@ local F="0"
      fi 
  fi
  
-  F="$cache_dir"recovery/
-  [ ! -d $F ] && mkdir -p $F
-  ui_print "- OrangeFox fresh installation - "$F"Fox_Installed"
-  echo "FOX_NEW=1" > "$F"Fox_Installed
-  [ ! -f "$F"Fox_Installed ] && {
+ if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
+    ui_print "- A/B device: the post-install patches will not be processed."
+    return
+ fi
+ 
+ F="$cache_dir"recovery/
+ [ ! -d $F ] && mkdir -p $F
+ ui_print "- OrangeFox fresh installation - "$F"Fox_Installed"
+ echo "FOX_NEW=1" > "$F"Fox_Installed
+ [ ! -f "$F"Fox_Installed ] && {
     ui_print "- Error writing to the cache directory ($cache_dir); the post-install patches will not be processed."
-  }
+ }
 }
 
 # unzip the installer package into /tmp
@@ -441,6 +449,7 @@ Unzip_Installer_Package() {
 FileSize() {
   if [ -f $1 ]; then
      set -- $(ls -l "$1"); echo "$5"
+     # stat -c %s "$1"
   else
      echo "0"
   fi
@@ -470,12 +479,12 @@ local PART
 
 	# target partition without the slot suffix
 	[ -z "$part_size" ] && part_size="0"
-	if [ -e /dev/block/bootdevice/by-name/recovery_b -a "$part_size" != "0" ]; then
-	    target="/dev/block/bootdevice/by-name/recovery"
+	if [ "$part_size" != "0" -a -e $RECOVERY_PARTITION"_b" ]; then
+	    target="$RECOVERY_PARTITION"
 	    name="recovery"
 	else
 	    ui_print "- Standard A/B device ..."
-	    target="/dev/block/bootdevice/by-name/boot"
+	    target="$BOOT_PARTITION"
 	    name="boot"
 	fi
 
@@ -547,6 +556,8 @@ local PART
 	if [ "$name" != "recovery" ]; then
 	   ui_print " "
 	   ui_print "*** NOTE: You are now unrooted! ***"
+	   ui_print " "
+	   ui_print " "
 	fi
 }
 
@@ -683,7 +694,7 @@ Main() {
     	mkdir -p $internal_SD/Fox/logs
     	ui_print "- Backing up recovery.log to $internal_SD/Fox/logs/install.log ..."
 	cp -a /tmp/recovery.log $internal_SD/Fox/logs/install.log
-   	[ "$internal_SD" = "/sdcard" ] &&  umount_part "$internal_SD"
+   	[ "$internal_SD" = "/sdcard" ] && umount_part "$internal_SD" > /dev/null 2>&1
 
 # umount
 	UnMountThemAll

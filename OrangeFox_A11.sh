@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 July 2021
+# 05 August 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -491,6 +491,12 @@ local TDT=$(date "+%d %B %Y")
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo -e "${RED}-- Changing the recovery vendor partition to \"$FOX_RECOVERY_VENDOR_PARTITION\" ${NC}"
      sed -i -e "s|^VENDOR_PARTITION=.*|VENDOR_PARTITION=\"$FOX_RECOVERY_VENDOR_PARTITION\"|" $F
+  fi
+
+  # embed the BOOT partition
+  if [ -n "$FOX_RECOVERY_BOOT_PARTITION" ]; then
+     echo -e "${RED}-- Changing the recovery boot partition to \"$FOX_RECOVERY_BOOT_PARTITION\" ${NC}"
+     sed -i -e "s|^BOOT_PARTITION=.*|BOOT_PARTITION=\"$FOX_RECOVERY_BOOT_PARTITION\"|" $F
   fi
 
   # debug mode for the installer? (just for testing purposes - don't ship the recovery with this enabled)
@@ -1091,6 +1097,13 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
      sed -i -e "s|^VENDOR_PARTITION=.*|VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION|" $F
   fi
 
+  # embed the boot partition (in foxstart.sh)
+  F=$FOX_RAMDISK/sbin/foxstart.sh
+  if [ -n "$FOX_RECOVERY_BOOT_PARTITION" ]; then
+     echo -e "${RED}-- Changing the recovery boot partition to \"$FOX_RECOVERY_BOOT_PARTITION\" ${NC}"
+     sed -i -e "s|^BOOT_PARTITION=.*|BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION|" $F
+  fi
+
   # Include mmgui
   $CP -p $FOX_VENDOR_PATH/Files/mmgui $FOX_RAMDISK/$RAMDISK_BIN/mmgui
   chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/mmgui
@@ -1193,6 +1206,9 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   fi
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
+  fi
+  if [ -n "$FOX_RECOVERY_BOOT_PARTITION" ]; then
+     echo "BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION" >> $FOX_RAMDISK/etc/fox.cfg
   fi
 
    # stamp our identity in the prop
