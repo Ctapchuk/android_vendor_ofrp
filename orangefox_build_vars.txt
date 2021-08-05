@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 30 July 2021
+# Date: 05 August 2021
 #
 # -----------------------------------
 #
@@ -64,6 +64,13 @@
      different from the default "/dev/block/bootdevice/by-name/vendor"
      (eg, some Samsung devices have a different location for vendor)
    - default = "/dev/block/bootdevice/by-name/vendor"
+#
+"FOX_RECOVERY_BOOT_PARTITION" [NEW] [R11.1 only]
+   - !!! this should normally BE LEFT WELL ALONE !!!
+   - set this ONLY if your device's boot partition is in a location that is
+     different from the default "/dev/block/bootdevice/by-name/boot"
+     (eg, some devices have a different location for boot)
+   - default = "/dev/block/bootdevice/by-name/boot"
 #
 "FOX_USE_LZMA_COMPRESSION"
    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
