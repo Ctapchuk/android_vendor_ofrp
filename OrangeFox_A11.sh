@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 05 August 2021
+# 10 August 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -187,11 +187,6 @@ fi
 # are we using a 10.0 (or higher) manifest? TODO - is there a better way to determine this?
 FOX_10=""
 [ "$FOX_MANIFEST_VER" = "10.0" -o "$FOX_MANIFEST_VER" = "11.0" -o $tmp01 -ge 29 ] && FOX_10="true"
-
-# fox_10 has a proper zip binary, so no need to use our own
-if [ "$FOX_10" = "true" -a -z "$FOX_SKIP_ZIP_BINARY" ]; then
-   export FOX_SKIP_ZIP_BINARY="1"
-fi
 
 # there are too many prop files around!
 if [ "$FOX_LEGACY_MANIFEST" != "1" -a "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
