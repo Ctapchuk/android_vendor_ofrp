@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 21 August 2021
+# 02 September 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -428,6 +428,8 @@ local F=$1
    sed -i '/FOX_BUILD_LOG_FILE/d' $F
    sed -i '/FOX_BUILD_DEVICE/d' $F
    sed -i '/FOX_LOCAL_CALLBACK_SCRIPT/d' $F
+   sed -i '/FOX_USE_SPECIFIC_MAGISK_ZIP/d' $F
+   sed -i '/FOX_MANIFEST_ROOT/d' $F
    sed -i '/FOX_PORTS_TMP/d' $F
    sed -i '/FOX_RAMDISK/d' $F
    sed -i '/FOX_WORK/d' $F
@@ -435,7 +437,6 @@ local F=$1
    sed -i '/FOX_VENDOR_CMD/d' $F
    sed -i '/FOX_VENDOR/d' $F
    sed -i '/OF_MAINTAINER/d' $F
-   sed -i '/FOX_USE_SPECIFIC_MAGISK_ZIP/d' $F
    sed -i "s/declare -x //g" $F
 }
 
@@ -1018,18 +1019,18 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      ln -s $RAMDISK_SBIN/resetprop $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/getprop
   fi
 
-  # replace busybox lzma (and "xz") with our own
+  # replace any built-in lzma (and "xz") with our own
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" -o "$FOX_USE_XZ_UTILS" = "1" ]; then
-     if [ "$FOX_DYNAMIC_SAMSUNG_FIX" != "1" -a "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
-     	echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
+     if [ "$FOX_DYNAMIC_SAMSUNG_FIX" != "1" ]; then
+     	echo -e "${GREEN}-- Replacing any built-in \"lzma\" command with our own full version ...${NC}"
      	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
      	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
-     	$CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
-     	if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" = "1" ]; then
-     	   [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "1" ] && ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
-     	else
+     	if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
+     	   $CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
            ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
+     	else
+     	   [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "1" ] && ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
      	fi
      fi
   fi
