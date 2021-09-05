@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 02 September 2021
+# 05 September 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -161,6 +161,7 @@ if [ -n "$4" ]; then
       echo "INTERNAL_RECOVERYIMAGE_ARGS='$INTERNAL_RECOVERYIMAGE_ARGS'" >>  $TMP_SCRATCH
       echo "INTERNAL_MKBOOTIMG_VERSION_ARGS=\"$INTERNAL_MKBOOTIMG_VERSION_ARGS\"" >>  $TMP_SCRATCH
       echo "BOARD_MKBOOTIMG_ARGS=\"$BOARD_MKBOOTIMG_ARGS\"" >>  $TMP_SCRATCH
+      echo "BOARD_USES_RECOVERY_AS_BOOT=\"$BOARD_USES_RECOVERY_AS_BOOT\"" >>  $TMP_SCRATCH
       echo "recovery_ramdisk=\"$recovery_ramdisk\"" >>  $TMP_SCRATCH
       echo "recovery_uncompressed_ramdisk=\"$recovery_uncompressed_ramdisk\"" >>  $TMP_SCRATCH
       echo "#" >>  $TMP_SCRATCH
@@ -180,9 +181,11 @@ if [ -z "$FOX_VENDOR_CMD" ]; then
 fi
 
 #
+# Virtual A/B devices?
+[ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ] && COMPILED_IMAGE_FILE="boot.img" || COMPILED_IMAGE_FILE="recovery.img"
+
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
-
 #
 if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
 	echo -e "${RED}Building OrangeFox...${NC}"
@@ -290,8 +293,8 @@ fi
 # alternative devices
 [ -n "$OF_TARGET_DEVICES" -a -z "$TARGET_DEVICE_ALT" ] && export TARGET_DEVICE_ALT="$OF_TARGET_DEVICES"
 
-# copy recovery.img
-[ -f $OUT/recovery.img ] && $CP $OUT/recovery.img $RECOVERY_IMAGE
+# copy recovery.img/boot.img
+[ -f $OUT/$COMPILED_IMAGE_FILE ] && $CP $OUT/$COMPILED_IMAGE_FILE $RECOVERY_IMAGE
 
 # extreme reduction
 if [ "$FOX_EXTREME_SIZE_REDUCTION" = "1" ]; then
@@ -472,7 +475,7 @@ local TDT=$(date "+%d %B %Y")
   # copy documentation
   $CP -p $FOX_VENDOR_PATH/Files/INSTALL.txt .
 
-  # copy recovery image
+  # copy recovery image/boot image to recovery.img in the zip
   $CP -p $RECOVERY_IMAGE ./recovery.img
 
   # copy the Samsung .tar file if it exists
@@ -915,7 +918,7 @@ if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
 
    # unpack recovery image into working directory
    echo -e "${BLUE}-- Unpacking recovery image${NC}"
-   bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/recovery.img" "$FOX_WORK" > /dev/null 2>&1
+   bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/$COMPILED_IMAGE_FILE" "$FOX_WORK" > /dev/null 2>&1
 
   # perhaps we don't need some "Tools" ?
   if [ "$(SAR_BUILD)" = "1" ]; then
@@ -1384,6 +1387,10 @@ if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
         [ -n "$SAMSUNG_DEVICE" ] && SAMSUNG_DEVICE="samsung"
      fi
 
+     if [ -z "$INSTALLED_RECOVERYIMAGE_TARGET" -a -n "$INSTALLED_BOOTIMAGE_TARGET" ]; then
+        INSTALLED_RECOVERYIMAGE_TARGET="$INSTALLED_BOOTIMAGE_TARGET"
+     fi
+
      echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
      $CP -p "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
      if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
@@ -1398,7 +1405,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
 
      	# make sure that the image being tarred is the correct one
      	$CP -pf "$RECOVERY_IMAGE" $INSTALLED_RECOVERYIMAGE_TARGET
-     	tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c recovery.img > $RECOVERY_IMAGE".tar"
+     	tar -C $(dirname "$RECOVERY_IMAGE") -H ustar -c $COMPILED_IMAGE_FILE > $RECOVERY_IMAGE".tar"
      fi
 
    # create update zip installer
