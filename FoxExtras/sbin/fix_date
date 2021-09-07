@@ -6,11 +6,11 @@
 #
 # By DarthJabba9
 #
-# Usage: setdate "2021-04-27-16:31"
+# Usage: fix_date "2021-08-27-16:31"
 # 
-# date format: date +%Y%m%d%H%M -s 202104271715
+# date format: date +%Y%m%d%H%M -s 202108271715
 # Copyright (C) 2018-2021 The OrangeFox Recovery Project
-# 28 April 2021
+# 07 September 2021
 # -------------------------
 
 bb=$(which busybox)
@@ -30,7 +30,7 @@ fi
 # process the arguments
 if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
    echo "Usage =  $0 YYYY-mm-dd-HH:MM"
-   echo "Example: $0 2021-04-27-16:31"
+   echo "Example: $0 2021-08-27-16:31"
    exit 0
 fi
 
