@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 05 September 2021
+# 07 September 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -263,6 +263,9 @@ fi
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
+
+# use magiskboot v23.0 for VAB device installation
+NEW_MAGISKBOOT_BIN="magiskboot_new"
 
 # tmp for "FOX_CUSTOM_BINS_TO_SDCARD"
 FOX_BIN_tmp=$OUT/tmp_bin/FoxFiles
@@ -546,10 +549,15 @@ local TDT=$(date "+%d %B %Y")
   # A/B devices
   if [ "$OF_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
-     tmp=$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
+     if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" -a -f $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ]; then
+        echo -e "${RED}-- VAB device - copying magiskboot v23.0 ... ${NC}"
+        tmp=$FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN
+     else
+        tmp=$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
+     fi
      [ ! -e $tmp ] && tmp=$(find $TARGET_RECOVERY_ROOT_OUT -name magiskboot)
      [ ! -e $tmp ] && tmp=/tmp/fox_build_tmp/magiskboot
-     $CP -pf $tmp .
+     $CP -pf $tmp ./magiskboot
      sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
   fi
   rm -rf /tmp/fox_build_tmp/
@@ -981,6 +989,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
       echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot ...${NC}"
       rm -f "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot"
+      rm -f $FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN
   else
      echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
      if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" ]; then
