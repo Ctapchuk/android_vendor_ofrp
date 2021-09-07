@@ -145,6 +145,12 @@ if [ "$OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" = "1" ]; then
    fi
 fi
 
+if [ "$OF_USE_NEW_MAGISKBOOT" = "1" -a "$OF_NO_SPLASH_CHANGE" != "1" ]; then
+   echo -e "${WHITEONRED}-- 'OF_USE_NEW_MAGISKBOOT': you must also set 'OF_NO_SPLASH_CHANGE' ${NC}"
+   echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
+   abort 96
+fi
+
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
 if [ -n "$4" ]; then
    echo "#########################################################################"
@@ -984,6 +990,11 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
 
   # copy resetprop (armeabi)
   $CP -p $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/$RAMDISK_SBIN/
+
+  # whether to replace the standard magiskboot with v23
+  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+     $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
+  fi
 
   # deal with magiskboot/mkbootimg/unpackbootimg
   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
