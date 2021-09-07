@@ -1002,6 +1002,12 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      fi
   fi
 
+  # symlink for /sbin/magiskboot in /system/bin/
+  if [ -f "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot" ]; then
+     rm -f "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/magiskboot"
+     ln -sf /sbin/magiskboot "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/magiskboot"
+  fi
+
   # try to fix toolbox egrep/fgrep symlink bug
   if [ "$(uses_toolbox)" = "1" ]; then
      rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
