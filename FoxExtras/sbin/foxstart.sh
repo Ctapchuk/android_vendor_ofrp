@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20210803
+# * Date:   20210907
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20210803"
+SCRIPT_LASTMOD_DATE="20210907"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -611,6 +611,8 @@ isFD_Encrypted() {
 # post-init stuff
 post_init() {
   local M="/FFiles/magiskboot_new"
+  [ -f $M ] && chmod 0755 $M
+  M="/FFiles/fox_fix_date"
   [ -f $M ] && chmod 0755 $M
 
   # FBE - remove the "del_pass" addon, but keep a copy in /FFiles/Tools/
