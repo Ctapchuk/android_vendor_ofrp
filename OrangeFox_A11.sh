@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 07 September 2021
+# 08 September 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -143,12 +143,6 @@ if [ "$OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" = "1" ]; then
       echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
       abort 98
    fi
-fi
-
-if [ "$OF_USE_NEW_MAGISKBOOT" = "1" -a "$OF_NO_SPLASH_CHANGE" != "1" ]; then
-   echo -e "${WHITEONRED}-- 'OF_USE_NEW_MAGISKBOOT': you must also set 'OF_NO_SPLASH_CHANGE' ${NC}"
-   echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
-   abort 96
 fi
 
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
@@ -1079,11 +1073,6 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   # remove extra "More..." link in the "About" screen?
   if [ "$OF_DISABLE_EXTRA_ABOUT_PAGE" = "1" ]; then
      echo -e "${GREEN}-- Disabling the \"More...\" link in the \"About\" page ...${NC}"
-  fi
-
-  # remove the "splash" setting?
-  if [ "$OF_NO_SPLASH_CHANGE" = "1" ]; then
-     echo -e "${GREEN}-- Removing the \"splash image\" setting ...${NC}"
   fi
 
   # disable the magisk addon ui entries?
