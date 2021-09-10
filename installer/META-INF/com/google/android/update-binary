@@ -460,6 +460,7 @@ FileSize() {
 AB_Install_Recovery() {
 local part_size="$1"
 local tool="$EX_DIR"/magiskboot
+local tool_new="$EX_DIR"/magiskboot_new
 local target="$EX_DIR"/boot.img
 local slot
 local name
@@ -509,10 +510,17 @@ local PART
 	   return
 	fi
 
+   	# if the newer magiskboot exists, use that for unpacking only
+	local thetool="$tool"
+	if [ -f "$tool_new" ]; then
+   	   chmod 0755 "tool_new"
+   	   thetool="$tool_new"
+	fi
+
    	# extract the ramdisk from the OrangeFox image
    	chmod 0755 "$tool"
    	ui_print "- Extracting the OrangeFox ramdisk ..."
-   	"$tool" unpack recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
+   	"$thetool" unpack recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
 
 	# deal with ramdisk cpio
    	if [ ! -f "ramdisk.cpio" ]; then
@@ -528,7 +536,7 @@ local PART
 
 		# dump the partition and unpack
 		dd bs=1048576 if=$target$slot of=boot.img || abort "- I cannot dump the $name$slot image."
-		"$tool" unpack -h boot.img || abort "- I cannot unpack the $name$slot image."
+		"$thetool" unpack -h boot.img || abort "- I cannot unpack the $name$slot image."
 
 		# kernel string want_initramfs -> skip_initramfs (Magisk)
 		"$tool" hexpatch kernel 77616E745F696E697472616D6673 736B69705F696E697472616D6673
