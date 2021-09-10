@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 08 September 2021
+# 10 September 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -263,6 +263,12 @@ fi
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
 TMP_VENDOR_PATH="$OUT/../../../../vendor/$RECOVERY_DIR"
 DEFAULT_INSTALL_PARTITION="/dev/block/bootdevice/by-name/recovery" # !! DON'T change!!!
+
+# target_arch - default to arm64
+if [ -z "$TARGET_ARCH" ]; then
+   echo "Arch not detected, using arm64"
+   TARGET_ARCH="arm64"
+fi
 
 # use magiskboot v23.0 for VAB device installation
 NEW_MAGISKBOOT_BIN="magiskboot_new"
@@ -549,16 +555,19 @@ local TDT=$(date "+%d %B %Y")
   # A/B devices
   if [ "$OF_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
-     if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" -a -f $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ]; then
-        echo -e "${RED}-- VAB device - copying magiskboot v23.0 ... ${NC}"
-        tmp=$FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN
-     else
-        tmp=$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
-     fi
-     [ ! -e $tmp ] && tmp=$(find $TARGET_RECOVERY_ROOT_OUT -name magiskboot)
-     [ ! -e $tmp ] && tmp=/tmp/fox_build_tmp/magiskboot
+     tmp=$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
+     [ ! -e "$tmp" ] && tmp=$FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/magiskboot
+     [ ! -e "$tmp" ] && tmp=/tmp/fox_build_tmp/magiskboot
+     [ ! -e "$tmp" ] && {
+       echo -e "${WHITEONRED}-- I cannot find magiskboot. Quitting! ${NC}"
+       abort 200
+     }
      $CP -pf $tmp ./magiskboot
      sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
+     if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" -a -f $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ]; then
+        echo -e "${RED}-- VAB device - copying magiskboot v23.0 ... ${NC}"
+        $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN .
+     fi
   fi
   rm -rf /tmp/fox_build_tmp/
 
@@ -940,13 +949,7 @@ fi
 ###############################################################
 # copy stuff to the ramdisk and do all necessary patches before the build system creates the recovery image
 if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
-   echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
-
-   if [ -z "$TARGET_ARCH" ]; then
-     echo "Arch not detected, using arm64"
-     TARGET_ARCH="arm64"
-   fi
-
+  echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
   case "$TARGET_ARCH" in
   "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
