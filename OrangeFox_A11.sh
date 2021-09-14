@@ -564,12 +564,19 @@ local TDT=$(date "+%d %B %Y")
      }
      $CP -pf $tmp ./magiskboot
      sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
-     if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" -a -f $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ]; then
-        echo -e "${RED}-- VAB device - copying magiskboot v23.0 ... ${NC}"
-        $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN .
-     fi
+#     if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" -a -f $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ]; then
+#        echo -e "${RED}-- VAB device - copying magiskboot v23.0 ... ${NC}"
+#        $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN .
+#     fi
   fi
   rm -rf /tmp/fox_build_tmp/
+
+  # whether to replace the standard magiskboot with v23
+  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+     echo -e "${RED}-- Using magiskboot v23.0 for the installation... ${NC}"
+     sed -i -e "s/^OF_USE_NEW_MAGISKBOOT=.*/OF_USE_NEW_MAGISKBOOT=\"1\"/" $F
+     $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ./magiskboot
+  fi
 
   # Reset Settings
   if [ "$FOX_RESET_SETTINGS" = "disabled" ]; then

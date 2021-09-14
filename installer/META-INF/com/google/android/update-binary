@@ -55,6 +55,9 @@ ERROR_CODE=0
 # AB device?
 OF_AB_DEVICE=""
 
+# use magiskboot 23.0?
+OF_USE_NEW_MAGISKBOOT=0
+
 # Reset OrangeFox settings to default?
 FOX_RESET_SETTINGS="1"
 
@@ -460,7 +463,6 @@ FileSize() {
 AB_Install_Recovery() {
 local part_size="$1"
 local tool="$EX_DIR"/magiskboot
-local tool_new="$EX_DIR"/magiskboot_new
 local target="$EX_DIR"/boot.img
 local slot
 local name
@@ -510,17 +512,10 @@ local PART
 	   return
 	fi
 
-   	# if the newer magiskboot exists, use that for unpacking only
-	local thetool="$tool"
-	if [ -f "$tool_new" ]; then
-   	   chmod 0755 "tool_new"
-   	   thetool="$tool_new"
-	fi
-
    	# extract the ramdisk from the OrangeFox image
    	chmod 0755 "$tool"
    	ui_print "- Extracting the OrangeFox ramdisk ..."
-   	"$thetool" unpack recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
+   	"$tool" unpack recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
 
 	# deal with ramdisk cpio
    	if [ ! -f "ramdisk.cpio" ]; then
@@ -536,7 +531,7 @@ local PART
 
 		# dump the partition and unpack
 		dd bs=1048576 if=$target$slot of=boot.img || abort "- I cannot dump the $name$slot image."
-		"$thetool" unpack -h boot.img || abort "- I cannot unpack the $name$slot image."
+		"$tool" unpack -h boot.img || abort "- I cannot unpack the $name$slot image."
 
 		# kernel string want_initramfs -> skip_initramfs (Magisk)
 		"$tool" hexpatch kernel 77616E745F696E697472616D6673 736B69705F696E697472616D6673
@@ -549,6 +544,11 @@ local PART
 
 		cp -f ramdisk-ofrp.cpio ramdisk.cpio
 		"$tool" repack boot.img || abort "- I cannot repack the $name$slot image!"
+
+		# try to work around the magiskboot repack bug
+		if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+		   "$tool" hexpatch new-boot.img 0000000300000000617662746f6f6c 0000000000000000617662746f6f6c
+		fi
 
 		blockdev --setrw $target$slot
 		cat new-boot.img /dev/zero > $target$slot 2>/dev/null || true
