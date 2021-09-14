@@ -515,7 +515,7 @@ local PART
    	# extract the ramdisk from the OrangeFox image
    	chmod 0755 "$tool"
    	ui_print "- Extracting the OrangeFox ramdisk ..."
-   	"$tool" unpack recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
+   	"$tool" unpack -n recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
 
 	# deal with ramdisk cpio
    	if [ ! -f "ramdisk.cpio" ]; then
@@ -531,7 +531,7 @@ local PART
 
 		# dump the partition and unpack
 		dd bs=1048576 if=$target$slot of=boot.img || abort "- I cannot dump the $name$slot image."
-		"$tool" unpack -h boot.img || abort "- I cannot unpack the $name$slot image."
+		"$tool" unpack -h -n boot.img || abort "- I cannot unpack the $name$slot image."
 
 		# kernel string want_initramfs -> skip_initramfs (Magisk)
 		"$tool" hexpatch kernel 77616E745F696E697472616D6673 736B69705F696E697472616D6673
@@ -543,7 +543,7 @@ local PART
 		sed -i "s|$(grep '^cmdline=' header | cut -d= -f2-)|$(grep '^cmdline=' header | cut -d= -f2- | sed -e 's/skip_override//' -e 's/  */ /g' -e 's/[ \t]*$//')|" header
 
 		cp -f ramdisk-ofrp.cpio ramdisk.cpio
-		"$tool" repack boot.img || abort "- I cannot repack the $name$slot image!"
+		"$tool" repack -n boot.img || abort "- I cannot repack the $name$slot image!"
 
 		# try to work around the magiskboot repack bug
 		if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
