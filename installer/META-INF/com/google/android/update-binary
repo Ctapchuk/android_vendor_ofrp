@@ -65,8 +65,8 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20210805"
-  
+MOD_DATE="20210915"
+
 # sundry glodal defaults
 # VEND_DIR="/vendor"
 # SYS_DIR="/system"
@@ -546,9 +546,9 @@ local PART
 		"$tool" repack -n boot.img || abort "- I cannot repack the $name$slot image!"
 
 		# try to work around the magiskboot repack bug
-		if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-		   "$tool" hexpatch new-boot.img 0000000300000000617662746f6f6c 0000000000000000617662746f6f6c
-		fi
+		#if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+		#   "$tool" hexpatch new-boot.img 0000000300000000617662746f6f6c 0000000000000000617662746f6f6c
+		#fi
 
 		blockdev --setrw $target$slot
 		cat new-boot.img /dev/zero > $target$slot 2>/dev/null || true
