@@ -1017,6 +1017,11 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      fi
   fi
 
+  # symlink for openrecovery binary
+  if [ -f "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/twrp" ]; then
+     ln -sf /system/bin/twrp "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fox"
+  fi
+
   # symlink for /sbin/magiskboot in /system/bin/
   if [ -f "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot" ]; then
      rm -f "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/magiskboot"
