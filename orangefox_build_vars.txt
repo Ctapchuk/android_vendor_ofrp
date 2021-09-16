@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 08 September 2021
+# Date: 16 September 2021
 #
 # -----------------------------------
 #
@@ -563,9 +563,11 @@
 - * If a user formats /data or deletes the /sdcard/Fox/FoxFiles/ folder, then the binaries will not be available to the recovery; the OrangeFox zip must be flashed again
 - * If decryption does not work, then the binaries will not be available to the recovery
 #
-"OF_USE_NEW_MAGISKBOOT" [NEW]
-- set to 1 to use the magiskboot v23.0 binary instead of the normal version, so as to be able to process the v3 headers in new boot images
-- if you use this, then the menu for changing the splash image will be disabled automatically in order to avoid problems
+"OF_USE_NEW_MAGISKBOOT" [NEW] [EXPERIMENTAL WiP]
+- Set to 1 to use the magiskboot v23.0 binary instead of the normal version, so as to be able to process the v3 headers in new boot images
+- This should only be used if your device's boot images have v3 headers (ie, if you have problems installing the OrangeFox zip, or with changing the splash image)
+- This is *experimental* and should be considered as work-in-progress. You should test your builds thoroughly to make sure that everything works as expected
+- If your device is a Virtual A/B (VAB) device,you *MUST* set this variable to 1
 - default = 0
 #
 # -----------------------------------
