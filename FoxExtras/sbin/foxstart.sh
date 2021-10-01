@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20210907
+# * Date:   20211001
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20210907"
+SCRIPT_LASTMOD_DATE="20211001"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -662,6 +662,12 @@ extralog "foxstart: completed backup_restore_FS()"
 # get kernel logs right now
 dmesg &> /tmp/dmesg.log
 extralog "foxstart: completed dmesg()"
+
+# get logcat right now
+if [ -f "/system/bin/logcat" ]; then
+   logcat -d &> /tmp/logcat.log
+   extralog "foxstart: completed logcat()"
+fi
 
 #
 Get_Details
