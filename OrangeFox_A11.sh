@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 10 September 2021
+# 05 October 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -206,7 +206,7 @@ else
    [ -e "$FOX_RAMDISK/prop.default" ] && DEFAULT_PROP="$FOX_RAMDISK/prop.default" || DEFAULT_PROP="$FOX_RAMDISK/default.prop"
 fi
 
-# some things are changing in native Android 10.0 devices
+# some things are changing in native Android 10.0 and higher devices
 RAMDISK_SBIN=/sbin
 RAMDISK_ETC=/etc
 RAMDISK_SYSTEM_BIN=/system/bin
@@ -270,9 +270,6 @@ if [ -z "$TARGET_ARCH" ]; then
    TARGET_ARCH="arm64"
 fi
 
-# use magiskboot v23.0 for VAB device installation
-NEW_MAGISKBOOT_BIN="magiskboot_new"
-
 # tmp for "FOX_CUSTOM_BINS_TO_SDCARD"
 FOX_BIN_tmp=$OUT/tmp_bin/FoxFiles
 
@@ -281,14 +278,24 @@ if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
    export FOX_REPLACE_BUSYBOX_PS="0"
 fi
 
-# magiskboot
-if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" ]; then
+# --------- magiskboot vars --------
+# magiskboot v23+ for VAB device installation
+NEW_MAGISKBOOT_BIN="magiskboot_new"
+
+# magiskboot 23+ and repatch issues?
+if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
+   export OF_USE_NEW_MAGISKBOOT=1
+   export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1
+fi
+
+# set the main var automatically, if not set
+if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" -o "$OF_FORCE_MAGISKBOOT_BOOT_PATCH_MIUI" = "1" -o "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
    export OF_USE_MAGISKBOOT=1
 fi
 
 # A/B devices
 if [ "$OF_AB_DEVICE" = "1" ]; then
-   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" ] || [ "$OF_USE_MAGISKBOOT" != "1" ]; then
+   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" -o "$OF_USE_MAGISKBOOT" != "1" ]; then
       echo -e "${RED}-- ************************************************************************************************${NC}"
       echo -e "${RED}-- OrangeFox.sh FATAL ERROR - A/B device - but other necessary vars not set. ${NC}"
       echo "-- You must do this - \"export OF_USE_MAGISKBOOT=1\" "
@@ -571,11 +578,15 @@ local TDT=$(date "+%d %B %Y")
   fi
   rm -rf /tmp/fox_build_tmp/
 
-  # whether to replace the standard magiskboot with v23
+  # whether to replace the standard magiskboot with v23+
   if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-     echo -e "${RED}-- Using magiskboot v23.0 for the installation... ${NC}"
+     echo -e "${RED}-- Using magiskboot v23+ for the installation... ${NC}"
      sed -i -e "s/^OF_USE_NEW_MAGISKBOOT=.*/OF_USE_NEW_MAGISKBOOT=\"1\"/" $F
      $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ./magiskboot
+  fi
+
+  if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
+     echo -e "${RED}-- Magiskboot v23+ repack issue will be patched... ${NC}"
   fi
 
   # Reset Settings
@@ -995,7 +1006,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   # copy resetprop (armeabi)
   $CP -p $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/$RAMDISK_SBIN/
 
-  # whether to replace the standard magiskboot with v23
+  # whether to replace the standard magiskboot with v23+
   if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
      $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
   fi
