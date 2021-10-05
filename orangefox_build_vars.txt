@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 01 October 2021
+# Date: 05 October 2021
 #
 # -----------------------------------
 #
@@ -554,9 +554,11 @@
 - range of stock and custom ROMs across all Android versions available for your device
 - default = the version that is currently in the vendor tree
 #
-"OF_RUN_POST_FORMAT_PROCESS" [NEW] [Experimental]
+"OF_RUN_POST_FORMAT_PROCESS" [Experimental] [DEPRECATED!]
+- This is DEPRECATED. Do NOT use it unless it has proved *absolutely necessary* to use it
 - set this to 1 to recreate automatically the Fox folders in /sdcard/ after formatting data
-- this can be helpful for those who wish to use MTP to copy files from their PC to the device immediately after formatting data
+- it can be helpful for those who wish to use MTP to copy files from their PC to the device immediately after formatting data
+- *However* it can cause issues with Android 11 encryption - so you have been warned!
 - default = 0
 #
 "FOX_VARIANT" [NEW]
