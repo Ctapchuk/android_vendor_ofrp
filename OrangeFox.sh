@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 05 August 2021
+# 02 November 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -65,6 +65,32 @@ abort() {
   exit $1
 }
 
+# whether a build var is enabled (accepts "1" or greater, and "true")
+# used in FOX_CUSTOM_BINS_TO_SDCARD
+function enabled() {
+local s="$1"
+  if [ -z "$s" -o "$s" = "0" -o "$s" = "false" ]; then
+     echo "0"
+     return
+  fi
+
+  if [ "$s" = "true" ]; then
+     echo "1"
+     return
+  fi
+ 
+  if [[ ! "$s" =~ ^[0-9]+$ ]]; then
+     echo "0"
+     return
+  fi
+
+  if [ "$s" -gt "0" ]; then
+     echo "1"
+  else
+     echo "0"
+  fi
+}
+
 # file_getprop <file> <property>
 file_getprop() {
   local F=$(grep -m1 "^$2=" "$1" | cut -d= -f2)
@@ -78,7 +104,34 @@ filesize() {
   stat -c %s "$1"
 }
 
+# generate a randomised build id
+generate_build_id() {
+local cmd="uuidgen -rx"
+  [ -z "$(which uuidgen)" ] && cmd="cat /proc/sys/kernel/random/uuid"
+  $cmd
+}
+
+# enforce using the build system's image builder
+if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" != "1" ]; then
+   echo -e "${WHITEONRED}-- ERROR! You MUST set \"FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER\" to \"1\" before building !${NC}"
+   echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
+   abort 90
+fi
+
 # check out some incompatible settings
+if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" = "1" ]; then
+   if [ "$FOX_USE_GREP_BINARY" = "1" ]; then
+      export FOX_USE_GREP_BINARY=0
+      echo -e "${WHITEONRED}-- 'FOX_CUSTOM_BINS_TO_SDCARD': ignoring incompatible build var 'FOX_USE_GREP_BINARY' ... ${NC}"
+   fi
+
+   if [ "$FOX_USE_BASH_SHELL" = "1" -o "$FOX_ASH_IS_BASH" = "1" -o "$FOX_DYNAMIC_SAMSUNG_FIX" = "1" ]; then
+     	echo -e "${WHITEONRED}-- ERROR! 'FOX_CUSTOM_BINS_TO_SDCARD' is incompatible with FOX_USE_BASH_SHELL or FOX_ASH_IS_BASH or FOX_DYNAMIC_SAMSUNG_FIX !${NC}"
+     	echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
+     	abort 97
+   fi
+fi
+
 if [ "$OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" = "1" ]; then
    if [ "$OF_DISABLE_MIUI_SPECIFIC_FEATURES" = "1" -o "$OF_TWRP_COMPATIBILITY_MODE" = "1" -o "$OF_VANILLA_BUILD" = "1" ]; then
       echo -e "${WHITEONRED}-- ERROR! \"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES\" is incompatible with \"OF_DISABLE_MIUI_SPECIFIC_FEATURES\" or \"OF_TWRP_COMPATIBILITY_MODE\"${NC}"
@@ -109,11 +162,16 @@ if [ -n "$4" ]; then
    fi
    echo "#########################################################################"
 else
-   if [ "$FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" = "1" ]; then
-      echo -e "${WHITEONRED}-- Build OrangeFox: FATAL ERROR! ${NC}"
-      echo -e "${WHITEONRED}-- You cannot use FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER without patching build/core/Makefile in the build system. Aborting! ${NC}"
-      abort 100
-   fi
+   echo -e "${WHITEONRED}-- Build OrangeFox: FATAL ERROR! ${NC}"
+   echo -e "${WHITEONRED}-- You cannot build OrangeFox without patching build/core/Makefile in the build system. Aborting! ${NC}"
+   abort 100
+fi
+
+# extra check: do we have a properly patched build system?
+if [ -z "$FOX_VENDOR_CMD" ]; then
+   echo -e "${WHITEONRED}-- OrangeFox build: Fatal ERROR! ${NC}"
+   echo -e "${WHITEONRED}-- Your build system is not properly patched for OrangeFox. Quitting ... ${NC}"
+   abort 100
 fi
 
 #
@@ -121,9 +179,8 @@ RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
 
 #
-[ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ] && echo -e "${RED}Building OrangeFox...${NC}"
-echo -e "${BLUE}-- Setting up environment variables${NC}"
 if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+	echo -e "${RED}Building OrangeFox...${NC}"
 	FOX_WORK="$TARGET_RECOVERY_ROOT_OUT"
 	FOX_RAMDISK="$TARGET_RECOVERY_ROOT_OUT"
 	DEFAULT_PROP_ROOT="$TARGET_RECOVERY_ROOT_OUT/../../root/default.prop"
@@ -132,6 +189,7 @@ else
 	FOX_RAMDISK="$FOX_WORK/ramdisk"
 	DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
 fi
+echo -e "${BLUE}-- Setting up environment variables${NC}"
 
 # default prop
 if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.prop" ]; then
@@ -141,42 +199,31 @@ else
 fi
 
 # some things are changing in native Android 10.0 devices
-[ "$FOX_MANIFEST_VER" = "10.0" ] && FOX_LEGACY_MANIFEST="0" || FOX_LEGACY_MANIFEST="1"
-RAMDISK_BIN=/sbin
+RAMDISK_SBIN=/sbin
 RAMDISK_ETC=/etc
-NEW_RAMDISK_BIN=/system/bin
-NEW_RAMDISK_ETC=/system/etc
+RAMDISK_SYSTEM_BIN=/system/bin
+RAMDISK_SYSTEM_ETC=/system/etc
 PROP_DEFAULT="$DEFAULT_PROP"
 
-# we can still use the original ("legacy") settings, if we want or are clearly building on less-than android10 manifest
+# identify the build SDK version (not used yet)
 if [ -e "$FOX_RAMDISK/prop.default" ]; then
-   tmp01=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.version.sdk")
+   BUILD_SDK=$(file_getprop "$FOX_RAMDISK/prop.default" "ro.build.version.sdk")
    PROP_DEFAULT="$FOX_RAMDISK/prop.default"
 elif [ -e "$FOX_RAMDISK/default.prop" ]; then
-   tmp01=$(file_getprop "$FOX_RAMDISK/default.prop" "ro.build.version.sdk")
+   BUILD_SDK=$(file_getprop "$FOX_RAMDISK/default.prop" "ro.build.version.sdk")
    PROP_DEFAULT="$FOX_RAMDISK/default.prop"
 else
-   tmp01=$(file_getprop "$DEFAULT_PROP" "ro.build.version.sdk")
+   BUILD_SDK=$(file_getprop "$DEFAULT_PROP" "ro.build.version.sdk")
 fi
-[ -z "$tmp01" ] && tmp01=28
-[  $tmp01 -ge 29 ] && FOX_LEGACY_MANIFEST="0" || FOX_LEGACY_MANIFEST="1"
-if [ "$FOX_LEGACY_SBIN_ETC" = "1" -o "$FOX_LEGACY_MANIFEST" = "1" ]; then
-   NEW_RAMDISK_BIN=$RAMDISK_BIN
-   NEW_RAMDISK_ETC=$RAMDISK_ETC
-   FOX_LEGACY_MANIFEST="1"; # set this in case it's not already set
-fi
-
-# are we using a 10.0 (or higher) manifest? TODO - is there a better way to determine this?
-FOX_10=""
-[ "$FOX_MANIFEST_VER" = "10.0" -o $tmp01 -ge 29 ] && FOX_10="true"
+[ -z "$BUILD_SDK" ] && BUILD_SDK=30
 
 # fox_10 has a proper zip binary, so no need to use our own
-if [ "$FOX_10" = "true" -a -z "$FOX_SKIP_ZIP_BINARY" ]; then
+if [ -z "$FOX_SKIP_ZIP_BINARY" ]; then
    export FOX_SKIP_ZIP_BINARY="1"
 fi
 
 # there are too many prop files around!
-if [ "$FOX_LEGACY_MANIFEST" != "1" -a "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
+if [ "$DEFAULT_PROP" != "$PROP_DEFAULT" ]; then
    if [ $(filesize $PROP_DEFAULT) -gt $(filesize $DEFAULT_PROP) ]; then
       DEFAULT_PROP=$PROP_DEFAULT
    fi
@@ -184,6 +231,9 @@ fi
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
+
+# tmp for "FOX_CUSTOM_BINS_TO_SDCARD"
+FOX_BIN_tmp=$OUT/tmp_bin/FoxFiles
 
 # build_type
 if [ -z "$FOX_BUILD_TYPE" ]; then
@@ -252,7 +302,7 @@ if [ "$FOX_EXTREME_SIZE_REDUCTION" = "1" ]; then
 fi
 
 # remove all extras if FOX_DRASTIC_SIZE_REDUCTION is defined
-if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" ]; then
+if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -a "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
    export FOX_USE_BASH_SHELL=0
    export FOX_ASH_IS_BASH=0
    export FOX_USE_TAR_BINARY=0
@@ -272,19 +322,19 @@ fi
 export FOX_DEVICE TMP_VENDOR_PATH FOX_OUT_NAME FOX_RAMDISK FOX_WORK
 
 # create working tmp
-if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" -o -z "$FOX_VENDOR_CMD" ]; then
+if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
    rm -rf $WORKING_TMP
    mkdir -p $WORKING_TMP
 fi
 
 # check whether the /etc/ directory is a symlink to /system/etc/
-if [ -h "$FOX_RAMDISK/$RAMDISK_ETC" -a -d "$FOX_RAMDISK/$NEW_RAMDISK_ETC" ]; then
-   RAMDISK_ETC=$NEW_RAMDISK_ETC
+if [ -h "$FOX_RAMDISK/$RAMDISK_ETC" -a -d "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC" ]; then
+   RAMDISK_ETC=$RAMDISK_SYSTEM_ETC
 fi
 
 # workaround for some Samsung bugs
 if [ "$FOX_DYNAMIC_SAMSUNG_FIX" = "1" ]; then
-   if [ -z "$FOX_VENDOR_CMD" -o "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
+   if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       echo -e "${WHITEONGREEN} - Dealing with bugged Samsung exynos dynamic stuff - removing stuff... ${NC}"
       echo -e "${WHITEONGREEN} - Make sure that you are doing a clean build. ${NC}"
    fi
@@ -311,11 +361,6 @@ fi
 Save_Build_Date() {
 local DT="$1"
 local F="$DEFAULT_PROP"
-
-  if [ "$FOX_LEGACY_MANIFEST" = "1" ]; then
-     F="$DEFAULT_PROP_ROOT"
-     [ ! -f  "$F" ] && F="$DEFAULT_PROP"
-  fi
 
    grep -q "ro.build.date.utc=" $F && \
    	sed -i -e "s/ro.build.date.utc=.*/ro.build.date.utc=$DT/g" $F || \
@@ -345,10 +390,10 @@ SAR_BUILD() {
   C=$(file_getprop "$DEFAULT_PROP" "ro.boot.dynamic_partitions")
   [ "$C" = "true" ] && { echo "1"; return; }
 
-  C=$(cat "$FOX_RAMDISK/$NEW_RAMDISK_ETC/twrp.fstab" 2>/dev/null | grep -s ^"/system_root")
+  C=$(cat "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/twrp.fstab" 2>/dev/null | grep -s ^"/system_root")
   [ -n "$C" ] && { echo "1"; return; }
 
-  C=$(cat "$FOX_RAMDISK/$NEW_RAMDISK_ETC/recovery.fstab" 2>/dev/null | grep -s ^"/system_root")
+  C=$(cat "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/recovery.fstab" 2>/dev/null | grep -s ^"/system_root")
   [ -n "$C" ] && { echo "1"; return; }
 
   [ -d "$FOX_RAMDISK/system_root/" ] && echo "1" || echo "0"
@@ -423,9 +468,6 @@ local TDT=$(date "+%d %B %Y")
   mkdir -p $OF_WORKING_DIR/sdcard/Fox
   mkdir -p $OF_WORKING_DIR/META-INF/debug
 
-  # copy busybox
-#  $CP -p $FOX_VENDOR_PATH/Files/busybox .
-
   # copy documentation
   $CP -p $FOX_VENDOR_PATH/Files/INSTALL.txt .
 
@@ -442,6 +484,13 @@ local TDT=$(date "+%d %B %Y")
 
   # copy FoxFiles/ to sdcard/Fox/
   $CP -a $FILES_DIR/ sdcard/Fox/
+  
+  # copy any custom bin files to /sdcard/Fox/bin/ ?
+  if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" = "1" -a -d "$FOX_BIN_tmp/bin" ]; then
+     chmod +x $FOX_BIN_tmp/bin/*
+     $CP -a $FOX_BIN_tmp/ sdcard/Fox/
+     rm -rf $FOX_BIN_tmp
+  fi
 
   # any local changes to a port's installer directory?
   if [ -n "$FOX_PORTS_INSTALLER" ] && [ -d "$FOX_PORTS_INSTALLER" ]; then
@@ -493,7 +542,7 @@ local TDT=$(date "+%d %B %Y")
   # A/B devices
   if [ "$OF_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
-     tmp=$FOX_RAMDISK/$RAMDISK_BIN/magiskboot
+     tmp=$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
      [ ! -e $tmp ] && tmp=$(find $TARGET_RECOVERY_ROOT_OUT -name magiskboot)
      [ ! -e $tmp ] && tmp=/tmp/fox_build_tmp/magiskboot
      $CP -pf $tmp .
@@ -617,11 +666,11 @@ local TDT=$(date "+%d %B %Y")
 # are we using toolbox/toybox?
 uses_toolbox() {
  [ "$TW_USE_TOOLBOX" = "true" ] && { echo "1"; return; }
- local T=$(filesize $FOX_RAMDISK/$NEW_RAMDISK_BIN/toybox)
+ local T=$(filesize $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/toybox)
  [ "$T" = "0" ] && { echo "0"; return; }
- local B=$(filesize $FOX_RAMDISK/$NEW_RAMDISK_BIN/busybox)
+ local B=$(filesize $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/busybox)
  [ $T -gt $B ] && { echo "1"; return; }
- T=$(readlink "$FOX_RAMDISK/$NEW_RAMDISK_BIN/yes")
+ T=$(readlink "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/yes")
  [ "$T" = "toybox" ] && echo "1" || echo "0"
 }
 
@@ -639,27 +688,29 @@ local F=""
       echo -e "${GREEN}-- Pruning the ramdisk to reduce the size ... ${NC}"
 
       # remove some large files
-      rm -rf $FFil/nano
-      rm -f $FOX_RAMDISK/sbin/aapt
-      rm -f $FOX_RAMDISK/sbin/zip
-      rm -f $FOX_RAMDISK/sbin/nano
-      rm -f $FOX_RAMDISK/sbin/gnutar
-      rm -f $FOX_RAMDISK/sbin/gnused
-      rm -f $FOX_RAMDISK/sbin/bash
-      rm -f $FOX_RAMDISK/sbin/busybox      
-      rm -f $FOX_RAMDISK/etc/bash.bashrc
-      rm -rf $FOX_RAMDISK/$RAMDISK_ETC/terminfo
-      [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
-      rm -rf $FFil/Tools
-      if [ "$OF_VANILLA_BUILD" = "1" ]; then
-         rm -rf $FFil/OF_avb20
-         rm -rf $FFil/OF_verity_crypt
+      if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
+      	 rm -rf $FFil/nano
+      	 rm -f $FOX_RAMDISK/sbin/aapt
+      	 rm -f $FOX_RAMDISK/sbin/zip
+      	 rm -f $FOX_RAMDISK/sbin/nano
+      	 rm -f $FOX_RAMDISK/sbin/gnutar
+      	 rm -f $FOX_RAMDISK/sbin/gnused
+      	 rm -f $FOX_RAMDISK/sbin/bash
+      	 rm -f $FOX_RAMDISK/sbin/busybox
+      	 rm -f $FOX_RAMDISK/etc/bash.bashrc
+      	 rm -rf $FOX_RAMDISK/$RAMDISK_ETC/terminfo
+      	 [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
+      	 rm -rf $FFil/Tools
+      	 if [ "$OF_VANILLA_BUILD" = "1" ]; then
+           rm -rf $FFil/OF_avb20
+           rm -rf $FFil/OF_verity_crypt
+      	 fi
       fi
-      
+
       if [ "$FOX_EXTREME_SIZE_REDUCTION" != "1" ]; then
          return
       fi
-      
+
       # fonts to be deleted      
       declare -a FontFiles=(
         "Amatic" 
@@ -718,6 +769,131 @@ local F=""
 	cd $CURRDIR
 }
 
+# have some big binaries in /sdcard/Fox/FoxFiles/bin/ ?
+process_custom_bins_to_sdcard() {
+local tmp1
+local tmp2
+local ramdisk_sbindir=$FOX_RAMDISK/sbin
+local ramdisk_sbindir_10=$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN
+local sdcard_bin=/sdcard/Fox/FoxFiles/bin
+local mksync="3"
+
+  if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
+     return
+  fi
+
+  echo -e "${WHITEONRED}-- 'FOX_CUSTOM_BINS_TO_SDCARD' used; Ensure that you are doing a CLEAN BUILD, else, it *WILL* all go pear-shaped!!${NC}"
+
+  [ -d $FOX_BIN_tmp/bin/ ] && rm -rf $FOX_BIN_tmp/bin/
+  mkdir -p $FOX_BIN_tmp/bin/
+
+  if [ -f $ramdisk_sbindir/bash -a ! -h $ramdisk_sbindir/bash ]; then
+     	mv -f $ramdisk_sbindir/bash $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/bash $ramdisk_sbindir/bash
+  elif [ "$FOX_BUILD_BASH" = "1" -a -f $ramdisk_sbindir_10/bash -a ! -h $ramdisk_sbindir_10/bash ]; then
+     	mv -f $ramdisk_sbindir_10/bash $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/bash $ramdisk_sbindir_10/bash
+  fi
+
+  [ -f $ramdisk_sbindir/zip -a ! -h $ramdisk_sbindir/zip ] && {
+     	mv -f $ramdisk_sbindir/zip $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/zip $ramdisk_sbindir/zip
+  }
+
+  [ -f $ramdisk_sbindir/gnutar ] && {
+     	mv -f $ramdisk_sbindir/gnutar $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/gnutar $ramdisk_sbindir/gnutar
+  }
+
+  [ -f $ramdisk_sbindir/gnused ] && {
+     	mv -f $ramdisk_sbindir/gnused $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/gnused $ramdisk_sbindir/gnused
+  }
+
+  [ -f $ramdisk_sbindir/aapt ] && {
+     	mv -f $ramdisk_sbindir/aapt $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/aapt $ramdisk_sbindir/aapt
+  }
+
+  [ "$FOX_USE_XZ_UTILS" = "1" -a -f $FOX_VENDOR_PATH/Files/xz ] && {
+     $CP -pf $FOX_VENDOR_PATH/Files/xz $FOX_BIN_tmp/bin/lzma
+     [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && {
+     	 rm -f $ramdisk_sbindir_10/lzma $ramdisk_sbindir_10/xz $ramdisk_sbindir/lzma $ramdisk_sbindir/xz
+     	 ln -sf $sdcard_bin/lzma $ramdisk_sbindir/lzma
+     	 ln -sf lzma $ramdisk_sbindir/xz
+     }
+  }
+
+  if [ "$FOX_USE_NANO_EDITOR" = "1" ]; then
+     [ "$ramdisk_sbindir/nano" ] && {
+     	tmp1=$ramdisk_sbindir/nano
+     	$CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" != "1" ] && sed -i -e "s|^NANO_DIR=.*|NANO_DIR=$sdcard_bin/nano|" $tmp1
+     }
+  elif [ "$FOX_EXCLUDE_NANO_EDITOR" != "1" -a -f $ramdisk_sbindir_10/nano -a ! -h $ramdisk_sbindir_10/nano ]; then
+     	mv -f $ramdisk_sbindir_10/nano $FOX_BIN_tmp/bin/
+     	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/nano $ramdisk_sbindir_10/nano
+  fi
+
+ # 1=copy at runtime; 2=symlinks at runtime; 3=symlinks at build time ($mksync)
+ if [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ]; then
+    return
+ fi
+ 
+ # create the helper scripts
+ echo -e "${GREEN}-- FOX_CUSTOM_BINS_TO_SDCARD: creating script to process $sdcard_bin/* for the recovery ramdisk ... ${NC}"
+
+ if [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "1" ]; then
+    tmp2="cp"
+ else
+    tmp2="sym"
+ fi
+
+# create the script
+tmp1=$FOX_BIN_tmp/bin/sdcard_to_bin.sh
+rm -f $tmp1
+cat << EOF >> "$tmp1"
+#!/sbin/sh
+   	cmd="$tmp2"
+   	chmod +x $sdcard_bin/*
+   	if [ "\$cmd" = "cp" ]; then
+           [ -d $sdcard_bin/nano/ ] && mv /sbin/nano /sbin/nano_script
+           cp -af $sdcard_bin/* /sbin/
+           [ -d $sdcard_bin/nano/ ] && { cp -af $sdcard_bin/nano/ /FFiles/nano/; rm -rf /sbin/nano/; mv -f /sbin/nano_script /sbin/nano; }
+           [ -f $sdcard_bin/nano ] && cp -af $sdcard_bin/nano /system/bin/
+   	else
+	   files="aapt bash gnused gnutar lzma zip"
+	   set -- \$files
+	   while [ -n "\$1" ]
+  	   do
+     	      i="\$1"
+     	      [ -f $sdcard_bin/"\$i" ] && { rm -f /sbin/\$i; ln -sf $sdcard_bin/\$i /sbin/\$i; }
+     	      shift
+  	   done
+  	   [ -f $sdcard_bin/nano ] && { rm -f /system/bin/nano; ln -sf $sdcard_bin/nano /system/bin/nano; }
+   	fi
+   	[ -f $sdcard_bin/lzma ] && { rm -f /sbin/xz; ln -sf lzma /sbin/xz; }
+	exit 0;
+EOF
+chmod 0755 $tmp1
+ 
+# run the script to copy /sdcard/Fox/FoxFiles/bin/* to the ramdisk at runtime
+# source this script in postecoveryboot.sh ("source /sbin/from_fox_sd.sh")
+tmp1=$ramdisk_sbindir/from_fox_sd.sh
+rm -f $tmp1
+cat << EOF >> "$tmp1"
+fxDIR=$sdcard_bin;
+fxF=\$fxDIR/sdcard_to_bin.sh;
+if [ -f \$fxF ]; then
+   chmod +x \$fxDIR/*;
+   echo "I: Running \$fxF !" >> /tmp/recovery.log;
+   \$fxF;
+fi
+rm -f "/sbin/from_fox_sd.sh"
+EOF
+chmod 0755 $tmp1
+} # end function process_custom_bins_to_sdcard()
+
 # ****************************************************
 # *** now the real work starts!
 # ****************************************************
@@ -750,8 +926,7 @@ fi
 
 ###############################################################
 # copy stuff to the ramdisk and do all necessary patches before the build system creates the recovery image
-if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
-#if [ "$FOX_VENDOR_CMD" != "Fox_After_Recovery_Image" ]; then
+if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
    echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
 
    if [ -z "$TARGET_ARCH" ]; then
@@ -762,95 +937,98 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   case "$TARGET_ARCH" in
   "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm/magiskboot" "$FOX_RAMDISK/$RAMDISK_BIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm/magiskboot" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       ;;
   "arm64")
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/magiskboot" "$FOX_RAMDISK/$RAMDISK_BIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/magiskboot" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       ;;
   "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
-      $CP "$FOX_VENDOR_PATH/prebuilt/x86/mkbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/x86/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/x86/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/x86/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       ;;
   "x86_64")
       echo -e "${GREEN}-- x86_64 arch detected. Copying x86_64 binaries${NC}"
-      $CP "$FOX_VENDOR_PATH/prebuilt/x86_64/mkbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/x86_64/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_BIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/x86_64/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/x86_64/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       ;;
     *) echo -e "${RED}-- Couldn't detect current device architecture or it is not supported${NC}" ;;
   esac
 
   # build standard (3GB) version
   # copy over vendor FFiles/ and vendor sbin/ stuff before creating the boot image
-  #[ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ] && echo "- FOX_BUILD_DEBUG_MESSAGES: Copying: $FOX_VENDOR_PATH/FoxExtras/* to $FOX_RAMDISK/"
   $CP -pr $FOX_VENDOR_PATH/FoxExtras/* $FOX_RAMDISK/
 
   # if these directories don't already exist
   mkdir -p $FOX_RAMDISK/$RAMDISK_ETC/
-  mkdir -p $FOX_RAMDISK/$RAMDISK_BIN/
+  mkdir -p $FOX_RAMDISK/$RAMDISK_SBIN/
 
   # copy resetprop (armeabi)
-  $CP -p $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/$RAMDISK_BIN/
+  $CP -p $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/$RAMDISK_SBIN/
 
   # deal with magiskboot/mkbootimg/unpackbootimg
   if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
-      echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/$RAMDISK_BIN/magiskboot ...${NC}"
-      rm -f "$FOX_RAMDISK/$RAMDISK_BIN/magiskboot"
+      echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot ...${NC}"
+      rm -f "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot"
   else
      echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
      if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" ]; then
-        echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/$RAMDISK_BIN/magiskboot] - deleting mkbootimg/unpackbootimg ...${NC}"
-        rm -f $FOX_RAMDISK/$RAMDISK_BIN/mkbootimg
-        rm -f $FOX_RAMDISK/$RAMDISK_BIN/unpackbootimg
-        echo -e "${GREEN}-- Backing up $FOX_RAMDISK/$RAMDISK_BIN/magiskboot to: /tmp/fox_build_tmp/ ...${NC}"
+        echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot] - deleting mkbootimg/unpackbootimg ...${NC}"
+        rm -f $FOX_RAMDISK/$RAMDISK_SBIN/mkbootimg
+        rm -f $FOX_RAMDISK/$RAMDISK_SBIN/unpackbootimg
+        echo -e "${GREEN}-- Backing up $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot to: /tmp/fox_build_tmp/ ...${NC}"
         mkdir -p /tmp/fox_build_tmp/
-        $CP -pf $FOX_RAMDISK/$RAMDISK_BIN/magiskboot /tmp/fox_build_tmp/
+        $CP -pf $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot /tmp/fox_build_tmp/
      fi
   fi
 
   # try to fix toolbox egrep/fgrep symlink bug
   if [ "$(uses_toolbox)" = "1" ]; then
-     rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep $FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep
-     ln -sf grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep
-     ln -sf grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep
+     rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
+     ln -sf grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep
+     ln -sf grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
   fi
 
   # replace busybox ps with our own ?
   if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
-     if [ "$(readlink $FOX_RAMDISK/$NEW_RAMDISK_BIN/ps)" = "toybox" ]; then # if using toybox, then we don't need this
+     if [ "$(readlink $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps)" = "toybox" ]; then # if using toybox, then we don't need this
      	rm -f "$FOX_RAMDISK/FFiles/ps"
      	export FOX_REPLACE_BUSYBOX_PS="0"
      	echo -e "${GREEN}-- The \"ps\" command is symlinked to \"toybox\". NOT replacing it...${NC}"
-     elif [ "$(readlink $FOX_RAMDISK/$NEW_RAMDISK_BIN/ps)" = "busybox" ]; then
+     elif [ "$(readlink $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps)" = "busybox" ]; then
         if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
            echo -e "${GREEN}-- Replacing the busybox \"ps\" command with our own full version ...${NC}"
-  	   rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/ps
-  	   ln -s /FFiles/ps $FOX_RAMDISK/$NEW_RAMDISK_BIN/ps
+  	   rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps
+  	   ln -s /FFiles/ps $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps
         fi
      fi
   fi
 
   # Replace the toolbox "getprop" with "resetprop" ?
-  if [ "$FOX_REPLACE_TOOLBOX_GETPROP" = "1" -a -f $FOX_RAMDISK/$RAMDISK_BIN/resetprop ]; then
+  if [ "$FOX_REPLACE_TOOLBOX_GETPROP" = "1" -a -f $FOX_RAMDISK/$RAMDISK_SBIN/resetprop ]; then
      echo -e "${GREEN}-- Replacing the toolbox \"getprop\" command with a fuller version ...${NC}"
-     rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/getprop
-     ln -s $RAMDISK_BIN/resetprop $FOX_RAMDISK/$NEW_RAMDISK_BIN/getprop
+     rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/getprop
+     ln -s $RAMDISK_SBIN/resetprop $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/getprop
   fi
 
   # replace busybox lzma (and "xz") with our own
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" -o "$FOX_USE_XZ_UTILS" = "1" ]; then
-     if [ "$FOX_DYNAMIC_SAMSUNG_FIX" != "1" ]; then
+     if [ "$FOX_DYNAMIC_SAMSUNG_FIX" != "1" -a "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
      	echo -e "${GREEN}-- Replacing the busybox \"lzma\" command with our own full version ...${NC}"
-     	rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/lzma
-     	rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/xz
-     	$CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$NEW_RAMDISK_BIN/lzma
-     	ln -s lzma $FOX_RAMDISK/$NEW_RAMDISK_BIN/xz
+     	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
+     	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
+     	$CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
+     	if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" = "1" ]; then
+     	   [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "1" ] && ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
+     	else
+           ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
+     	fi
      fi
   fi
 
@@ -858,48 +1036,28 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   if [ "$OF_SUPPORT_PRE_FLASH_SCRIPT" = "1" ]; then
      echo -e "${GREEN}-- OF_SUPPORT_PRE_FLASH_SCRIPT=1 (system_root device); copying fox_pre_flash to sbin ...${NC}"
      echo -e "${GREEN}-- Make sure that you mount both /system *and* /system_root in your fstab.${NC}"
-     $CP -p $FOX_VENDOR_PATH/Files/fox_pre_flash $FOX_RAMDISK/$RAMDISK_BIN/
+     $CP -p $FOX_VENDOR_PATH/Files/fox_pre_flash $FOX_RAMDISK/$RAMDISK_SBIN/
   fi
 
   # remove the green LED setting?
   if [ "$OF_USE_GREEN_LED" = "0" ]; then
      echo -e "${GREEN}-- Removing the \"green LED\" setting ...${NC}"
-#     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
-#     # remove the "green LED" tick box (the line where it is found + the next 2 lines)
-#     green_setting="fox_use_green_led"
-#     sed -i "/$green_setting/I,+2 d" $Led_xml_File
-#
-#     # remove the text label
-#     green_setting="fox_led_title"
-#     sed -i "/$green_setting/I,+0 d" $Led_xml_File
   fi
 
   # remove extra "More..." link in the "About" screen?
   if [ "$OF_DISABLE_EXTRA_ABOUT_PAGE" = "1" ]; then
      echo -e "${GREEN}-- Disabling the \"More...\" link in the \"About\" page ...${NC}"
-#     Led_xml_File=$FOX_RAMDISK/twres/pages/settings.xml
-#     green_setting="btn_about_credits"
-#     sed -i "/$green_setting/I,+8 d" $Led_xml_File
-#
-#     green_setting="floating_btn"
-#     sed -i "/$green_setting/I,+6 d" $Led_xml_File
   fi
 
   # remove the "splash" setting?
   if [ "$OF_NO_SPLASH_CHANGE" = "1" ]; then
      echo -e "${GREEN}-- Removing the \"splash image\" setting ...${NC}"
-#     Led_xml_File=$FOX_RAMDISK/twres/pages/customization.xml
-#
-#     # remove the "splash" setting (the line where it is found + the next 8 lines)
-#     green_setting="sph_sph"
-#     sed -i "/$green_setting/I,+8 d" $Led_xml_File
   fi
 
   # disable the magisk addon ui entries?
   if [ "$FOX_DELETE_MAGISK_ADDON" = "1" ]; then
      echo -e "${GREEN}-- Disabling the magisk addon entries in advanced.xml ...${NC}"
      Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
-#     sed -i "/Magisk Manager/I,+5 d" $Led_xml_File
      sed -i "/>mod_magisk</I,+0 d" $Led_xml_File
      sed -i "/>mod_unmagisk</I,+0 d" $Led_xml_File
      sed -i "s/>Magisk</>Magisk ({@disabled})</" $Led_xml_File
@@ -910,27 +1068,27 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
 
      if [ "$FOX_BUILD_BASH" != "1" ]; then
          export FOX_USE_BASH_SHELL="0"
-         rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/bash
+         rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash
      fi
 
      # remove the /sbin/ bash if it is there from a previous build
-     rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
+     rm -f $FOX_RAMDISK/$RAMDISK_SBIN/bash
      rm -f $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
   else
      echo -e "${GREEN}-- Copying bash ...${NC}"
      $CP -p $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
      
      if [ "$FOX_BUILD_BASH" = "1" ]; then
-        if [ -z "$(cat $FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc | grep OrangeFox)" ]; then
-           echo " " >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
-           echo "# OrangeFox" >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
-           echo '[ -f /sdcard/Fox/fox.bashrc ] && source /sdcard/Fox/fox.bashrc' >> "$FOX_RAMDISK/$NEW_RAMDISK_ETC/bash/bashrc"
+        if [ -z "$(cat $FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc | grep OrangeFox)" ]; then
+           echo " " >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc"
+           echo "# OrangeFox" >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc"
+           echo '[ -f /sdcard/Fox/fox.bashrc ] && source /sdcard/Fox/fox.bashrc' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc"
         fi
      else
-        rm -f $FOX_RAMDISK/$RAMDISK_BIN/bash
-        $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
-        chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/bash
-        rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/bash
+        rm -f $FOX_RAMDISK/$RAMDISK_SBIN/bash
+        $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_SBIN/bash
+        chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/bash
+        rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash
      fi
      
      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
@@ -940,61 +1098,59 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
 
   # replace busybox "sh" with bash ?
   if [ "$FOX_BUILD_BASH" = "1" ]; then
-     BASH_BIN=$NEW_RAMDISK_BIN/bash
+     BASH_BIN=$RAMDISK_SYSTEM_BIN/bash
   else
-     BASH_BIN=$RAMDISK_BIN/bash
+     BASH_BIN=$RAMDISK_SBIN/bash
   fi
 
   if [ "$FOX_USE_BASH_SHELL" = "1" ]; then
         echo -e "${GREEN}-- Replacing the \"sh\" applet with bash ...${NC}"
-  	rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
-  	ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/sh
-  	#if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/sh" ]; then
-  	   #rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
-  	   #ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/sh
-  	#fi
+  	rm -f $FOX_RAMDISK/$RAMDISK_SBIN/sh
+  	ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_SBIN/sh
   else
         echo -e "${GREEN}-- Cleaning up any bash stragglers...${NC}"
 	# cleanup any stragglers
-	if [ -h $FOX_RAMDISK/$RAMDISK_BIN/sh ]; then
-	    T=$(readlink $FOX_RAMDISK/$RAMDISK_BIN/sh)
-	    [ "$(basename $T)" = "bash" ] && rm -f $FOX_RAMDISK/$RAMDISK_BIN/sh
+	if [ -h $FOX_RAMDISK/$RAMDISK_SBIN/sh ]; then
+	    T=$(readlink $FOX_RAMDISK/$RAMDISK_SBIN/sh)
+	    [ "$(basename $T)" = "bash" ] && rm -f $FOX_RAMDISK/$RAMDISK_SBIN/sh
 	fi
 
 	# if there is no symlink for /sbin/sh create one
-	if [ ! -e $FOX_RAMDISK/$RAMDISK_BIN/sh -a ! -h $FOX_RAMDISK/$RAMDISK_BIN/sh ]; then
-	   ln -s $NEW_RAMDISK_BIN/sh $FOX_RAMDISK/$RAMDISK_BIN/sh
+	if [ ! -e $FOX_RAMDISK/$RAMDISK_SBIN/sh -a ! -h $FOX_RAMDISK/$RAMDISK_SBIN/sh ]; then
+	   ln -s $RAMDISK_SYSTEM_BIN/sh $FOX_RAMDISK/$RAMDISK_SBIN/sh
 	fi
   fi
 
 # do the same for "ash"?
   if [ "$FOX_ASH_IS_BASH" = "1" ]; then
      echo -e "${GREEN}-- Replacing the \"ash\" applet with bash ...${NC}"
-     rm -f $FOX_RAMDISK/$RAMDISK_BIN/ash
-     ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_BIN/ash
-     rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
-     ln -s $BASH_BIN $FOX_RAMDISK/$NEW_RAMDISK_BIN/ash
+     rm -f $FOX_RAMDISK/$RAMDISK_SBIN/ash
+     ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_SBIN/ash
+     rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ash
+     ln -s $BASH_BIN $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ash
   else
-        echo -e "${GREEN}-- Cleaning up any ash stragglers...${NC}"
-	# cleanup any stragglers
-	if [ -h $FOX_RAMDISK/$RAMDISK_BIN/ash ]; then
-	    T=$(readlink $FOX_RAMDISK/$RAMDISK_BIN/ash)
-	    [ "$(basename $T)" = "bash" ] && rm -f $FOX_RAMDISK/$RAMDISK_BIN/ash
-	fi
+     echo -e "${GREEN}-- Cleaning up any ash stragglers...${NC}"
+     # cleanup any stragglers
+     if [ -h $FOX_RAMDISK/$RAMDISK_SBIN/ash ]; then
+	T=$(readlink $FOX_RAMDISK/$RAMDISK_SBIN/ash)
+	[ "$(basename $T)" = "bash" ] && rm -f $FOX_RAMDISK/$RAMDISK_SBIN/ash
+    fi
   fi
 
   # create symlink for /sbin/bash of missing?
-  if [ -f "$FOX_RAMDISK/$NEW_RAMDISK_BIN/bash" -a ! -e "$FOX_RAMDISK/$RAMDISK_BIN/bash" ]; then
+  if [ -f "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash" -a ! -e "$FOX_RAMDISK/$RAMDISK_SBIN/bash" ]; then
      echo -e "${GREEN}-- Creating a bash symbolic link: /sbin/bash -> /system/bin/bash ...${NC}"
-     ln -sf $NEW_RAMDISK_BIN/bash $FOX_RAMDISK/$RAMDISK_BIN/bash
+     ln -sf $RAMDISK_SYSTEM_BIN/bash $FOX_RAMDISK/$RAMDISK_SBIN/bash
   fi
 
   # Include nano editor ?
   if [ "$FOX_USE_NANO_EDITOR" = "1" ]; then
       echo -e "${GREEN}-- Copying nano editor ...${NC}"
       mkdir -p $FOX_RAMDISK/FFiles/nano/
-      $CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
-      $CP -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/$RAMDISK_BIN/
+      $CP -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/$RAMDISK_SBIN/
+      if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
+      	 $CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
+      fi
   else
       if [ -d $FOX_RAMDISK/FFiles/nano/ ]; then
          echo -e "${GREEN}-- Removing the dangling \"$FOX_RAMDISK/FFiles/nano/\" ...${NC}"
@@ -1006,8 +1162,8 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   if [ "$FOX_EXCLUDE_NANO_EDITOR" = "1" ]; then
       echo -e "${RED}-- Removing the nano files from the build ...${NC}"
       [ -d $FOX_RAMDISK/FFiles/nano/ ] && rm -rf $FOX_RAMDISK/FFiles/nano/
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/nano
-      rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/nano
+      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/nano
+      rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/nano
       rm -f $FOX_RAMDISK/$RAMDISK_ETC/init/nano*
       rm -rf $FOX_RAMDISK/$RAMDISK_ETC/nano
       if [ -d $FOX_RAMDISK/$RAMDISK_ETC/terminfo -a "$FOX_DRASTIC_SIZE_REDUCTION" != "1" ]; then
@@ -1018,65 +1174,64 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   # Include standalone "tar" binary ?
   if [ "$FOX_USE_TAR_BINARY" = "1" ]; then
       echo -e "${GREEN}-- Copying the GNU \"tar\" binary (gnutar) ...${NC}"
-      $CP -p $FOX_VENDOR_PATH/Files/gnutar $FOX_RAMDISK/$RAMDISK_BIN/
-      chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/gnutar
+      $CP -p $FOX_VENDOR_PATH/Files/gnutar $FOX_RAMDISK/$RAMDISK_SBIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/gnutar
   else
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/gnutar
+      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/gnutar
   fi
 
   # Include standalone "sed" binary ?
   if [ "$FOX_USE_SED_BINARY" = "1" ]; then
       echo -e "${GREEN}-- Copying the GNU \"sed\" binary (gnused) ...${NC}"
-      $CP -p $FOX_VENDOR_PATH/Files/gnused $FOX_RAMDISK/$RAMDISK_BIN/
-      chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/gnused
+      $CP -p $FOX_VENDOR_PATH/Files/gnused $FOX_RAMDISK/$RAMDISK_SBIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/gnused
   else
-      rm -f $FOX_RAMDISK/$RAMDISK_BIN/gnused
+      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/gnused
   fi
 
   # Include standalone "grep" binary ?
   if [ "$FOX_USE_GREP_BINARY" = "1"  -a -x $FOX_VENDOR_PATH/Files/grep ]; then
       echo -e "${GREEN}-- Copying the GNU \"grep\" binary ...${NC}"
-      rm -f $FOX_RAMDISK/$NEW_RAMDISK_BIN/grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep $FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep
-      $CP -pf $FOX_VENDOR_PATH/Files/grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/
-      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep"
-      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep"
-      echo 'exec grep -F "$@"' >> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep"
-      echo 'exec grep -E "$@"' >> "$FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep"
-      chmod 0755 $FOX_RAMDISK/$NEW_RAMDISK_BIN/grep $FOX_RAMDISK/$NEW_RAMDISK_BIN/fgrep $FOX_RAMDISK/$NEW_RAMDISK_BIN/egrep
+      rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
+      $CP -pf $FOX_VENDOR_PATH/Files/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
+      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep"
+      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep"
+      echo 'exec grep -F "$@"' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep"
+      echo 'exec grep -E "$@"' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep"
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep
   fi
 
   # Include our own "zip" binary ?
   if [ "$FOX_REMOVE_ZIP_BINARY" = "1" ]; then
-      [ -e $FOX_RAMDISK/$RAMDISK_BIN/zip ] && {
+      [ -e $FOX_RAMDISK/$RAMDISK_SBIN/zip ] && {
          echo -e "${RED}-- Removing the OrangeFox InfoZip \"zip\" binary ...${NC}"
-         rm -f $FOX_RAMDISK/$RAMDISK_BIN/zip
+         rm -f $FOX_RAMDISK/$RAMDISK_SBIN/zip
       }
   else
       if [ "$FOX_SKIP_ZIP_BINARY" != "1" ]; then
          echo -e "${GREEN}-- Copying the OrangeFox InfoZip \"zip\" binary ...${NC}"
-         if [ -e $FOX_RAMDISK/$RAMDISK_BIN/zip ]; then
-            rm -f $FOX_RAMDISK/$RAMDISK_BIN/zip
+         if [ -e $FOX_RAMDISK/$RAMDISK_SBIN/zip ]; then
+            rm -f $FOX_RAMDISK/$RAMDISK_SBIN/zip
          fi
-         $CP -pf $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/$RAMDISK_BIN/
-         chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/zip
+         $CP -pf $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/$RAMDISK_SBIN/
+         chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/zip
       fi
   fi
 
   # if zip is built from source (in /system/bin/) create a symlink to it if necessary
-  if [ -x "$FOX_RAMDISK/$NEW_RAMDISK_BIN/zip" ]; then
-     [ ! -e "$FOX_RAMDISK/$RAMDISK_BIN/zip" ] && ln -sf /system/bin/zip $FOX_RAMDISK/$RAMDISK_BIN/zip
+  if [ -x "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/zip" ]; then
+     [ ! -e "$FOX_RAMDISK/$RAMDISK_SBIN/zip" ] && ln -sf /system/bin/zip $FOX_RAMDISK/$RAMDISK_SBIN/zip
   fi
 
   # embed the system partition (in foxstart.sh)
-  F=$FOX_RAMDISK/$RAMDISK_BIN/foxstart.sh
+  F=$FOX_RAMDISK/$RAMDISK_SBIN/foxstart.sh
   if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
      echo -e "${RED}-- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
      sed -i -e "s|^SYSTEM_PARTITION=.*|SYSTEM_PARTITION=\"$FOX_RECOVERY_SYSTEM_PARTITION\"|" $F
-     # sed -i 's/^SYSTEM_PARTITION=.*/SYSTEM_PARTITION="'"$FOX_RECOVERY_SYSTEM_PARTITION"'"/' $F
   fi
 
   # embed the vendor partition (in foxstart.sh)
-  F=$FOX_RAMDISK/$RAMDISK_BIN/foxstart.sh
+  F=$FOX_RAMDISK/$RAMDISK_SBIN/foxstart.sh
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo -e "${RED}-- Changing the recovery vendor partition to \"$FOX_RECOVERY_VENDOR_PARTITION\" ${NC}"
      sed -i -e "s|^VENDOR_PARTITION=.*|VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION|" $F
@@ -1090,41 +1245,42 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
   fi
 
   # Include mmgui
-  $CP -p $FOX_VENDOR_PATH/Files/mmgui $FOX_RAMDISK/$RAMDISK_BIN/mmgui
-  chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/mmgui
+  $CP -p $FOX_VENDOR_PATH/Files/mmgui $FOX_RAMDISK/$RAMDISK_SBIN/mmgui
+  chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/mmgui
 
   # Include aapt (1.7mb!) ?
   if [ "$FOX_REMOVE_AAPT" = "1" ]; then
      echo -e "${GREEN}-- Omitting the aapt binary ...${NC}"
      # remove aapt if it is there from a previous build
-     rm -f $FOX_RAMDISK/$RAMDISK_BIN/aapt
+     rm -f $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   else
-     $CP -p $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/$RAMDISK_BIN/aapt
-     chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/aapt
+     $CP -p $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/$RAMDISK_SBIN/aapt
+     chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   fi
 
   # enable the app manager?
   if [ "$FOX_ENABLE_APP_MANAGER" = "1" ]; then
      echo -e "${GREEN}-- Enabling the App Manager ...${NC}"
-#     Led_xml_File=$FOX_RAMDISK/twres/pages/advanced.xml
-#     #sed -i "/appmgr_title/I,+3 d" $Led_xml_File
-#     sed -i '/name="{@appmgr_title}"/I,+3 d' $Led_xml_File
-     # remove aapt also, as it would be redundant
+  # remove aapt also, as it would be redundant
   else
      echo -e "${GREEN}-- Omitting the aapt binary (it useless if the app manager is not enabled) ...${NC}"
-     rm -f $FOX_RAMDISK/$RAMDISK_BIN/aapt
+     rm -f $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   fi
 
-  # fox_10 - include some stuff (busybox, new magisk)
-  if [ "$FOX_10" = "true" ]; then
-     if [ "$FOX_REMOVE_BUSYBOX_BINARY" = "1" ]; then
-        rm -f $FOX_RAMDISK/$RAMDISK_BIN/busybox
-     else
-        $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_BIN/busybox
-        chmod 0755 $FOX_RAMDISK/$RAMDISK_BIN/busybox
-     fi
+  # include some stuff (busybox, new magisk)
+  if [ "$FOX_REMOVE_BUSYBOX_BINARY" = "1" ]; then
+     rm -f $FOX_RAMDISK/$RAMDISK_SBIN/busybox
+  else
+     $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_SBIN/busybox
+     chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/busybox
   fi
-  
+
+#######################
+  if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" = "1" ]; then
+     process_custom_bins_to_sdcard;
+  fi
+#######################
+
   # Get Magisk version
   tmp1=$FOX_VENDOR_PATH/FoxFiles/Magisk.zip
   if [ -n "$FOX_USE_SPECIFIC_MAGISK_ZIP" -a -e "$FOX_USE_SPECIFIC_MAGISK_ZIP" ]; then
@@ -1193,8 +1349,16 @@ if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image"
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
   if [ -n "$FOX_RECOVERY_BOOT_PARTITION" ]; then
-     echo "BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION" >> $FOX_RAMDISK/etc/fox.cfg
+     echo "BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
+
+  # save the build id
+   echo -e "${GREEN}-- Generating the build ID ${NC}"
+   tmp1=$(generate_build_id)
+   grep -q "ro.build.fox_id=" $DEFAULT_PROP_ROOT && \
+  	sed -i -e "s/ro.build.fox_id=.*/ro.build.fox_id=$tmp1/g" $DEFAULT_PROP_ROOT || \
+  	echo "ro.build.fox_id=$tmp1" >> $DEFAULT_PROP_ROOT
+   echo "ro.build.fox_id=$tmp1" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
 
    # stamp our identity in the prop
    sed -i -e "s/$TARGET_PRODUCT/fox_$FOX_DEVICE/g" $DEFAULT_PROP
@@ -1214,7 +1378,7 @@ fi
 
 # this is the final stage after the recovery image has been created
 # process the recovery image where necessary (and repack where necessary)
-if [ -z "$FOX_VENDOR_CMD" ] || [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
 
      if [ "$OF_SAMSUNG_DEVICE" = "1" -o "$OF_SAMSUNG_DEVICE" = "true" ]; then
         SAMSUNG_DEVICE="samsung"

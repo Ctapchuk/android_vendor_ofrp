@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 05 October 2021
+# Date: 02 November 2021
 #
 # -----------------------------------
 #
@@ -565,5 +565,31 @@
 - Use this if building a specific variant for your device (eg, for MIUI, or FBE, or whatever variant for which the build is specific)
 - eg, export FOX_VARIANT=MIUI
 - default = default
+#
+"FOX_CUSTOM_BINS_TO_SDCARD" [NEW] [EXPERIMENTAL WiP]
+- This is *highly experimental* and should be considered as work-in-progress. It is very fiddly to use, and must be used with *extreme caution*
+- You should only use this if it is ABSOLUTELY NECESSARY. It has too many potential issues
+- This can be used to move some big binaries to the internal storage, instead of being located in the recovery ramdisk. This will reduce
+- the size of the recovery ramdisk, and those binaries will be made available at runtime. 
+- How the binaries are made available to the recovery at runtine depends on the value given to this variable
+- Possible values:
+- 	"1" = copy the files to the ramdisk at runtime
+-	"2" = create symlinks at runtime to the files in the internal storage; 
+- 	"3" = create symlinks at build time to the files in the internal storage;
+-
+- Additional required steps:
+-	You must insert the code on the next line into your device tree's postrecoveryboot.sh
+		[ -f /sbin/from_fox_sd.sh ] && source /sbin/from_fox_sd.sh
+-
+- Notes:
+- * Some build vars are not compatible with this one (eg, FOX_USE_BASH_SHELL; FOX_ASH_IS_BASH; FOX_DYNAMIC_SAMSUNG_FIX; FOX_USE_GREP_BINARY)
+- * When using this build variable, you MUST ALWAYS do a CLEAN BUILD - everytime you build
+- * Users MUST flash the OrangeFox zip, *not* the img - otherwise the binaries will not be available to the recovery
+- * If a user formats /data or deletes the /sdcard/Fox/FoxFiles/ folder, then the binaries will not be available to the recovery; the OrangeFox zip must be flashed again
+- * If decryption does not work, then the binaries will not be available to the recovery
+#
+"OF_SKIP_DECRYPTED_ADOPTED_STORAGE" [NEW] [EXPERIMENTAL]
+- Set this to 1 to try and work around issues with the binary Android 12 storage.xml files
+ - default = 0
 #
 # -----------------------------------
