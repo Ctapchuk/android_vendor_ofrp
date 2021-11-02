@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 05 October 2021
+# Date: 02 November 2021
 #
 # -----------------------------------
 #
@@ -578,5 +578,9 @@
 - This is *experimental* and should be considered as work-in-progress. You should test your builds thoroughly to make sure that everything works as expected
 - This is actually only a stop-gap until the problem is fixed upstream in magisk
 - default = 0
+#
+"OF_SKIP_DECRYPTED_ADOPTED_STORAGE" [NEW] [EXPERIMENTAL]
+- Set this to 1 to try and work around issues with the binary Android 12 storage.xml files
+ - default = 0
 #
 # -----------------------------------
