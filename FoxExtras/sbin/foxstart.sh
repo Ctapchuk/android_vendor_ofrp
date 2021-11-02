@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20211001
+# * Date:   20211102
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20211001"
+SCRIPT_LASTMOD_DATE="2021102"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -277,8 +277,8 @@ local slot=$(getprop "ro.boot.slot_suffix")
 
    # query the build.prop
    local tmp2=""
-   [ -n "$V_PROP" ] && tmp2=$(file_getprop "$V_PROP" "ro.vendor.build.id")
-   [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.build.display.id")
+   tmp2=$(file_getprop "$PROP" "ro.build.display.id")
+   [ -n "$V_PROP" -a  -z "$tmp2" ] && tmp2=$(file_getprop "$V_PROP" "ro.vendor.build.id")
    [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.build.id")
    [ -z "$tmp2" ] && tmp2=$(file_getprop "$PROP" "ro.system.build.id")
    
