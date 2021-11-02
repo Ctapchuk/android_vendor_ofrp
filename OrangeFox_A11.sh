@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 05 October 2021
+# 02 November 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -29,8 +29,6 @@
 # It is best to declare them in a script that you will use for building
 #
 #
-
-#set -o xtrace
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
@@ -121,6 +119,13 @@ filesize() {
   [ -z "$1" -o -d "$1" ] && { echo "0"; return; }
   [ ! -e "$1" -a ! -h "$1" ] && { echo "0"; return; }
   stat -c %s "$1"
+}
+
+# generate a randomised build id
+generate_build_id() {
+local cmd="uuidgen -rx"
+  [ -z "$(which uuidgen)" ] && cmd="cat /proc/sys/kernel/random/uuid"
+  $cmd
 }
 
 # check out some incompatible settings
@@ -1396,8 +1401,16 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      echo "VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
   if [ -n "$FOX_RECOVERY_BOOT_PARTITION" ]; then
-     echo "BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION" >> $FOX_RAMDISK/etc/fox.cfg
+     echo "BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
+
+  # save the build id
+   echo -e "${GREEN}-- Generating the build ID ${NC}"
+   tmp1=$(generate_build_id)
+   grep -q "ro.build.fox_id=" $DEFAULT_PROP_ROOT && \
+  	sed -i -e "s/ro.build.fox_id=.*/ro.build.fox_id=$tmp1/g" $DEFAULT_PROP_ROOT || \
+  	echo "ro.build.fox_id=$tmp1" >> $DEFAULT_PROP_ROOT
+   echo "ro.build.fox_id=$tmp1" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
 
    # stamp our identity in the prop
    sed -i -e "s/$TARGET_PRODUCT/fox_$FOX_DEVICE/g" $DEFAULT_PROP
