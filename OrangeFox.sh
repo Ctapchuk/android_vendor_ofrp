@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 02 November 2021
+# 20 November 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -54,9 +54,12 @@ NC='\033[0m'
 TMP_SCRATCH=/tmp/fox_build_000tmp.txt
 WORKING_TMP=/tmp/Fox_000_tmp
 
-# make sure we know exactly which "cp" command we are running
+# make sure we know exactly which commands we are running
 CP=/bin/cp
 [ ! -x "$CP" ] && CP=cp
+
+UUIDGEN=/usr/bin/uuidgen
+[ ! -x "$UUIDGEN" ] && UUIDGEN=uuidgen
 
 # exit function (cleanup first), and return status code
 abort() {
@@ -106,8 +109,8 @@ filesize() {
 
 # generate a randomised build id
 generate_build_id() {
-local cmd="uuidgen -rx"
-  [ -z "$(which uuidgen)" ] && cmd="cat /proc/sys/kernel/random/uuid"
+local cmd="$UUIDGEN -rx"
+  [ -z "$(which $UUIDGEN)" ] && cmd="cat /proc/sys/kernel/random/uuid"
   $cmd
 }
 
