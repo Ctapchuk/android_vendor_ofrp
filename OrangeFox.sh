@@ -1221,6 +1221,17 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       fi
   fi
 
+  # phhusson's lptool? (arm64 only)
+  if [ "$OF_ENABLE_LPTOOLS" = "1" -a -x $FOX_VENDOR_PATH/Files/lptools -a "$TARGET_ARCH" = "arm64" ]; then
+      echo -e "${GREEN}-- Copying phhusson's \"lptools\" binary [use only with arm64 dynamic partition devices] ...${NC}"
+      $CP -pf $FOX_VENDOR_PATH/Files/lptools $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lptools
+  else
+      if [ -e $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lptools ]; then
+         rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lptools
+      fi
+  fi
+
   # if zip is built from source (in /system/bin/) create a symlink to it if necessary
   if [ -x "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/zip" ]; then
      [ ! -e "$FOX_RAMDISK/$RAMDISK_SBIN/zip" ] && ln -sf /system/bin/zip $FOX_RAMDISK/$RAMDISK_SBIN/zip

@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 02 November 2021
+# Date: 20 November 2021
 #
 # -----------------------------------
 #
@@ -591,5 +591,10 @@
 "OF_SKIP_DECRYPTED_ADOPTED_STORAGE" [NEW] [EXPERIMENTAL]
 - Set this to 1 to try and work around issues with the binary Android 12 storage.xml files
  - default = 0
+#
+"OF_ENABLE_LPTOOLS" [NEW] [ARM64 dynamic partition devices ONLY!]
+- Set to 1 to add phhusson's lptools binary to the build
+- This is only for arm64 devices with dynamic partitions; do not try to use on any other kind of device
+- default = 0
 #
 # -----------------------------------
