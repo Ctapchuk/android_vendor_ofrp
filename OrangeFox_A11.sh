@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 02 November 2021
+# 22 November 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -69,9 +69,12 @@ NC='\033[0m'
 TMP_SCRATCH=/tmp/fox_build_000tmp.txt
 WORKING_TMP=/tmp/Fox_000_tmp
 
-# make sure we know exactly which "cp" command we are running
+# make sure we know exactly which commands we are running
 CP=/bin/cp
 [ ! -x "$CP" ] && CP=cp
+
+UUIDGEN=/usr/bin/uuidgen
+[ ! -x "$UUIDGEN" ] && UUIDGEN=uuidgen
 
 # exit function (cleanup first), and return status code
 abort() {
@@ -123,8 +126,8 @@ filesize() {
 
 # generate a randomised build id
 generate_build_id() {
-local cmd="uuidgen -rx"
-  [ -z "$(which uuidgen)" ] && cmd="cat /proc/sys/kernel/random/uuid"
+local cmd="$UUIDGEN -rx"
+  [ -z "$(which $UUIDGEN)" ] && cmd="cat /proc/sys/kernel/random/uuid"
   $cmd
 }
 
@@ -1382,6 +1385,15 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   	sed -i -e "s/ro.bootimage.build.date.utc_fox=.*/ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP_ROOT || \
   	echo "ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP_ROOT
 
+  # also update prop.default
+  grep -q "ro.build.date.utc_fox=" $DEFAULT_PROP && \
+  	sed -i -e "s/ro.build.date.utc_fox=.*/ro.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP || \
+  	echo "ro.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP
+
+  grep -q "ro.bootimage.build.date.utc_fox=" $DEFAULT_PROP && \
+  	sed -i -e "s/ro.bootimage.build.date.utc_fox=.*/ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC/g" $DEFAULT_PROP || \
+  	echo "ro.bootimage.build.date.utc_fox=$BUILD_DATE_UTC" >> $DEFAULT_PROP
+
   #  save also to /etc/fox.cfg
   echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   [ -z "$FOX_CURRENT_DEV_STR" ] && FOX_CURRENT_DEV_STR=$(git -C $FOX_VENDOR_PATH/../../bootable/recovery log -1 --format='%ad (%h)' --date=short) > /dev/null 2>&1
@@ -1410,6 +1422,12 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
    grep -q "ro.build.fox_id=" $DEFAULT_PROP_ROOT && \
   	sed -i -e "s/ro.build.fox_id=.*/ro.build.fox_id=$tmp1/g" $DEFAULT_PROP_ROOT || \
   	echo "ro.build.fox_id=$tmp1" >> $DEFAULT_PROP_ROOT
+
+  # also update prop.default
+   grep -q "ro.build.fox_id=" $DEFAULT_PROP && \
+  	sed -i -e "s/ro.build.fox_id=.*/ro.build.fox_id=$tmp1/g" $DEFAULT_PROP || \
+  	echo "ro.build.fox_id=$tmp1" >> $DEFAULT_PROP
+
    echo "ro.build.fox_id=$tmp1" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
 
    # stamp our identity in the prop
