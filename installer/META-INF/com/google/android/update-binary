@@ -65,7 +65,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20210915"
+MOD_DATE="20211122"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -471,11 +471,18 @@ local PART
 
    	cd "$EX_DIR"
    	
-   	if [ ! -f "$tool" ]; then
-   	   tool=$(which magiskboot)
+   	# various searches for magiskboot in the live recovery session
+   	if [ ! -e "$tool" ]; then
+   	   tool=/system/bin/magiskboot
+   	   if [ ! -e "$tool" ]; then
+   	      tool=/sbin/magiskboot
+   	      [ ! -e "$tool" ] && tool=/FFiles/magiskboot_new
+   	      [ ! -e "$tool" ] && tool=$(which magiskboot)
+   	   fi
    	   [ -z "$tool" ] && abort "- I cannot find magiskboot. Quitting!"
    	fi
 
+   	# recovery.img must be in the zip installer
    	if [ ! -f "recovery.img" ]; then
    	   abort "- I cannot find the OrangeFox recovery image. Quitting!"
    	fi
