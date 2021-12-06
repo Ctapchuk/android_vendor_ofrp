@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 03 December 2021
+# 06 December 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -126,7 +126,7 @@ filesize() {
 
 # generate a randomised build id
 generate_build_id() {
-local cmd="$UUIDGEN -rx"
+local cmd="$UUIDGEN -r"
   [ -z "$(which $UUIDGEN)" ] && cmd="cat /proc/sys/kernel/random/uuid"
   $cmd
 }
