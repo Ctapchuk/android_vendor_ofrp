@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 03 December 2021
+# 06 December 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -109,7 +109,7 @@ filesize() {
 
 # generate a randomised build id
 generate_build_id() {
-local cmd="$UUIDGEN -rx"
+local cmd="$UUIDGEN -r"
   [ -z "$(which $UUIDGEN)" ] && cmd="cat /proc/sys/kernel/random/uuid"
   $cmd
 }
