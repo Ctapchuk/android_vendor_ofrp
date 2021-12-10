@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 06 December 2021
+# 10 December 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -290,8 +290,25 @@ fi
 # magiskboot v23+ for VAB device installation
 NEW_MAGISKBOOT_BIN="magiskboot_new"
 
+# virtual A/B (VAB)
+if [ "$OF_AB_DEVICE" = "1" -a "$BOARD_BOOT_HEADER_VERSION" -gt 2 -a "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+    [ -z "$OF_VIRTUAL_AB_DEVICE" ] && export OF_VIRTUAL_AB_DEVICE="1"
+fi
+
+if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
+    echo -e "${GREEN}-- The device is a virtual A/B device .... ${NC}"
+    export OF_AB_DEVICE=1
+    export OF_USE_NEW_MAGISKBOOT=1
+    export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1
+fi
+
 # magiskboot 23+ and repatch issues?
 if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
+   if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
+      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - Virtual A/B device - you cannot also use \"OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY\". ${NC}"
+      echo -e "${RED}-- Quitting now ... ${NC}"
+      abort 101
+   fi
    export OF_USE_NEW_MAGISKBOOT=1
    export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1
 fi

@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 20 November 2021
+# Date: 10 December 2021
 #
 # -----------------------------------
 #
@@ -559,6 +559,11 @@
 - * Users MUST flash the OrangeFox zip, *not* the img - otherwise the binaries will not be available to the recovery
 - * If a user formats /data or deletes the /sdcard/Fox/FoxFiles/ folder, then the binaries will not be available to the recovery; the OrangeFox zip must be flashed again
 - * If decryption does not work, then the binaries will not be available to the recovery
+#
+"OF_VIRTUAL_AB_DEVICE" [NEW] [EXPERIMENTAL WiP]
+- Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
+- If this is set, some other relevant variables are enabled automatically ("OF_AB_DEVICE", "OF_USE_NEW_MAGISKBOOT", "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES")
+- default = 0
 #
 "OF_USE_NEW_MAGISKBOOT" [NEW] [EXPERIMENTAL WiP]
 - Set to 1 to use the magiskboot v23+ binary instead of the normal version, so as to be able to process the v3 headers in new boot images
