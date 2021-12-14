@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 06 December 2021
+# 14 December 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -1301,6 +1301,10 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      tmp1=$FOX_USE_SPECIFIC_MAGISK_ZIP
   fi
   MAGISK_VER=$(unzip -c $tmp1 common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
+  if [ -z "$MAGISK_VER" ]; then
+     tmp2=$(unzip -c $tmp1 assets/util_functions.sh | grep "MAGISK_VER=")
+     MAGISK_VER=$(cut -d= -f2 <<<$tmp2)
+  fi
   echo -e "${GREEN}-- Detected Magisk version: ${MAGISK_VER}${NC}"
   sed -i -E "s+\"magisk_ver\" value=\"(.*)\"+\"magisk_ver\" value=\"$MAGISK_VER\"+" $FOX_RAMDISK/twres/ui.xml
 
