@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2021 OrangeFox Recovery Project
-# Date: 20 November 2021
+# Date: 19 December 2021
 #
 # -----------------------------------
 #
@@ -131,10 +131,7 @@
    - set to 1 to disable recovery zip creation
    - default = 0
 #
-"OF_SUPPORT_PRE_FLASH_SCRIPT"
-   - set to 1 to support running a script before flashing zips (other than ROMs)
-   - the script must be called /sbin/fox_pre_flash - and you need to copy it there yourself
-   - default = 0
+"OF_SUPPORT_PRE_FLASH_SCRIPT" [OBSOLETE]
 #
 "OF_DONT_PATCH_ON_FRESH_INSTALLATION"
    - set to 1 to prevent patching dm-verity and forced-encryption when the OrangeFox zip is flashed

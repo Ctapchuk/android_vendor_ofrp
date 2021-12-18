@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 14 December 2021
+# 18 December 2021
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -1033,13 +1033,6 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
            ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
      	fi
      fi
-  fi
-
-  # system_root stuff
-  if [ "$OF_SUPPORT_PRE_FLASH_SCRIPT" = "1" ]; then
-     echo -e "${GREEN}-- OF_SUPPORT_PRE_FLASH_SCRIPT=1 (system_root device); copying fox_pre_flash to sbin ...${NC}"
-     echo -e "${GREEN}-- Make sure that you mount both /system *and* /system_root in your fstab.${NC}"
-     $CP -p $FOX_VENDOR_PATH/Files/fox_pre_flash $FOX_RAMDISK/$RAMDISK_SBIN/
   fi
 
   # remove the green LED setting?
