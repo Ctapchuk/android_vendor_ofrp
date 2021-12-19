@@ -594,4 +594,14 @@
 - This is only for arm64 devices with dynamic partitions; do not try to use on any other kind of device
 - default = 0
 #
+"OF_CONVERT_RW" [NEW] [EXPERIMENTAL]
+- Set to 1 to add Convert ROM to r/w script by lebigmac (modified and implemented by brigudav) to the build.
+- Deletes EXT4_FEATURE_RO_COMPAT_SHARED_BLOCKS feature whic doesn't allow mounting partitions with read/write access (Android 10+ stock ROMs)
+- This scripts unpack super partition, extracts dynamic partitions, converts and repacks them to super.
+- Requirements:
+- 	* >20% battery charge
+- 	* 25GB of free space in /data partition
+- A/B devices maybe doesn't work
+- default = 0
+#
 # -----------------------------------
