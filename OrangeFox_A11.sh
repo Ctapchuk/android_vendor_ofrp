@@ -1264,6 +1264,23 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       fi
   fi
 
+  # convert rom to r/w?
+  if [ "$OF_CONVERT_RW" = "1" ]; then
+      echo -e "${GREEN}-- Copying Convert ROM to r/w script ...${NC}"
+      $CP -pf $FOX_VENDOR_PATH/Files/img2simg $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/img2simg
+      $CP -pf $FOX_VENDOR_PATH/Files/lpdump $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lpdump
+      $CP -pf $FOX_VENDOR_PATH/Files/lpmake $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lpmake
+      $CP -pf $FOX_VENDOR_PATH/Files/lpunpack $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lpunpack
+  else
+      if [ -e $FOX_RAMDISK/FFiles/OF_convert/OF_convert.zip ]; then
+         rm -rf $FOX_RAMDISK/FFiles/OF_convert
+      fi
+  fi
+
   # if zip is built from source (in /system/bin/) create a symlink to it if necessary
   if [ -x "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/zip" ]; then
      [ ! -e "$FOX_RAMDISK/$RAMDISK_SBIN/zip" ] && ln -sf /system/bin/zip $FOX_RAMDISK/$RAMDISK_SBIN/zip

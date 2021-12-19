@@ -590,4 +590,15 @@ OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY [OBSOLETE]
 - Do *NOT* use this variable unless you are sure of what you are doing (and only if you are getting bootloops after flashing OrangeFox or Magisk or after changing the splash image)
 - This is *experimental* and should be considered as work-in-progress. You should test your builds thoroughly to make sure that everything works as expected
 - default = 0
+#
+"OF_CONVERT_RW" [NEW] [EXPERIMENTAL]
+- Set to 1 to add Convert ROM to r/w script by lebigmac (modified and implemented by brigudav) to the build.
+- Deletes EXT4_FEATURE_RO_COMPAT_SHARED_BLOCKS feature whic doesn't allow mounting partitions with read/write access (Android 10+ stock ROMs)
+- This scripts unpack super partition, extracts dynamic partitions, converts and repacks them to super.
+- Requirements:
+- 	* >20% battery charge
+- 	* 25GB of free space in /data partition
+- A/B devices maybe doesn't work
+- default = 0
+#
 # -----------------------------------
