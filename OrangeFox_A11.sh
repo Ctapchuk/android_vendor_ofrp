@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 18 December 2021
+# 23 December 2021
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -291,8 +291,10 @@ fi
 NEW_MAGISKBOOT_BIN="magiskboot_new"
 
 # virtual A/B (VAB)
-if [ "$OF_AB_DEVICE" = "1" -a "$BOARD_BOOT_HEADER_VERSION" -gt 2 -a "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
-    [ -z "$OF_VIRTUAL_AB_DEVICE" ] && export OF_VIRTUAL_AB_DEVICE="1"
+if [ "$OF_AB_DEVICE" = "1" -a "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+    if [ -n "$BOARD_BOOT_HEADER_VERSION" ]; then
+       [ "$BOARD_BOOT_HEADER_VERSION" -gt 2 -a -z "$OF_VIRTUAL_AB_DEVICE" ] && export OF_VIRTUAL_AB_DEVICE="1"
+    fi
 fi
 
 if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
