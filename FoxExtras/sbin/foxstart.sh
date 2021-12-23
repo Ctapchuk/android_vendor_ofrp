@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20211102
+# * Date:   20211223
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="2021102"
+SCRIPT_LASTMOD_DATE="20211223"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -618,9 +618,12 @@ post_init() {
   # FBE - remove the "del_pass" addon, but keep a copy in /FFiles/Tools/
   M=$(isFB_Encrypted)
   [ "$M" = "1" ] && {
-    mkdir -p /FFiles/Tools
-    cp -a /FFiles/OF_DelPass/OF_DelPass.zip /FFiles/Tools/
-    rm -rf "/FFiles/OF_DelPass/"
+    local F=/FFiles/OF_DelPass/OF_DelPass.zip
+    if [ -f $F ]; then
+    	mkdir -p /FFiles/Tools
+    	cp -f $F /FFiles/Tools/
+    	rm -rf "/FFiles/OF_DelPass/"
+    fi
   }
   
   # write OrangeFox props to the log
