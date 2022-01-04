@@ -154,8 +154,8 @@ if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" = "1" ]; then
 fi
 
 if [ "$OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" = "1" ]; then
-   if [ "$OF_DISABLE_MIUI_SPECIFIC_FEATURES" = "1" -o "$OF_TWRP_COMPATIBILITY_MODE" = "1" -o "$OF_VANILLA_BUILD" = "1" ]; then
-      echo -e "${WHITEONRED}-- ERROR! \"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES\" is incompatible with \"OF_DISABLE_MIUI_SPECIFIC_FEATURES\" or \"OF_TWRP_COMPATIBILITY_MODE\"${NC}"
+   if [ "$OF_DISABLE_EXTRA_SPECIFIC_FEATURES" = "1" -o "$OF_TWRP_COMPATIBILITY_MODE" = "1" -o "$OF_VANILLA_BUILD" = "1" ]; then
+      echo -e "${WHITEONRED}-- ERROR! \"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES\" is incompatible with \"OF_DISABLE_EXTRA_SPECIFIC_FEATURES\" or \"OF_TWRP_COMPATIBILITY_MODE\"${NC}"
       echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
       abort 98
    fi
