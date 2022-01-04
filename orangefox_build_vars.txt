@@ -138,9 +138,9 @@
    - default = 0
    - if dm-verity is enabled in the ROM, and this is turned on, there will be a bootloop
 #
- "OF_TWRP_COMPATIBILITY_MODE" ; "OF_DISABLE_MIUI_SPECIFIC_FEATURES"
+ "OF_TWRP_COMPATIBILITY_MODE" ; "OF_DISABLE_EXTRA_SPECIFIC_FEATURES"
    - set either of them to 1 to enable stock TWRP-compatibility mode 
-   - in this mode, MIUI OTA, and dm-verity/forced-encryption patching will be disabled
+   - in this mode, incremental OTA, and dm-verity/forced-encryption patching will be disabled
    - default = 0
 #
 "OF_DONT_PATCH_ENCRYPTED_DEVICE"
@@ -203,7 +203,7 @@
    - default = nothing (ie, try to decrypt all Android API levels)
 #
 "OF_OTA_RES_DECRYPT"
-   - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
+   - set to 1 to try and decrypt internal storage (instead bailing out with an error) during incremental OTA restore
    - default = 0
 #
 "OF_NO_MIUI_OTA_VENDOR_BACKUP"
@@ -396,7 +396,7 @@
 "OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" [NEW]
 - Set this to 1 to enable support for block-based incremental OTA on custom ROMs that have this feature
 - If enabled, flashing a custom ROM will run the same OTA_BAK/OTA_RES processes as with MIUI
-- This setting is incompatible with OF_DISABLE_MIUI_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/OF_VANILLA_BUILD
+- This setting is incompatible with OF_DISABLE_EXTRA_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/OF_VANILLA_BUILD
 - The default position is to support block-based incremental OTA in MIUI ROMs only
 - default = 0
 #
@@ -404,8 +404,8 @@
 - Set this to 1 to suppress warnings that not patching MIUI may cause MIUI to not boot, or to overwrite the recovery with stock recovery
 - default = 0
 #
-"OF_DISABLE_MIUI_OTA_BY_DEFAULT" [NEW]
-- Set this to 1 to disable the OTA settings by default, meaning that users have to enable OTA manually
+"OF_DISABLE_INCREMENTAL_OTA_BY_DEFAULT"
+- Set this to 1 to disable the incremental OTA settings by default, meaning that users have to enable support incremental OTA manually
 - default = 0
 #
 "OF_QUICK_BACKUP_LIST" [NEW]
