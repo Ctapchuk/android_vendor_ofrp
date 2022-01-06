@@ -38,6 +38,9 @@ export OF_USE_MAGISKBOOT=1
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
+# The name of this script - don't change it
+THIS_SCRIPT=OrangeFox_A11.sh
+
 # environment/build-var imports
 FOXENV=/tmp/$FOX_DEVICE/fox_env.sh
 if [ -f "$FOXENV" ]; then
@@ -445,7 +448,7 @@ expand_vendor_path() {
   [ ! -d $FOX_VENDOR_PATH/installer ] && {
      local T="${BASH_SOURCE%/*}"
      T=$(fullpath $T)
-     [ -x $T/OrangeFox.sh ] && FOX_VENDOR_PATH=$T
+     [ -x $T/$THIS_SCRIPT ] && FOX_VENDOR_PATH=$T
   }
 }
 
