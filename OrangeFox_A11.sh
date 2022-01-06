@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2021 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2022 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 23 December 2021
+# 06 January 2022
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -29,6 +29,11 @@
 # It is best to declare them in a script that you will use for building
 #
 #
+
+# automatically use magiskboot - overrides anything to the contrary in device trees
+# other methods for patching recovery/boot images are no longer supported
+export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1
+export OF_USE_MAGISKBOOT=1
 
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
@@ -188,7 +193,32 @@ if [ -z "$FOX_VENDOR_CMD" ]; then
    abort 100
 fi
 
-#
+# virtual A/B (VAB)
+if [ "$OF_AB_DEVICE" = "1" -a "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+    if [ -n "$BOARD_BOOT_HEADER_VERSION" ]; then
+       [ "$BOARD_BOOT_HEADER_VERSION" -gt 2 -a -z "$OF_VIRTUAL_AB_DEVICE" ] && export OF_VIRTUAL_AB_DEVICE="1"
+    fi
+fi
+
+if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
+    echo -e "${GREEN}-- The device is a virtual A/B device .... ${NC}"
+    export OF_AB_DEVICE=1
+    export OF_USE_NEW_MAGISKBOOT=1
+fi
+
+# --------- magiskboot vars --------
+# magiskboot v23+ for VAB device installation
+NEW_MAGISKBOOT_BIN="magiskboot_new"
+
+# magiskboot 23+ and repatch issues?
+if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
+   if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
+      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - Virtual A/B device - you cannot also use \"OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY\". ${NC}"
+      echo -e "${RED}-- Quitting now ... ${NC}"
+      abort 101
+   fi
+fi
+
 # Virtual A/B devices?
 [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ] && COMPILED_IMAGE_FILE="boot.img" || COMPILED_IMAGE_FILE="recovery.img"
 
@@ -284,53 +314,6 @@ FOX_BIN_tmp=$OUT/tmp_bin/FoxFiles
 # FOX_REPLACE_BUSYBOX_PS: default to 0
 if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
    export FOX_REPLACE_BUSYBOX_PS="0"
-fi
-
-# --------- magiskboot vars --------
-# magiskboot v23+ for VAB device installation
-NEW_MAGISKBOOT_BIN="magiskboot_new"
-
-# virtual A/B (VAB)
-if [ "$OF_AB_DEVICE" = "1" -a "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
-    if [ -n "$BOARD_BOOT_HEADER_VERSION" ]; then
-       [ "$BOARD_BOOT_HEADER_VERSION" -gt 2 -a -z "$OF_VIRTUAL_AB_DEVICE" ] && export OF_VIRTUAL_AB_DEVICE="1"
-    fi
-fi
-
-if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
-    echo -e "${GREEN}-- The device is a virtual A/B device .... ${NC}"
-    export OF_AB_DEVICE=1
-    export OF_USE_NEW_MAGISKBOOT=1
-    export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1
-fi
-
-# magiskboot 23+ and repatch issues?
-if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
-   if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
-      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - Virtual A/B device - you cannot also use \"OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY\". ${NC}"
-      echo -e "${RED}-- Quitting now ... ${NC}"
-      abort 101
-   fi
-   export OF_USE_NEW_MAGISKBOOT=1
-   export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1
-fi
-
-# set the main var automatically, if not set
-if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" -o "$OF_FORCE_MAGISKBOOT_BOOT_PATCH_MIUI" = "1" -o "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-   export OF_USE_MAGISKBOOT=1
-fi
-
-# A/B devices
-if [ "$OF_AB_DEVICE" = "1" ]; then
-   if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" -o "$OF_USE_MAGISKBOOT" != "1" ]; then
-      echo -e "${RED}-- ************************************************************************************************${NC}"
-      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - A/B device - but other necessary vars not set. ${NC}"
-      echo "-- You must do this - \"export OF_USE_MAGISKBOOT=1\" "
-      echo "-- And this         - \"export OF_USE_MAGISKBOOT_FOR_ALL_PATCHES=1\" "
-      echo -e "${RED}-- Quitting now ... ${NC}"
-      echo -e "${RED}-- ************************************************************************************************${NC}"
-      abort 200
-   fi
 fi
 
 # alternative devices
@@ -598,10 +581,6 @@ local TDT=$(date "+%d %B %Y")
      }
      $CP -pf $tmp ./magiskboot
      sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
-#     if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" -a -f $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ]; then
-#        echo -e "${RED}-- VAB device - copying magiskboot v23.0 ... ${NC}"
-#        $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN .
-#     fi
   fi
   rm -rf /tmp/fox_build_tmp/
 
@@ -1039,21 +1018,13 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   fi
 
   # deal with magiskboot/mkbootimg/unpackbootimg
-  if [ "$OF_USE_MAGISKBOOT" != "1" ]; then
-      echo -e "${GREEN}-- Not using magiskboot - deleting $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot ...${NC}"
-      rm -f "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot"
-      rm -f $FOX_RAMDISK/FFiles/$NEW_MAGISKBOOT_BIN
-  else
-     echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
-     if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" = "1" ]; then
-        echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot] - deleting mkbootimg/unpackbootimg ...${NC}"
-        rm -f $FOX_RAMDISK/$RAMDISK_SBIN/mkbootimg
-        rm -f $FOX_RAMDISK/$RAMDISK_SBIN/unpackbootimg
-        echo -e "${GREEN}-- Backing up $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot to: /tmp/fox_build_tmp/ ...${NC}"
-        mkdir -p /tmp/fox_build_tmp/
-        $CP -pf $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot /tmp/fox_build_tmp/
-     fi
-  fi
+  echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
+  echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot] - deleting mkbootimg/unpackbootimg ...${NC}"
+  rm -f $FOX_RAMDISK/$RAMDISK_SBIN/mkbootimg
+  rm -f $FOX_RAMDISK/$RAMDISK_SBIN/unpackbootimg
+  echo -e "${GREEN}-- Backing up $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot to: /tmp/fox_build_tmp/ ...${NC}"
+  mkdir -p /tmp/fox_build_tmp/
+  $CP -pf $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot /tmp/fox_build_tmp/
 
   # symlink for openrecovery binary
   if [ -f "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/twrp" ]; then
@@ -1097,7 +1068,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
 
   # replace any built-in lzma (and "xz") with our own
   # use the full "xz" binary for lzma, and for xz - smaller in size, and does the same job
-  if [ "$OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" != "1" -o "$FOX_USE_XZ_UTILS" = "1" ]; then
+  if [ "$FOX_USE_XZ_UTILS" = "1" ]; then
      if [ "$FOX_DYNAMIC_SAMSUNG_FIX" != "1" ]; then
      	echo -e "${GREEN}-- Replacing any built-in \"lzma\" command with our own full version ...${NC}"
      	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
