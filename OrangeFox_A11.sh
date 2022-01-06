@@ -38,8 +38,8 @@ export OF_USE_MAGISKBOOT=1
 # device name
 FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 
-# The name of this script - don't change it
-THIS_SCRIPT=OrangeFox_A11.sh
+# The name of this script
+THIS_SCRIPT=$(basename $0)
 
 # environment/build-var imports
 FOXENV=/tmp/$FOX_DEVICE/fox_env.sh
