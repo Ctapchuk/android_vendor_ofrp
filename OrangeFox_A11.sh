@@ -176,7 +176,7 @@ if [ -n "$4" ]; then
       echo "INTERNAL_KERNEL_CMDLINE=\"$INTERNAL_KERNEL_CMDLINE\"" >>  $TMP_SCRATCH
       echo "INTERNAL_RECOVERYIMAGE_ARGS='$INTERNAL_RECOVERYIMAGE_ARGS'" >>  $TMP_SCRATCH
       echo "INTERNAL_MKBOOTIMG_VERSION_ARGS=\"$INTERNAL_MKBOOTIMG_VERSION_ARGS\"" >>  $TMP_SCRATCH
-      echo "BOARD_MKBOOTIMG_ARGS=\"$BOARD_MKBOOTIMG_ARGS\"" >>  $TMP_SCRATCH
+      echo "BOARD_MKBOOTIMG_ARGS='$BOARD_MKBOOTIMG_ARGS'" >>  $TMP_SCRATCH
       echo "BOARD_USES_RECOVERY_AS_BOOT=\"$BOARD_USES_RECOVERY_AS_BOOT\"" >>  $TMP_SCRATCH
       echo "recovery_ramdisk=\"$recovery_ramdisk\"" >>  $TMP_SCRATCH
       echo "recovery_uncompressed_ramdisk=\"$recovery_uncompressed_ramdisk\"" >>  $TMP_SCRATCH
