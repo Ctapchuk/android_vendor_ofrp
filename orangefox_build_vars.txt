@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2022 OrangeFox Recovery Project
-# Date: 06 January 2022
+# Date: 07 January 2022
 #
 # -----------------------------------
 #
@@ -192,6 +192,15 @@
 "OF_SKIP_FBE_DECRYPTION" 
    - set to 1 to skip the FBE decryption routines (prevents hanging at the Fox logo or Redmi/Mi logo)
    - default = 0
+#
+"OF_SKIP_FBE_DECRYPTION_SDKVERSION" [NEW]
+   - This allows you to instruct OrangeFox to avoid trying to decrypt ROMs with a specific Android SDK/API number (and higher)
+   - set to the Android SDK/API level which should be skipped. It is up to you to ensure that the value supplied makes sense and is correct
+   - a warning will be printed on the log screen whenever the skip code is triggered, and no attempt will be made to decrypt data the partition
+   - eg, "export OF_SKIP_FBE_DECRYPTION_SDKVERSION=31" (ie, don't try to decrypt Android 12 (SDK/API 31) or higher)
+   - the valid SDK/API level numbers can be found at: "https://source.android.com/setup/start/build-numbers"
+   - NOTE: do NOT use "OF_SKIP_FBE_DECRYPTION" if you are using this variable, because it will supersede this variable
+   - default = nothing (ie, try to decrypt all Android API levels)
 #
 "OF_OTA_RES_DECRYPT"
    - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
