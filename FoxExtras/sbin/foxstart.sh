@@ -4,7 +4,7 @@
 # 	Custom script for OrangeFox Recovery
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2021 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2022 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20211223
+# * Date:   20220128
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20211223"
+SCRIPT_LASTMOD_DATE="20220128"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -220,9 +220,13 @@ local V_PROP="$V/build.prop"
 local found_vendor_prop="0"
 local slot=$(getprop "ro.boot.slot_suffix")
 
+   # don't use slots when using a dm-* block device name
+   local tmp01=$(echo "$SYSTEM_BLOCK" | grep "/dm-")
+   [ -n "$tmp01" ] && slot=""
+
    # if not there already
    mkdir -p $OUR_TMP
-   
+
    # mount /system and check
    if [ -d "$S" ]; then
       DebugMsg "$S already exists"
@@ -231,10 +235,10 @@ local slot=$(getprop "ro.boot.slot_suffix")
       DebugMsg "Creating $S"
       mkdir -p $S
    fi
-   
+
    # mount
    $MOUNT_CMD -t ext4 $SYSTEM_BLOCK"$slot" $S > /dev/null 2>&1
-   
+
    # look for build.prop
    [ ! -e "$PROP" ] && PROP="$S/system/build.prop" # test for SAR
    
@@ -365,6 +369,10 @@ isMIUI() {
    local E="$S/etc"
    local S_SAR="$S/system"
    local slot=$(getprop "ro.boot.slot_suffix")
+
+   # don't use slots when using a dm-* block device name
+   local tmp01=$(echo "$SYSTEM_BLOCK" | grep "/dm-")
+   [ -n "$tmp01" ] && slot=""
    
    # mount /system and check
    if [ -d "$S" ]; then
