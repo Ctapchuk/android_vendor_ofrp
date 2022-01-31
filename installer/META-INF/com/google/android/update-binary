@@ -55,8 +55,8 @@ ERROR_CODE=0
 # AB device?
 OF_AB_DEVICE=""
 
-# use magiskboot 23.0?
-OF_USE_NEW_MAGISKBOOT=0
+# enable vbmeta patching for magiskboot 24+ ?
+OF_PATCH_VBMETA_FLAG=0
 
 # Reset OrangeFox settings to default?
 FOX_RESET_SETTINGS="1"
@@ -65,7 +65,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20211122"
+MOD_DATE="20220129"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -519,6 +519,13 @@ local PART
 	   return
 	fi
 
+	# enable the magiskboot 24+ vbmeta patch?
+	if [ "$OF_PATCH_VBMETA_FLAG" = "1" ]; then
+	   export PATCHVBMETAFLAG=true
+	else
+	   export PATCHVBMETAFLAG=false
+	fi
+	
    	# extract the ramdisk from the OrangeFox image
    	chmod 0755 "$tool"
    	ui_print "- Extracting the OrangeFox ramdisk ..."
@@ -551,11 +558,6 @@ local PART
 
 		cp -f ramdisk-ofrp.cpio ramdisk.cpio
 		"$tool" repack -n boot.img || abort "- I cannot repack the $name$slot image!"
-
-		# try to work around the magiskboot repack bug
-		#if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-		#   "$tool" hexpatch new-boot.img 0000000300000000617662746f6f6c 0000000000000000617662746f6f6c
-		#fi
 
 		blockdev --setrw $target$slot
 		cat new-boot.img /dev/zero > $target$slot 2>/dev/null || true

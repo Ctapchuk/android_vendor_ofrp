@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2022 OrangeFox Recovery Project
-# Date: 07 January 2022
+# Date: 30 January 2022
 #
 # -----------------------------------
 #
@@ -568,32 +568,26 @@
 #
 "OF_VIRTUAL_AB_DEVICE" [NEW] [EXPERIMENTAL WiP]
 - Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
-- If this is set, some other relevant variables are enabled automatically ("OF_AB_DEVICE", "OF_USE_NEW_MAGISKBOOT")
+- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE")
 - default = 0
 #
-"OF_USE_NEW_MAGISKBOOT" [NEW] [EXPERIMENTAL WiP]
-- Set to 1 to use the magiskboot v23+ binary instead of the normal version, so as to be able to process the v3 headers in new boot images
-- If your device is a Virtual A/B (VAB) device,you *MUST* set this variable to 1
-- Otherwise, this should only be used if you have problems installing the OrangeFox zip, or with changing the splash image
-- This is *experimental* and should be considered as work-in-progress. You should test your builds thoroughly to make sure that everything works as expected
-- This is actually only a stop-gap until the problem is fixed upstream in magisk
-- default = 0
+"OF_USE_NEW_MAGISKBOOT" [OBSOLETE]
 #
-"OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" [NEW] [EXPERIMENTAL WiP]
-- Set to 1 to *force* an AVB footer work-around for magiskboot repack issues when using the magiskboot v23+ binary
-- Setting this to 1 will also automatically enable "OF_USE_NEW_MAGISKBOOT"
-- It should not be necessary to use this variable under normal circumstances
-- Do *NOT* use this variable unless you are absolutely sure of what you are doing, and are experiencing bootloops (having enabled "OF_USE_NEW_MAGISKBOOT") after doing
-- things like changing the splash image
-- Do *NOT* use this variable if your device is a Virtual A/B device
-- This is *experimental* and should be considered as work-in-progress. You should test your builds thoroughly to make sure that everything works as expected
-- This is actually only a stop-gap until the problem is fixed upstream in magisk
-- default = 0
+OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY [OBSOLETE]
 #
-"OF_SKIP_DECRYPTED_ADOPTED_STORAGE" [OBSOLETE!!]
+"OF_SKIP_DECRYPTED_ADOPTED_STORAGE" [NEW]
+- Set to 1 to skip adopted storage decryption (only kicks in if the installed ROM is higher than Android 11 and can prevent certain A12 bootloops)
+- default = 0
 #
 "OF_ENABLE_LPTOOLS" [NEW]
 - Set to 1 to add phhusson's lptools to the build.
 - This requires syncing the lptools sources (just run "repo sync" from the usual place, or follow the instructions in the error message that will be generated if the sources are missing)
+- default = 0
+#
+"OF_PATCH_VBMETA_FLAG" [NEW] [EXPERIMENTAL WiP]
+- Set to 1 to instruct magiskboot v24+ to always patch the vbmeta header when patching the recovery/boot image
+- It should not be necessary to use this variable under normal circumstances
+- Do *NOT* use this variable unless you are sure of what you are doing (and only if you are getting bootloops after flashing OrangeFox or Magisk or after changing the splash image)
+- This is *experimental* and should be considered as work-in-progress. You should test your builds thoroughly to make sure that everything works as expected
 - default = 0
 # -----------------------------------

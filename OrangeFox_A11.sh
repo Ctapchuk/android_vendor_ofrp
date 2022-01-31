@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 06 January 2022
+# 30 January 2022
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -206,7 +206,7 @@ fi
 if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
     echo -e "${GREEN}-- The device is a virtual A/B device .... ${NC}"
     export OF_AB_DEVICE=1
-    export OF_USE_NEW_MAGISKBOOT=1
+#    export OF_USE_NEW_MAGISKBOOT=1
 fi
 
 # --------- magiskboot vars --------
@@ -214,13 +214,13 @@ fi
 NEW_MAGISKBOOT_BIN="magiskboot_new"
 
 # magiskboot 23+ and repatch issues?
-if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
-   if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
-      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - Virtual A/B device - you cannot also use \"OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY\". ${NC}"
-      echo -e "${RED}-- Quitting now ... ${NC}"
-      abort 101
-   fi
-fi
+#if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
+#   if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
+#      echo -e "${RED}-- OrangeFox.sh FATAL ERROR - Virtual A/B device - you cannot also use \"OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY\". ${NC}"
+#      echo -e "${RED}-- Quitting now ... ${NC}"
+#      abort 101
+#   fi
+#fi
 
 # Virtual A/B devices?
 [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ] && COMPILED_IMAGE_FILE="boot.img" || COMPILED_IMAGE_FILE="recovery.img"
@@ -587,16 +587,21 @@ local TDT=$(date "+%d %B %Y")
   fi
   rm -rf /tmp/fox_build_tmp/
 
-  # whether to replace the standard magiskboot with v23+
-  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-     echo -e "${RED}-- Using magiskboot v23+ for the installation... ${NC}"
-     sed -i -e "s/^OF_USE_NEW_MAGISKBOOT=.*/OF_USE_NEW_MAGISKBOOT=\"1\"/" $F
-     $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ./magiskboot
+  # whether to enable magisk 24+ patching of vbmeta
+  if [ "$OF_PATCH_VBMETA_FLAG" = "1" ]; then
+     echo -e "${RED}-- Enabling PATCHVBMETAFLAG for the installation... ${NC}"
+     sed -i -e "s/^OF_PATCH_VBMETA_FLAG=.*/OF_PATCH_VBMETA_FLAG=\"1\"/" $F
   fi
 
-  if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
-     echo -e "${RED}-- Magiskboot v23+ repack issue will be patched... ${NC}"
-  fi
+#  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+#     echo -e "${RED}-- Using magiskboot v23+ for the installation... ${NC}"
+#     sed -i -e "s/^OF_USE_NEW_MAGISKBOOT=.*/OF_USE_NEW_MAGISKBOOT=\"1\"/" $F
+#     $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN ./magiskboot
+#  fi
+#
+#  if [ "$OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY" = "1" ]; then
+#     echo -e "${RED}-- Magiskboot v23+ repack issue will be patched... ${NC}"
+#  fi
 
   # Reset Settings
   if [ "$FOX_RESET_SETTINGS" = "disabled" ]; then
@@ -1016,9 +1021,9 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   $CP -p $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/$RAMDISK_SBIN/
 
   # whether to replace the standard magiskboot with v23+
-  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
-     $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
-  fi
+#  if [ "$OF_USE_NEW_MAGISKBOOT" = "1" ]; then
+#     $CP -pf $FOX_VENDOR_PATH/FoxExtras/FFiles/$NEW_MAGISKBOOT_BIN $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
+#  fi
 
   # deal with magiskboot/mkbootimg/unpackbootimg
   echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
