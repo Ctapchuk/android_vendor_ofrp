@@ -42,7 +42,7 @@ FOX_DEVICE=$(cut -d'_' -f2 <<<$TARGET_PRODUCT)
 THIS_SCRIPT=$(basename $0)
 
 # environment/build-var imports
-FOXENV=/tmp/$FOX_DEVICE/fox_env.sh
+FOXENV=$(pwd)/tmp/fox_env.sh
 if [ -f "$FOXENV" ]; then
    source "$FOXENV"
 else
@@ -88,7 +88,6 @@ UUIDGEN=/usr/bin/uuidgen
 abort() {
   [ -d $WORKING_TMP ] && rm -rf $WORKING_TMP
   [ -f $TMP_SCRATCH ] && rm -f $TMP_SCRATCH
-  [ -f $FOXENV ] && rm -f $FOXENV
   exit $1
 }
 
