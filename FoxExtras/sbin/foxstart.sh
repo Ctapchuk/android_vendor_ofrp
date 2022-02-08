@@ -626,12 +626,9 @@ post_init() {
   # FBE - remove the "del_pass" addon, but keep a copy in /FFiles/Tools/
   M=$(isFB_Encrypted)
   [ "$M" = "1" ] && {
-    local F=/FFiles/OF_DelPass/OF_DelPass.zip
-    if [ -f $F ]; then
-    	mkdir -p /FFiles/Tools
-    	cp -f $F /FFiles/Tools/
-    	rm -rf "/FFiles/OF_DelPass/"
-    fi
+    mkdir -p /FFiles/Tools
+    cp -a /FFiles/OF_DelPass/OF_DelPass.zip /FFiles/Tools/
+    rm -rf "/FFiles/OF_DelPass/"
   }
   
   # write OrangeFox props to the log
