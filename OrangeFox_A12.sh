@@ -19,9 +19,9 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 January 2022
+# 30 April 2022
 #
-# *** This script is for the OrangeFox Android 11.0 manifest ***
+# *** This script is for the OrangeFox Android 12.1 manifest ***
 #
 # For optional environment variables - to be declared before building,
 # see "orangefox_build_vars.txt" for full details
@@ -47,7 +47,7 @@ if [ -f "$FOXENV" ]; then
    source "$FOXENV"
 else
    echo "** WARNING: $FOXENV is not found. Your build vars will probably not be implemented. **"
-   echo "** You need an up-to-date OrangeFox patch for the AOSP 11.0 manifest. **"
+   echo "** You need an up-to-date OrangeFox patch for the AOSP 12.1 manifest. **"
 fi
 
 # whether to print extra debug messages
@@ -297,7 +297,7 @@ else
    if [ "$FOX_VARIANT" = "default" ]; then
       FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
    else
-      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
+      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"_"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
    fi
 fi
 

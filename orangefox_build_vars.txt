@@ -1,11 +1,11 @@
 # ------------------------------------
 #
-# Custom build VARs for the OrangeFox Recovery, fox_11.0
+# Custom build VARs for the OrangeFox Recovery, fox_12.1
 #
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2022 OrangeFox Recovery Project
-# Date: 30 January 2022
+# Date: 30 April 2022
 #
 # -----------------------------------
 #
@@ -131,8 +131,6 @@
    - set to 1 to disable recovery zip creation
    - default = 0
 #
-"OF_SUPPORT_PRE_FLASH_SCRIPT" [OBSOLETE]
-#
 "OF_DONT_PATCH_ON_FRESH_INSTALLATION"
    - set to 1 to prevent patching dm-verity and forced-encryption when the OrangeFox zip is flashed
    - default = 0
@@ -218,9 +216,6 @@
 "OF_NO_TREBLE_COMPATIBILITY_CHECK"
    - set to 1 to disable checking for compatibility.zip in ROMs
    - default = 0
-#
-"FOX_USE_TWRP_RECOVERY_IMAGE_BUILDER" [OBSOLETE!]
-- This is now obsolete in fox_11.0
 #
 "FOX_RESET_SETTINGS"
    - set to "disabled" to NOT reset OrangeFox settings to defaults, after installation of the OrangeFox zip
@@ -331,7 +326,7 @@
 "OF_VANILLA_BUILD" [NEW]
  - Set this to 1 to make a plain build that skips all the OrangeFox patches
  - If this is enabled, a whole lot of other variables are also enabled automatically to disable various
- - OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/Android.mk for details)
+ - OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/orangefox.mk for details)
  - With this enabled, it is very possible (even likely) that OrangeFox will be overwritten by stock recovery, so the
  - user may well need to flash some kind of "fcrypt" zip and/or magisk
  - default = 0
@@ -367,27 +362,6 @@
 - Set this to 1 to try patch AVB 2.0 so that OrangeFox is not replaced by stock recovery
 - This requires magiskboot
 - default = 0
-#
-"OF_SKIP_MULTIUSER_FOLDERS_BACKUP" [OBSOLETE!]
-- This is now obsolete
-#
-"OF_USE_SYSTEM_FINGERPRINT" [OBSOLETE!] 
-- This is now obsolete in fox_10.0
-#
-"OF_USE_TWRP_SAR_DETECT" [OBSOLETE!]
-- This is now obsolete in fox_10.0
-#
-"OF_DISABLE_KEYMASTER2" [OBSOLETE!]
-- This is now obsolete in fox_10.0
-#
-"FOX_DRASTIC_SIZE_REDUCTION" [OBSOLETE!]
- - This is now obsolete in fox_10.0
-#
-"FOX_USE_ZIP_BINARY" [ OBSOLETE!]
-- This is now obsolete in fox_10.0
-#
-"BUILD_2GB_VERSION" [OBSOLETE!]
-- This is now obsolete in fox_10.0
 #
 "OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [NEW]
 - Set this to 1 to create a backup of the boot.img from the ROM's zip during the OTA_BAK process when installing a ROM
@@ -484,8 +458,8 @@
 - this is useful in cases where the original grep is causing problems
 - default = 0
 #
-"FOX_REMOVE_BUSYBOX_BINARY" [NEW] [FOX_10.0 builds only]
-- set this to 1 to delete the extra standalone /sbin/busybox binary from the fox_10.0 builds
+"FOX_REMOVE_BUSYBOX_BINARY" [NEW] [FOX_10+ builds only]
+- set this to 1 to delete the extra standalone /sbin/busybox binary from the fox_10+ builds
 - default = 0
 #
 "FOX_JAVA8_PATH" [NEW]
@@ -493,7 +467,7 @@
 - eg, export FOX_JAVA8_PATH="/usr/lib/jvm/java-8-openjdk/jre/bin/java"
 - default = "/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
 #
-"OF_SPLASH_MAX_SIZE"  [NEW] [FOX_10.0 builds only]
+"OF_SPLASH_MAX_SIZE"  [NEW]
 - use this to specify the maximum size (in kilobytes) of image files that can safely be used for splash images
 - on some devices, the maximum safe size is 65 Kb; on others, the images can be very big (eg, megabytes)
 - Note: verify that the maximum value you set is not too big (ie, test it yourself)
@@ -566,14 +540,10 @@
 - * If a user formats /data or deletes the /sdcard/Fox/FoxFiles/ folder, then the binaries will not be available to the recovery; the OrangeFox zip must be flashed again
 - * If decryption does not work, then the binaries will not be available to the recovery
 #
-"OF_VIRTUAL_AB_DEVICE" [NEW] [EXPERIMENTAL WiP]
+"OF_VIRTUAL_AB_DEVICE" [NEW]
 - Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
 - If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE")
 - default = 0
-#
-"OF_USE_NEW_MAGISKBOOT" [OBSOLETE]
-#
-OF_NEW_MAGISKBOOT_FORCE_AVB_VERIFY [OBSOLETE]
 #
 "OF_SKIP_DECRYPTED_ADOPTED_STORAGE" [NEW]
 - Set to 1 to skip adopted storage decryption (only kicks in if the installed ROM is higher than Android 11 and can prevent certain A12 bootloops)
