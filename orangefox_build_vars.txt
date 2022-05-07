@@ -2,10 +2,10 @@
 #
 # Custom build VARs for the OrangeFox Recovery, fox_12.1
 #
-# These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
+# These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2022 OrangeFox Recovery Project
-# Date: 30 April 2022
+# Date: 07 May 2022
 #
 # -----------------------------------
 #
@@ -51,21 +51,21 @@
      different from the default "/dev/block/bootdevice/by-name/recovery"
    - default = "/dev/block/bootdevice/by-name/recovery"
 #
-"FOX_RECOVERY_SYSTEM_PARTITION" [NEW]
+"FOX_RECOVERY_SYSTEM_PARTITION"
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's system partition is in a location that is
      different from the default "/dev/block/bootdevice/by-name/system"
      (eg, some Samsung/HTC devices have a different location for system)
    - default = "/dev/block/bootdevice/by-name/system"
 #
-"FOX_RECOVERY_VENDOR_PARTITION" [NEW]
+"FOX_RECOVERY_VENDOR_PARTITION"
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's vendor partition is in a location that is
      different from the default "/dev/block/bootdevice/by-name/vendor"
      (eg, some Samsung devices have a different location for vendor)
    - default = "/dev/block/bootdevice/by-name/vendor"
 #
-"FOX_RECOVERY_BOOT_PARTITION" [NEW] [R11.1 only]
+"FOX_RECOVERY_BOOT_PARTITION" [R11.1 only]
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's boot partition is in a location that is
      different from the default "/dev/block/bootdevice/by-name/boot"
@@ -76,7 +76,7 @@
    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
    - * this requires you to have an up-to-date lzma binary in your build system, and 
    - * set this in your BoardConfig (it will be set automatically if you don't set it yourself):
-   -     LZMA_RAMDISK_TARGETS := recovery
+   -     BOARD_RAMDISK_USE_LZMA := true
    - * your kernel must also have built-in lzma compression support
    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
 #
@@ -86,7 +86,7 @@
    - this will add about 420kb to the size of the recovery image
    - default = 0
 #
-"FOX_USE_SED_BINARY" [NEW]
+"FOX_USE_SED_BINARY"
    - set this to 1 if you want the gnu sed binary to be added (/sbin/gnused)
    - this must be set in a shell script, or at the command line, before building
    - this will add about 200kb to the size of the recovery image
@@ -159,27 +159,27 @@
    - set to 1 to *UNTICK* both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
    - default = 0
 #
-"OF_FORCE_DISABLE_DM_VERITY"; [NEW]
+"OF_FORCE_DISABLE_DM_VERITY";
    - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box on every bootup
    - default = 0
 #
-"OF_FORCE_DISABLE_FORCED_ENCRYPTION"; [NEW]
+"OF_FORCE_DISABLE_FORCED_ENCRYPTION";
    - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box on every bootup
    - default = 0
 #
-"OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
+"OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION";
    - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
    - default = 0
 #
-"OF_DISABLE_DM_VERITY"; [NEW]
+"OF_DISABLE_DM_VERITY";
    - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box by default (on fresh installation)
    - default = 0 (should be set to "1" for older Xiaomi devices like kenzo, libra, mido)
 #
-"OF_DISABLE_FORCED_ENCRYPTION"; [NEW]
+"OF_DISABLE_FORCED_ENCRYPTION";
    - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box by default (on fresh installation)
    - default = 0
 #
-"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [NEW]
+"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION";
    - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes by default (on fresh installation)
    - default = 0
 #
@@ -191,7 +191,7 @@
    - set to 1 to skip the FBE decryption routines (prevents hanging at the Fox logo or Redmi/Mi logo)
    - default = 0
 #
-"OF_SKIP_FBE_DECRYPTION_SDKVERSION" [NEW]
+"OF_SKIP_FBE_DECRYPTION_SDKVERSION"
    - This allows you to instruct OrangeFox to avoid trying to decrypt ROMs with a specific Android SDK/API number (and higher)
    - set to the Android SDK/API level which should be skipped. It is up to you to ensure that the value supplied makes sense and is correct
    - a warning will be printed on the log screen whenever the skip code is triggered, and no attempt will be made to decrypt data the partition
@@ -283,20 +283,20 @@
   - if OF_ALLOW_DISABLE_NAVBAR is set to 0 user can't hide on-screen navbar
   - default = 1
 # 
-"OF_DONT_KEEP_LOG_HISTORY" [NEW]
+"OF_DONT_KEEP_LOG_HISTORY"
   - Time-stamped copies of the recovery.log (in .zip format) will now be kept (in /sdcard/Fox/logs/)
   - this means that the previously saved recovery logs will not be overwritten
   - these will be in .zip format; users might need to clear them out periodically
   - enable this to turn off this feature (meaning that lastrecoverylog.log will be overwritten each time the recovery is rebooted)
   - default = 0
 #
-"FOX_BUGGED_AOSP_ARB_WORKAROUND" [NEW]
+"FOX_BUGGED_AOSP_ARB_WORKAROUND"
  - Use this to set an old UTC time for the build, to work around bugged alleged anti-rollback protection in some ROMs
  - eg, export FOX_BUGGED_AOSP_ARB_WORKAROUND="1546300800" [Tue Jan 1 2019 00:00:00 GMT]
  -     export FOX_BUGGED_AOSP_ARB_WORKAROUND="1420041600" [Wed Dec 31 2014 16:00:00 GMT]
  - default = nothing
 #
-"TARGET_DEVICE_ALT" [NEW]
+"TARGET_DEVICE_ALT"
  - Use this if the device has more than one code name, so that the OrangeFox zip
  - installer can support the alternative code name without just bombing out
  - eg, export TARGET_DEVICE_ALT="kate" (for kenzo/kate)
@@ -304,7 +304,7 @@
  -     export TARGET_DEVICE_ALT="blue, green, yellow, orange" (for multiple alt devices)
  - default = nothing
 #
-"OF_TARGET_DEVICES" [NEW]
+"OF_TARGET_DEVICES"
 - Use this if the device has more than one code name, but ROMs and other zip installers
 - never check for all code names, therefore always causing "E3004 error 7" problems (eg, raphael/raphaelin)
 - What this does is to cause OrangeFox to temporarily switch devices names to prevent error 7 from happening
@@ -318,12 +318,12 @@
 - so that it can trigger all these impacts in the live recovery session. You should only deploy a
 - build using this variable after plenty of testing in all possible scenarios
 #
-"OF_SKIP_ORANGEFOX_PROCESS" [NEW]
+"OF_SKIP_ORANGEFOX_PROCESS"
  - Use this to 1 to skip the dm-verity/forced-encryption/boot images patches
  - If this is enabled, then "OF_DONT_PATCH_ON_FRESH_INSTALLATION" is also enabled automatically
  - default = 0
 #
-"OF_VANILLA_BUILD" [NEW]
+"OF_VANILLA_BUILD"
  - Set this to 1 to make a plain build that skips all the OrangeFox patches
  - If this is enabled, a whole lot of other variables are also enabled automatically to disable various
  - OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/orangefox.mk for details)
@@ -331,97 +331,97 @@
  - user may well need to flash some kind of "fcrypt" zip and/or magisk
  - default = 0
 #
-"OF_SUPPORT_OZIP_DECRYPTION" [NEW]
+"OF_SUPPORT_OZIP_DECRYPTION"
  - Set this to 1 to enable support for Realme oZip decryption
  - do not use this unless you know what you are doing (see below)
  - if this is enabled, you must also set "TW_OZIP_DECRYPT_KEY"
  - default = 0
 #
-"FOX_REMOVE_AAPT" [NEW]
+"FOX_REMOVE_AAPT"
  - Set this to 1 to remove the aapt binary from the build
  - This binary is 1.7mb in size, and using this variable is useful for reducing the size of the recovery
  - default = 0
 #
-"OF_CHECK_OVERWRITE_ATTEMPTS" [NEW]
+"OF_CHECK_OVERWRITE_ATTEMPTS"
  - Set this to 1 to check for attempts by a ROM's installer to overwrite OrangeFox with another recovery
  - If this is enabled, then OrangeFox will give users a 40-second countdown, to enable
  - them to reboot OrangeFox to stop the ROM installation, if they want
  - default = 0
 #
-"OF_FBE_METADATA_MOUNT_IGNORE" [NEW]
+"OF_FBE_METADATA_MOUNT_IGNORE"
  - Set this to 1 if you are supporting FBE metadata encryption in your fstab, but don't want the user to be
  - spammed with metadata mount errors in ROMs that don't use metadata encryption
  - default = 0
 #
-"OF_FIX_OTA_UPDATE_MANUAL_FLASH_ERROR" [NEW]
+"OF_FIX_OTA_UPDATE_MANUAL_FLASH_ERROR"
 - Set this to 1 to try to recover from error situations where people flash incremental block-based OTA zips manually
 - An error will still be displayed, but OrangeFox will reboot itself into "Ors" mode and attempt to apply the OTA update (this is not guaranteed to always work)
 - default = 0
 #
-"OF_PATCH_AVB20" [NEW]
+"OF_PATCH_AVB20"
 - Set this to 1 to try patch AVB 2.0 so that OrangeFox is not replaced by stock recovery
 - This requires magiskboot
 - default = 0
 #
-"OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [NEW]
+"OF_OTA_BACKUP_STOCK_BOOT_IMAGE"
 - Set this to 1 to create a backup of the boot.img from the ROM's zip during the OTA_BAK process when installing a ROM
 - default = 0
 #
-"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" [NEW]
+"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES"
 - Set this to 1 to enable support for block-based incremental OTA on custom ROMs that have this feature
 - If enabled, flashing a custom ROM will run the same OTA_BAK/OTA_RES processes as with MIUI
 - This setting is incompatible with OF_DISABLE_MIUI_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/OF_VANILLA_BUILD
 - The default position is to support block-based incremental OTA in MIUI ROMs only
 - default = 0
 #
-"OF_NO_MIUI_PATCH_WARNING" [NEW]
+"OF_NO_MIUI_PATCH_WARNING"
 - Set this to 1 to suppress warnings that not patching MIUI may cause MIUI to not boot, or to overwrite the recovery with stock recovery
 - default = 0
 #
-"OF_DISABLE_MIUI_OTA_BY_DEFAULT" [NEW]
+"OF_DISABLE_MIUI_OTA_BY_DEFAULT"
 - Set this to 1 to disable the OTA settings by default, meaning that users have to enable OTA manually
 - default = 0
 #
-"OF_QUICK_BACKUP_LIST" [NEW]
+"OF_QUICK_BACKUP_LIST"
 - Use this to specify the desired default list of partitions selected for "Quick Backup"
 - Note: only specify a partition if you mount it in your fstab, else an error will be generated
 - The partitions should be separated by a semi-colon, and the list should end with a semi-colon
 - Example: export OF_QUICK_BACKUP_LIST="/data;/storage;/persist;"
 #
-"OF_USE_LOCKSCREEN_BUTTON" [NEW]
+"OF_USE_LOCKSCREEN_BUTTON"
 - Set this to 1 to replace the "Swipe up" lockscreen screen with a button
 - This is especially useful (for the time being) for 720p screens
 - default = 0
 #
-"FOX_REMOVE_ZIP_BINARY" [NEW]
+"FOX_REMOVE_ZIP_BINARY"
 - set this to 1 if you do NOT want the InfoZip zip binary to be added (to create zip archives)
 - this must be set in a shell script, or at the command line, before building
 - the binary will add about 275kb to the size of the recovery image
 - default = 0
 #
-"FOX_ADVANCED_SECURITY" [NEW]
+"FOX_ADVANCED_SECURITY"
 - set this to 1 to enable the advanced security features
 - this forces ADB and MTP to be disabled until after you enter the recovery (ie, until after
 - all decryption/recovery passwords are successfully entered)
 - default = 0
 #
-"OF_NO_SAMSUNG_SPECIAL" [NEW]
+"OF_NO_SAMSUNG_SPECIAL"
 - set this to 1 to disable some operations relating only to Samsung devices - these are:
 -   1) appending "SEANDROIDENFORCE" to the recovery image of a Samsung device
 -   2) creating an Odin flashable tar file of the recovery image
 - all decryption/recovery passwords are successfully entered)
 - default = 0
 #
-"OF_DEVICE_WITHOUT_PERSIST" [NEW]
+"OF_DEVICE_WITHOUT_PERSIST"
 - set this to 1 if your device does not have a /persist partition
 - default = 0
 #
-"OF_DISABLE_EXTRA_ABOUT_PAGE" [NEW]
+"OF_DISABLE_EXTRA_ABOUT_PAGE"
 - set this to 1 to disable display of the extra information under the "About" page
 - you only need to do this if trying to display it causes problems
 - default = 0
 #
-"OF_NO_SPLASH_CHANGE" [NEW]
+"OF_NO_SPLASH_CHANGE"
 - set this to 1 to disable changing the splash image
 - you only need to do this if trying to change the splash image causes problems
 - default = 0
@@ -433,41 +433,41 @@
 - this feature is experimental - test very carefully!
 - default = 0
 #
-"OF_REPORT_HARMLESS_MOUNT_ISSUES" [NEW] [FOX_10.0 builds only]
+"OF_REPORT_HARMLESS_MOUNT_ISSUES"
 - set this to 1 to preserve the old behaviour of reporting harmless mount issues as errors
 - the default setting is either not to report them at all, or to report them for information, rather than as errors
 - default = 0
 #
-"FOX_DELETE_INITD_ADDON" [NEW]
+"FOX_DELETE_INITD_ADDON"
 - set this to 1 to delete the initd addon
 - default = 0
 #
-"FOX_INSTALLER_DEBUG_MODE" [NEW]
+"FOX_INSTALLER_DEBUG_MODE"
 - set this to 1 to put the OrangeFox zip installer in debug mode
 - in the debug mode, when the zip is flashed, a large amount of information is written into the install.log file
 - this is for developer testing only - you must disable this before release
 - default = 0
 #
-"FOX_ENABLE_APP_MANAGER" [NEW]
+"FOX_ENABLE_APP_MANAGER"
 - set this to 1 to enable the OrangeFox App Manager (now disabled by default)
 - sometimes there are issues with the App Manager, especially with Android 11 - if you don't care, then use this variable to enable it
 - default = 0
 #
-"FOX_USE_GREP_BINARY" [NEW]
+"FOX_USE_GREP_BINARY"
 - set this to 1 to replace the toybox/busybox "grep" with a full standalone GNU grep
 - this is useful in cases where the original grep is causing problems
 - default = 0
 #
-"FOX_REMOVE_BUSYBOX_BINARY" [NEW] [FOX_10+ builds only]
+"FOX_REMOVE_BUSYBOX_BINARY" [FOX_10+ builds only]
 - set this to 1 to delete the extra standalone /sbin/busybox binary from the fox_10+ builds
 - default = 0
 #
-"FOX_JAVA8_PATH" [NEW]
+"FOX_JAVA8_PATH"
 - use this to point to the installed java-8 binary
 - eg, export FOX_JAVA8_PATH="/usr/lib/jvm/java-8-openjdk/jre/bin/java"
 - default = "/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
 #
-"OF_SPLASH_MAX_SIZE"  [NEW]
+"OF_SPLASH_MAX_SIZE"
 - use this to specify the maximum size (in kilobytes) of image files that can safely be used for splash images
 - on some devices, the maximum safe size is 65 Kb; on others, the images can be very big (eg, megabytes)
 - Note: verify that the maximum value you set is not too big (ie, test it yourself)
@@ -476,11 +476,11 @@
 - eg, "export OF_SPLASH_MAX_SIZE=128" (ie, 128 Kb maximum)
 - default = 4096 (ie, 4mb maximum)
 #
-"FOX_USE_XZ_UTILS" [NEW]
+"FOX_USE_XZ_UTILS"
 - set this to 1 if you want the XZ Utils (lzma, xz) to be added to the build (the binary is about 260kb in size)
 - default = 0
 #
-"FOX_DYNAMIC_SAMSUNG_FIX" [NEW] [FOX_10.0 builds only]
+"FOX_DYNAMIC_SAMSUNG_FIX"
 - set this to 1 to provide a workaround for bug in Samsung exynos dynamic partition devices, which causes a bootloop on encountering some binaries
 - when enabled, certain binaries (eg, bash, nano, aapt, etc) are removed from (or not added to) the build 
 - use this only if the recovery doesn't boot on your Samsung dynamic partition exynos device
@@ -494,18 +494,18 @@
    - nano from source; if this attempt fails, then you might need to clone the nano sources from upstream
    - default = 0
 #
-"FOX_EXCLUDE_NANO_EDITOR" [NEW] [FOX_10.0 builds only]
+"FOX_EXCLUDE_NANO_EDITOR"
 - set this to 1 to exclude every specie of nano from the build
 - default = 0
 #
-"FOX_BUILD_BASH" [NEW] [FOX_10.0 builds only]
+"FOX_BUILD_BASH"
 - set this to 1 to compile bash from source during the build process; this will replace the standard OrangeFox bash binary
 - this might require cloning the bash sources from upstream (or updating them if the current version generates build errors)
 #
-"FOX_USE_SPECIFIC_MAGISK_ZIP" [NEW]
+"FOX_USE_SPECIFIC_MAGISK_ZIP"
 - use this to point to an alternative Magisk addon installer zip, if the default one does not work well for your device (eg, if it causes bootloops)
 -
-- eg, "export FOX_USE_SPECIFIC_MAGISK_ZIP=~/Magisk/Magisk-21.4.zip"
+- eg, "export FOX_USE_SPECIFIC_MAGISK_ZIP=~/Magisk/Magisk-v24.3.zip"
 -
 -     this will replace (at compile time) the default magisk addon with the one that you specified
 - it is the maintainers' responsibility to ensure that the replacement magisk zip is not corrupt, and that it works well with their device
@@ -513,12 +513,12 @@
 - range of stock and custom ROMs across all Android versions available for your device
 - default = the version that is currently in the vendor tree
 #
-"FOX_VARIANT" [NEW]
+"FOX_VARIANT"
 - Use this if building a specific variant for your device (eg, for MIUI, or FBE, or whatever variant for which the build is specific)
 - eg, export FOX_VARIANT=MIUI
 - default = default
 #
-"FOX_CUSTOM_BINS_TO_SDCARD" [NEW] [EXPERIMENTAL WiP]
+"FOX_CUSTOM_BINS_TO_SDCARD" [EXPERIMENTAL WiP]
 - This is *highly experimental* and should be considered as work-in-progress. It is very fiddly to use, and must be used with *extreme caution*
 - You should only use this if it is ABSOLUTELY NECESSARY. It has too many potential issues
 - This can be used to move some big binaries to the internal storage, instead of being located in the recovery ramdisk. This will reduce
@@ -540,16 +540,16 @@
 - * If a user formats /data or deletes the /sdcard/Fox/FoxFiles/ folder, then the binaries will not be available to the recovery; the OrangeFox zip must be flashed again
 - * If decryption does not work, then the binaries will not be available to the recovery
 #
-"OF_VIRTUAL_AB_DEVICE" [NEW]
+"OF_VIRTUAL_AB_DEVICE"
 - Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
-- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE")
+- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE" "OF_VANILLA_BUILD", etc)
 - default = 0
 #
-"OF_SKIP_DECRYPTED_ADOPTED_STORAGE" [NEW]
+"OF_SKIP_DECRYPTED_ADOPTED_STORAGE"
 - Set to 1 to skip adopted storage decryption (only kicks in if the installed ROM is higher than Android 11 and can prevent certain A12 bootloops)
 - default = 0
 #
-"OF_ENABLE_LPTOOLS" [NEW]
+"OF_ENABLE_LPTOOLS"
 - Set to 1 to add phhusson's lptools to the build.
 - This requires syncing the lptools sources (just run "repo sync" from the usual place, or follow the instructions in the error message that will be generated if the sources are missing)
 - default = 0
