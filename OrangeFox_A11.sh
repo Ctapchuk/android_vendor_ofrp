@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 January 2022
+# 30 April 2022
 #
 # *** This script is for the OrangeFox Android 11.0 manifest ***
 #
@@ -297,7 +297,7 @@ else
    if [ "$FOX_VARIANT" = "default" ]; then
       FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
    else
-      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
+      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"_"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
    fi
 fi
 
