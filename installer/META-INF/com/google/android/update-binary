@@ -65,7 +65,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20220129"
+MOD_DATE="20220507"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -753,10 +753,11 @@ Main() {
 	ui_print "- Rebooting to Recovery now ..."
 	reboot recovery
 
-	# if the reboot command fails, try this instead
+	# if we reach here, then the reboot command failed
 	sleep 3
-	killall recovery
-
+	ui_print " "
+	ui_print "- Hmmm ... it seems that auto-reboot has failed. Please reboot to Recovery manually."
+	exit 0
 } # end Main(); 
 
 # --
