@@ -5,7 +5,7 @@
 # These should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2022 OrangeFox Recovery Project
-# Date: 30 January 2022
+# Date: 7 May 2022
 #
 # -----------------------------------
 #
@@ -76,7 +76,7 @@
    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
    - * this requires you to have an up-to-date lzma binary in your build system, and 
    - * set this in your BoardConfig (it will be set automatically if you don't set it yourself):
-   -     LZMA_RAMDISK_TARGETS := recovery
+   -     BOARD_RAMDISK_USE_LZMA := true
    - * your kernel must also have built-in lzma compression support
    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
 #
@@ -372,22 +372,22 @@
 - This is now obsolete
 #
 "OF_USE_SYSTEM_FINGERPRINT" [OBSOLETE!] 
-- This is now obsolete in fox_10.0
+- This is now obsolete in fox_10.0 and higher
 #
 "OF_USE_TWRP_SAR_DETECT" [OBSOLETE!]
-- This is now obsolete in fox_10.0
+- This is now obsolete in fox_10.0 and higher
 #
 "OF_DISABLE_KEYMASTER2" [OBSOLETE!]
-- This is now obsolete in fox_10.0
+- This is now obsolete in fox_10.0 and higher
 #
 "FOX_DRASTIC_SIZE_REDUCTION" [OBSOLETE!]
- - This is now obsolete in fox_10.0
+ - This is now obsolete in fox_10.0 and higher
 #
 "FOX_USE_ZIP_BINARY" [ OBSOLETE!]
-- This is now obsolete in fox_10.0
+- This is now obsolete in fox_10.0 and higher
 #
 "BUILD_2GB_VERSION" [OBSOLETE!]
-- This is now obsolete in fox_10.0
+- This is now obsolete in fox_10.0 and higher
 #
 "OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [NEW]
 - Set this to 1 to create a backup of the boot.img from the ROM's zip during the OTA_BAK process when installing a ROM
@@ -459,7 +459,7 @@
 - this feature is experimental - test very carefully!
 - default = 0
 #
-"OF_REPORT_HARMLESS_MOUNT_ISSUES" [NEW] [FOX_10.0 builds only]
+"OF_REPORT_HARMLESS_MOUNT_ISSUES" [NEW] 
 - set this to 1 to preserve the old behaviour of reporting harmless mount issues as errors
 - the default setting is either not to report them at all, or to report them for information, rather than as errors
 - default = 0
@@ -484,8 +484,8 @@
 - this is useful in cases where the original grep is causing problems
 - default = 0
 #
-"FOX_REMOVE_BUSYBOX_BINARY" [NEW] [FOX_10.0 builds only]
-- set this to 1 to delete the extra standalone /sbin/busybox binary from the fox_10.0 builds
+"FOX_REMOVE_BUSYBOX_BINARY" [NEW] 
+- set this to 1 to delete the extra standalone /sbin/busybox binary from the fox_10.0 and higher builds
 - default = 0
 #
 "FOX_JAVA8_PATH" [NEW]
@@ -493,7 +493,7 @@
 - eg, export FOX_JAVA8_PATH="/usr/lib/jvm/java-8-openjdk/jre/bin/java"
 - default = "/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java"
 #
-"OF_SPLASH_MAX_SIZE"  [NEW] [FOX_10.0 builds only]
+"OF_SPLASH_MAX_SIZE"  [NEW] 
 - use this to specify the maximum size (in kilobytes) of image files that can safely be used for splash images
 - on some devices, the maximum safe size is 65 Kb; on others, the images can be very big (eg, megabytes)
 - Note: verify that the maximum value you set is not too big (ie, test it yourself)
@@ -506,7 +506,7 @@
 - set this to 1 if you want the XZ Utils (lzma, xz) to be added to the build (the binary is about 260kb in size)
 - default = 0
 #
-"FOX_DYNAMIC_SAMSUNG_FIX" [NEW] [FOX_10.0 builds only]
+"FOX_DYNAMIC_SAMSUNG_FIX" [NEW] 
 - set this to 1 to provide a workaround for bug in Samsung exynos dynamic partition devices, which causes a bootloop on encountering some binaries
 - when enabled, certain binaries (eg, bash, nano, aapt, etc) are removed from (or not added to) the build 
 - use this only if the recovery doesn't boot on your Samsung dynamic partition exynos device
@@ -520,18 +520,18 @@
    - nano from source; if this attempt fails, then you might need to clone the nano sources from upstream
    - default = 0
 #
-"FOX_EXCLUDE_NANO_EDITOR" [NEW] [FOX_10.0 builds only]
+"FOX_EXCLUDE_NANO_EDITOR" [NEW] 
 - set this to 1 to exclude every specie of nano from the build
 - default = 0
 #
-"FOX_BUILD_BASH" [NEW] [FOX_10.0 builds only]
+"FOX_BUILD_BASH" [NEW] 
 - set this to 1 to compile bash from source during the build process; this will replace the standard OrangeFox bash binary
 - this might require cloning the bash sources from upstream (or updating them if the current version generates build errors)
 #
 "FOX_USE_SPECIFIC_MAGISK_ZIP" [NEW]
 - use this to point to an alternative Magisk addon installer zip, if the default one does not work well for your device (eg, if it causes bootloops)
 -
-- eg, "export FOX_USE_SPECIFIC_MAGISK_ZIP=~/Magisk/Magisk-21.4.zip"
+- eg, "export FOX_USE_SPECIFIC_MAGISK_ZIP=~/Magisk/Magisk-v24.3.zip"
 -
 -     this will replace (at compile time) the default magisk addon with the one that you specified
 - it is the maintainers' responsibility to ensure that the replacement magisk zip is not corrupt, and that it works well with their device
@@ -568,7 +568,7 @@
 #
 "OF_VIRTUAL_AB_DEVICE" [NEW] [EXPERIMENTAL WiP]
 - Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
-- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE")
+- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE", "OF_VANILLA_BUILD", etc)
 - default = 0
 #
 "OF_USE_NEW_MAGISKBOOT" [OBSOLETE]
