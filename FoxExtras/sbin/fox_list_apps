@@ -1,7 +1,7 @@
 #!/sbin/sh
 #
 # Custom script for OrangeFox TWRP Recovery
-# Copyright (C) 2018-2020 OrangeFox Recovery Project
+# Copyright (C) 2018-2022 OrangeFox Recovery Project
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
@@ -24,31 +24,40 @@ is_mounted() {
 }
 
 Do_Get_List() {
+local AAPT1="/sbin/aapt"
+local AAPT2="/sbin/aapt2"
 local tmp="/tmp/listapps"
 local list="$tmp/list"
 local apps_dir="/data/app"
 local namestr="application-label:'"
 local d_mnt=$(is_mounted "/data")
 
-	[ -d "$list" ] && return	
+	[ -d "$list" ] && return
 	[ "$d_mnt" != "1" ] && mount /data
-	
+
 	mkdir -p "$tmp" "$list"
-	cd "$apps_dir"
-	if [ -f "/sbin/aapt" ]; then
-	   for pkgname in * ; do
-	       name=$(aapt dump badging "$pkgname/base.apk" 2>/dev/null | grep "$namestr" | sed "s/"$namestr"//" | sed "s/'//")
-	       if [ -n "$name" ]; then
-	          echo "$apps_dir/$pkgname" > "$list/$name"
-	       fi
+
+	if [ -f "$AAPT1" -o -f "$AAPT2" ]; then
+	   AAPT="$AAPT1"
+	   [ ! -f "$AAPT1" ] && AAPT="$AAPT2"
+	   for pkgname in $(ls /data/app/* | cut -d':' -f2 | cut -d'-' -f1 | sed "/^$/d" ) ; do
+	       	fullpath=$(ls /data/app/*/* | grep $pkgname | cut -d':' -f1)
+	       	if [ -f "$fullpath/base.apk" ]; then
+	           name=$($AAPT dump badging "$fullpath/base.apk" | grep "$namestr" | sed "s/"$namestr"//" | sed "s/'//" | sed "s/'//")
+	           if [ -n "$name" -a -f "$list/$name" ]; then
+			echo "$fullpath" > "$list/$name ($pkgname)"
+	           else
+			echo "$fullpath" > "$list/$name"
+	           fi
+		fi
 	   done
-	else 
-	   for pkgname in * ; do
-	      name="$(echo "$pkgname" | sed 's+-.*++g')"
-	      echo "$apps_dir/$pkgname" > "$list/$name"
+	else
+	   for pkgname in $(ls /data/app/* | cut -d':' -f2 | cut -d'-' -f1 | sed "/^$/d" ) ; do
+		fullpath=$(ls /data/app/*/* | grep $pkgname | cut -d':' -f1)
+		[ -f "$fullpath/base.apk" ] && echo "$fullpath" > "$list/$pkgname"
 	   done
 	fi
-	
+
 	exit 0
 }
 
