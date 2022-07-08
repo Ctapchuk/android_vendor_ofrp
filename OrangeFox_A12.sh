@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 30 April 2022
+# 08 July 2022
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -1309,7 +1309,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      echo -e "${GREEN}-- Enabling the App Manager ...${NC}"
   # remove aapt also, as it would be redundant
   else
-     echo -e "${GREEN}-- Omitting the aapt binary (it useless if the app manager is not enabled) ...${NC}"
+     echo -e "${GREEN}-- Omitting the aapt binary (it is useless if the app manager is not enabled) ...${NC}"
      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   fi
 
