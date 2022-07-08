@@ -16,7 +16,7 @@ export PS1='\s-\v \w > '
 
 # aliases
 alias cls="clear"
-alias seek='find . -name "$@"'
+alias seek='find . -type d -path ./proc -prune -o -name "$@"'
 alias dirp="ls -all --color=auto -t | more"
 alias dirt="ls -all --color=auto -t"
 alias dirs="ls -all --color=auto -S"
