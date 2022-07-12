@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2022 OrangeFox Recovery Project
-# Date: 08 July 2022
+# Date: 12 July 2022
 #
 # -----------------------------------
 #
@@ -565,5 +565,18 @@
 - Set to 1 if decryption fails on your device, despite all efforts. This may solve the problem - and it may not solve it at all
 - Most devices should NOT need this at all. But some devices (eg, violet, and some Realme devices) need this setting
 - default = 0
+#
+"OF_DYNAMIC_FULL_SIZE" [NEW]
+- This is for Virtual A/B devices only
+- Use this to specify the actual space of the "super" partition for ROM installations (instead of using update_engine's calculated allocatable space)
+- It is only useful if flashing a stock ROM fails, with an error "The maximum size of all groups for the target slot ... has exceeded allocatable space for dynamic partitions..."
+- The exact size of "super" partition (in kb) should be used
+- The size *must* be ascertained correctly (possibly, by running "fastboot getvar partition-size:super", and then converting the result from hex to decimal)
+- Do *NOT* use this var unless you are absolutely sure of what you are doing; it is your responsibility to ensure that the value supplied is correct
+- For most devices, it should not be needed at all
+-
+- 	eg, "export OF_DYNAMIC_FULL_SIZE=9126805504"
+-
+- default = none
 #
 # -----------------------------------
