@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 08 July 2022
+# 15 December 2022
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -1332,11 +1332,15 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   if [ -n "$FOX_USE_SPECIFIC_MAGISK_ZIP" -a -e "$FOX_USE_SPECIFIC_MAGISK_ZIP" ]; then
      tmp1=$FOX_USE_SPECIFIC_MAGISK_ZIP
   fi
-  MAGISK_VER=$(unzip -c $tmp1 common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
-  if [ -z "$MAGISK_VER" ]; then
+  # is this an old magisk zip or a new one?
+  tmp2=$(unzip -l $tmp1 | grep common/util_functions.sh)
+  if [ -n "$tmp2" ]; then
+     MAGISK_VER=$(unzip -c $tmp1 common/util_functions.sh | grep MAGISK_VER= | sed -E 's+MAGISK_VER="(.*)"+\1+')
+  else
      tmp2=$(unzip -c $tmp1 assets/util_functions.sh | grep "MAGISK_VER=")
      MAGISK_VER=$(cut -d= -f2 <<<$tmp2 | sed "s|[',]||g")
   fi
+
   echo -e "${GREEN}-- Detected Magisk version: ${MAGISK_VER}${NC}"
   sed -i -E "s+\"magisk_ver\" value=\"(.*)\"+\"magisk_ver\" value=\"$MAGISK_VER\"+" $FOX_RAMDISK/twres/ui.xml
 
