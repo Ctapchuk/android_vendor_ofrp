@@ -65,7 +65,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20220507"
+MOD_DATE="20230101"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -580,7 +580,7 @@ local PART
 
 # install the recovery
 Install_Recovery() {
-local PART=$(readlink -f $RECOVERY_PARTITION)
+local PART=$(readlink -e $RECOVERY_PARTITION)
 local ttmp=$PART
 local Is_ABD="0"
 
