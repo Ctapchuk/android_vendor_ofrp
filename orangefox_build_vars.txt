@@ -4,8 +4,8 @@
 #
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
-# Copyright (C) 2019-2022 OrangeFox Recovery Project
-# Date: 15 December 2022
+# Copyright (C) 2019-2023 OrangeFox Recovery Project
+# Date: 04 January 2023
 #
 # -----------------------------------
 #
@@ -88,6 +88,14 @@ OF_AB_DEVICE_WITH_RECOVERY_PARTITION [NEW]
    -     BOARD_RAMDISK_USE_LZMA := true
    - * your kernel must also have built-in lzma compression support
    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
+#
+"FOX_USE_LZ4_COMPRESSION"
+   - set this to 1 if (for whatever reason) you want to use lz4 compression for your ramdisk;
+   - * this requires you to have an up-to-date lz4 binary in your build system, and
+   - * set this in your BoardConfig (it will be set automatically if you don't set it yourself):
+   -     BOARD_RAMDISK_USE_LZ4 := true
+   - * your kernel must also have built-in lz4 compression support
+   - default = 0 (meaning use standard gzip compression, which provides better compression anyway)
 #
 "FOX_USE_TAR_BINARY"
    - set this to 1 if you want the gnu tar binary to be added (/sbin/gnutar)
