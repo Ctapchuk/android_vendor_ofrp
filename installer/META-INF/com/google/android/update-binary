@@ -2,6 +2,8 @@
 
 # ******************************************************
 # Description: 	Installer script for OrangeFox Recovery
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2018-2023 The OrangeFox Recovery Project
 # Author: 	DarthJabba9
 # Date: 	TODAY
 # ******************************************************
@@ -40,6 +42,9 @@ SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
 # default vendor mount point
 VENDOR_PARTITION=/dev/block/bootdevice/by-name/vendor
 
+# default vendor_boot mount point
+VENDOR_BOOT_PARTITION=/dev/block/bootdevice/by-name/vendor_boot
+
 # the display screen
 SCREEN=/proc/self/fd/$2
 
@@ -55,6 +60,9 @@ ERROR_CODE=0
 # AB device?
 OF_AB_DEVICE=""
 
+# vendor_boot recovery?
+OF_VENDOR_BOOT_RECOVERY=0
+
 # enable vbmeta patching for magiskboot 24+ ?
 OF_PATCH_VBMETA_FLAG=0
 
@@ -65,7 +73,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20230101"
+MOD_DATE="20230111"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -493,9 +501,15 @@ local PART
 	    target="$RECOVERY_PARTITION"
 	    name="recovery"
 	else
-	    ui_print "- Standard A/B device ..."
-	    target="$BOOT_PARTITION"
-	    name="boot"
+	    if [ "$OF_VENDOR_BOOT_RECOVERY" = "1" ]; then # vendor_boot bringup
+	    	ui_print "- Vendor_boot device ..."
+	    	target="$VENDOR_BOOT_PARTITION"
+	    	name="vendor_boot"
+	    else
+	    	ui_print "- Standard A/B device ..."
+	    	target="$BOOT_PARTITION"
+	    	name="boot"
+	    fi
 	fi
 
 	# if we have a recovery  partition - install the recovery image to recovery _a /_b
@@ -512,6 +526,17 @@ local PART
 	   ui_print "- The active slot is $tmp ..."
 	   for slot in _a _b; do
 		ui_print "- Installing OrangeFox to slot $slot..."
+		PART=$target"$slot"
+		blockdev --setrw $PART
+		package_extract_file "recovery.img" "$PART"
+	   done
+	   return
+	fi
+
+	# vendor_boot as recovery - flash both slots and return
+	if [ "$OF_VENDOR_BOOT_RECOVERY" = "1" ]; then
+	   for slot in _a _b; do
+		ui_print "- Installing OrangeFox to $name$slot..."
 		PART=$target"$slot"
 		blockdev --setrw $PART
 		package_extract_file "recovery.img" "$PART"
@@ -538,7 +563,7 @@ local PART
    	cp -f ramdisk.cpio ramdisk-ofrp.cpio
    	rm -f ramdisk.cpio
    	rm -f kernel dtb kernel_dtb
-	
+
 	# deal with both slots
 	for slot in _a _b; do
 		ui_print "- Running boot image patcher on slot $name$slot..."

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2022 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2023 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 01 January 2023
+# 11 January 2023
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -196,6 +196,12 @@ if [ -z "$FOX_VENDOR_CMD" ]; then
    abort 100
 fi
 
+# vendor_boot as recovery
+IS_VENDOR_BOOT_RECOVERY=0
+if [ "$OF_VENDOR_BOOT_RECOVERY" = "1" -o "$BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT" = "true" -o "$BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT" = "true" -o -n "$INSTALLED_VENDOR_BOOTIMAGE_TARGET" ]; then
+   IS_VENDOR_BOOT_RECOVERY=1
+fi
+
 # virtual A/B (VAB)
 if [ "$OF_AB_DEVICE" = "1" -a "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
     if [ -n "$BOARD_BOOT_HEADER_VERSION" ]; then
@@ -208,8 +214,14 @@ if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
     export OF_AB_DEVICE=1
 fi
 
-# Virtual A/B devices?
-[ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ] && COMPILED_IMAGE_FILE="boot.img" || COMPILED_IMAGE_FILE="recovery.img"
+# Virtual A/B and vendor_boot recovery devices?
+if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+    COMPILED_IMAGE_FILE="boot.img"
+elif  [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
+    COMPILED_IMAGE_FILE="vendor_boot.img"
+else
+    COMPILED_IMAGE_FILE="recovery.img"
+fi
 
 RECOVERY_DIR="recovery"
 FOX_VENDOR_PATH=vendor/$RECOVERY_DIR
@@ -493,6 +505,18 @@ local TDT=$(date "+%d %B %Y")
   # copy recovery image/boot image to recovery.img in the zip
   $CP -p $RECOVERY_IMAGE ./recovery.img
 
+  # vendor_boot as recovery - add the ramdisk image to the zip
+  if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" -a -x $FOX_VENDOR_PATH/tools/magiskboot ]; then
+     local VBtmp=/tmp/VBOOT_stuff
+     mkdir -p $VBtmp/
+     $CP -p $RECOVERY_IMAGE $VBtmp/tmp.img
+     cd $VBtmp/
+     $FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
+     $CP -p ramdisk.cpio $OF_WORKING_DIR/ramdisk.cpio.gz
+     cd $OF_WORKING_DIR
+     rm -rf $VBtmp/
+  fi
+
   # copy the Samsung .tar file if it exists
   if [ -f $RECOVERY_IMAGE".tar" ]; then
      $CP -p $RECOVERY_IMAGE".tar" .
@@ -552,6 +576,12 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s|^BOOT_PARTITION=.*|BOOT_PARTITION=\"$FOX_RECOVERY_BOOT_PARTITION\"|" $F
   fi
 
+  # embed the VENDOR_BOOT partition
+  if [ -n "$FOX_RECOVERY_VENDOR_BOOT_PARTITION" ]; then
+     echo -e "${RED}-- Changing the recovery vendor_boot partition to \"$FOX_RECOVERY_VENDOR_BOOT_PARTITION\" ${NC}"
+     sed -i -e "s|^VENDOR_BOOT_PARTITION=.*|VENDOR_BOOT_PARTITION=\"$FOX_RECOVERY_VENDOR_BOOT_PARTITION\"|" $F
+  fi
+
   # debug mode for the installer? (just for testing purposes - don't ship the recovery with this enabled)
   if [ "$FOX_INSTALLER_DEBUG_MODE" = "1" -o "$FOX_INSTALLER_DEBUG_MODE" = "true" ]; then
      echo -e "${WHITEONRED}-- Enabling debug mode in the zip installer! You must disable \"FOX_INSTALLER_DEBUG_MODE\" before release! ${NC}"
@@ -572,6 +602,12 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
   fi
   rm -rf /tmp/fox_build_tmp/
+
+  # vendor_boot
+  if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
+     echo -e "${RED}-- Vendor_boot device - enabling vendor_boot mode for the installer ... ${NC}"
+     sed -i -e "s/^OF_VENDOR_BOOT_RECOVERY=.*/OF_VENDOR_BOOT_RECOVERY=\"1\"/" $F
+  fi
 
   # whether to enable magisk 24+ patching of vbmeta
   if [ "$OF_PATCH_VBMETA_FLAG" = "1" ]; then
@@ -1418,6 +1454,7 @@ fi
 # this is the final stage after the recovery image has been created
 # process the recovery image where necessary (and repack where necessary)
 if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
+
      if [ "$OF_SAMSUNG_DEVICE" = "1" -o "$OF_SAMSUNG_DEVICE" = "true" ]; then
         SAMSUNG_DEVICE="samsung"
      else
@@ -1429,19 +1466,34 @@ if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
         [ -n "$SAMSUNG_DEVICE" ] && SAMSUNG_DEVICE="samsung"
      fi
 
-     if [ -z "$INSTALLED_RECOVERYIMAGE_TARGET" -a -n "$INSTALLED_BOOTIMAGE_TARGET" ]; then
-        INSTALLED_RECOVERYIMAGE_TARGET="$INSTALLED_BOOTIMAGE_TARGET"
+     if [ -z "$INSTALLED_RECOVERYIMAGE_TARGET" ]; then
+        if [ -n "$INSTALLED_BOOTIMAGE_TARGET" ]; then
+           INSTALLED_RECOVERYIMAGE_TARGET="$INSTALLED_BOOTIMAGE_TARGET"
+        fi
      fi
 
+     if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
+        if [ -n "$INSTALLED_VENDOR_BOOTIMAGE_TARGET" ]; then
+           INSTALLED_RECOVERYIMAGE_TARGET="$INSTALLED_VENDOR_BOOTIMAGE_TARGET"
+        else
+           INSTALLED_RECOVERYIMAGE_TARGET="$OUT/$COMPILED_IMAGE_FILE"
+        fi
+     fi
+
+     # copy
      echo -e "${GREEN}-- Copying recovery: \"$INSTALLED_RECOVERYIMAGE_TARGET\" --> \"$RECOVERY_IMAGE\" ${NC}"
      $CP -p "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
+
+     # samsung stuff?
      if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
      	echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
      	echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
      fi
+
+     # md5sum
      cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
-     
-     #
+
+     # more samsung stuff
      if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
      	echo -e "${RED}-- Creating Odin flashable recovery tar ($RECOVERY_IMAGE.tar) ... ${NC}"
 
