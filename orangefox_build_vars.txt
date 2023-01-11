@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 04 January 2023
+# Date: 11 January 2023
 #
 # -----------------------------------
 #
@@ -23,7 +23,7 @@
     	OF_USE_MAGISKBOOT_FOR_ALL_PATCHES
    - default = 0
 #
-OF_AB_DEVICE_WITH_RECOVERY_PARTITION [NEW]
+"OF_AB_DEVICE_WITH_RECOVERY_PARTITION" [NEW]
    - set to 1 if the device is an A/B device that has a dedicated recovery partition (** make sure that it really is **)
    - it is NOT normal for an A/B device to also have a dedicated recovery partition - but some OnePlus A/B devices do
    - if this is enabled, the following features will automatically be removed
@@ -32,7 +32,7 @@ OF_AB_DEVICE_WITH_RECOVERY_PARTITION [NEW]
    	* "Reflash OrangeFox after flashing a ROM"
    - default = 0
 #
-"FOX_PORTS_TMP" 
+"FOX_PORTS_TMP"
    - point to a custom temp directory for creating the zip installer
 #
 "FOX_PORTS_INSTALLER" 
@@ -557,9 +557,8 @@ OF_AB_DEVICE_WITH_RECOVERY_PARTITION [NEW]
 - * If a user formats /data or deletes the /sdcard/Fox/FoxFiles/ folder, then the binaries will not be available to the recovery; the OrangeFox zip must be flashed again
 - * If decryption does not work, then the binaries will not be available to the recovery
 #
-"OF_VIRTUAL_AB_DEVICE"
-- Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
-- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE" "OF_VANILLA_BUILD", etc)
+"OF_FORCE_PREBUILT_KERNEL" [NEW]
+- Set this to 1 to avoid the new 'NO KERNEL CONFIG' error, when using a prebuilt kernel
 - default = 0
 #
 "OF_SKIP_DECRYPTED_ADOPTED_STORAGE"
@@ -583,6 +582,11 @@ OF_AB_DEVICE_WITH_RECOVERY_PARTITION [NEW]
 - Most devices should NOT need this at all. But some devices (eg, violet, and some Realme devices) need this setting
 - default = 0
 #
+"OF_VIRTUAL_AB_DEVICE"
+- Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
+- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE" "OF_VANILLA_BUILD", etc)
+- default = 0
+#
 "OF_DYNAMIC_FULL_SIZE" [NEW]
 - This is for Virtual A/B devices only
 - Use this to specify the actual space of the "super" partition for ROM installations (instead of using update_engine's calculated allocatable space)
@@ -596,8 +600,27 @@ OF_AB_DEVICE_WITH_RECOVERY_PARTITION [NEW]
 -
 - default = none
 #
-"OF_FORCE_PREBUILT_KERNEL" [NEW]
-- Set this to 1 to avoid the new 'NO KERNEL CONFIG' error, when using a prebuilt kernel
+"OF_NO_REFLASH_CURRENT_ORANGEFOX" [NEW]
+- This is for Virtual A/B devices only
+- if this is enabled, the following features will automatically be removed
+   	* "Flash Current OrangeFox"
+   	* "Reflash OrangeFox after flashing a ROM"
+- default = 0
+#
+"OF_VENDOR_BOOT_RECOVERY" [NEW - Experimental]
+- Do *NOT* use this variable unless you know what you are doing! Bootloops and bricks are *very* possible!
+- Set to 1 to build a recovery for a vendor_boot-as-recovery (hdr4) device (normally, hdr4 devices are also Virtual A/B devices)
+- There are currently *many* problems with vendor_boot-as-recovery, and custom recoveries are at a very early stage of development
+- If this is enabled, the following features will automatically be removed
+   	* Changing the OrangeFox splash image/logo
+   	* "Flash Current OrangeFox"
+   	* "Reflash OrangeFox after flashing a ROM"
+- the zip installer that is created will also include the recovery ramdisk image ("ramdisk.cpio.gz")
+- if this is enabled, the proper way to flash the built recovery is to reboot an installed working recovery to "fastbootd" mode,
+- and extract and flash the recovery ramdisk image by running the command: "fastboot flash vendor_boot:recovery ramdisk.cpio.gz"
+- Do NOT flash the zip installer itself, unless you have both of you ROM's original boot.img and vendor_boot.img, *and* know how to recover the device from bootloops or bricks
+- This is because the outcome of flashing the recovery.img is *unpredictable* - it might be fine, or brick the device, or make the ROM unbootable; any of these is equally possible
+- You really SHOULD stay away from using this variable unless you are a *highly technical risk-taker*, and you can fix any problem *on your own*. You have been warned!
 - default = 0
 #
 # -----------------------------------
