@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 11 January 2023
+# 15 February 2023
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -510,6 +510,7 @@ local TDT=$(date "+%d %B %Y")
      local VBtmp=/tmp/VBOOT_stuff
      mkdir -p $VBtmp/
      $CP -p $RECOVERY_IMAGE $VBtmp/tmp.img
+     $CP -p $FOX_VENDOR_PATH/Files/flash-* .
      cd $VBtmp/
      $FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
      $CP -p ramdisk.cpio $OF_WORKING_DIR/ramdisk.cpio.gz

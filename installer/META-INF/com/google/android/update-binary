@@ -73,7 +73,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20230111"
+MOD_DATE="20230215"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -535,6 +535,7 @@ local PART
 
 	# vendor_boot as recovery - flash both slots and return
 	if [ "$OF_VENDOR_BOOT_RECOVERY" = "1" ]; then
+	   ui_print "- NOTE: vendor_boot-as-recovery is highly experimental! Do not use unless you are absolutely sure that it will not cause problems!"
 	   for slot in _a _b; do
 		ui_print "- Installing OrangeFox to $name$slot..."
 		PART=$target"$slot"
