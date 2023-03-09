@@ -45,14 +45,20 @@ VENDOR_PARTITION=/dev/block/bootdevice/by-name/vendor
 # default vendor_boot mount point
 VENDOR_BOOT_PARTITION=/dev/block/bootdevice/by-name/vendor_boot
 
+# default persist partition
+PERSIST_PARTITION=/dev/block/bootdevice/by-name/persist
+
 # the display screen
 SCREEN=/proc/self/fd/$2
 
 # the current zip installer
 ZIPFILE="$3"
 
+# temp directory
+TMP_DIR=/dev/tmp
+
 # the zip extract directory
-EX_DIR=/tmp/ofox_installer
+EX_DIR=$TMP_DIR/ofox_installer
 
 # global error code (0=good; 1=error)
 ERROR_CODE=0
@@ -73,7 +79,7 @@ FOX_RESET_SETTINGS="1"
 OF_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20230215"
+MOD_DATE="20230309"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -110,10 +116,44 @@ fi
 
 # ui_print "<message>" ["<message 2>" ...]
 ui_print() {
-  until [ ! "$1" ]; do
-    echo -e "ui_print $1\nui_print" >> $SCREEN
-    shift
-  done
+  if [ "$BOOTMODE" = "true" ]; then
+  	echo "$1"
+  else
+  	until [ ! "$1" ]; do
+    		echo -e "ui_print $1\nui_print" >> $SCREEN
+    		shift
+  	done
+  fi
+}
+
+# abort [<message>]
+abort() {
+   ui_print "$*"
+   ERROR_CODE=1
+   rm -rf $EX_DIR
+   exit 1
+}
+
+# detect Magisk app/booted flashing
+BOOTMODE=false
+ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
+$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
+
+# 
+find_persist() {
+local P=/persist
+  [ -d $P -o "$BOOTMODE" != "true" ] && { echo $P; return; }
+
+  P=/mnt/vendor/persist
+  [ -d $P ] && { echo $P; return; }
+
+  P=/dev/tmp/persist
+  if [ -e $PERSIST_PARTITION ]; then
+     mkdir -p $P
+     mount $PERSIST_PARTITION $P
+     [ $? = 0 ] && { echo $P; return; }
+  fi
+  echo "ERROR"
 }
 
 # is_mounted <partition>
@@ -191,13 +231,6 @@ file_getprop() {
 # xgetprop <property>
 xgetprop() { 
    [ -e $GETPROP ] && $GETPROP $1 || grep -m1 "^$1=" /default.prop | head -n1 | cut -d= -f2
-}
-
-# abort [<message>]
-abort() { 
-   ui_print "$*"
-   ERROR_CODE=1
-   exit 1
 }
 
 # avoid the standalone BSD grep, which segfaults on "grep -w"
@@ -337,7 +370,7 @@ UnMountThemAll() {
    umount_part "$SYS_DIR" > /dev/null 2>&1
    umount_part "$VEND_DIR"
    umount_part "/cache"
-   umount_part "/persist"
+   umount_part "$PERSIST_PATH"
    umount_part "/data"
 }
 
@@ -397,6 +430,7 @@ local D="/data/"
   fi
   
  [ -d $C ] && { 
+    [ "$BOOTMODE" = "true" ] && { echo "$C"; return; }
     local F=$(cat /etc/fstab | grep "/cache")
     [ -n "$F" ] && { echo "$C"; return; }
  }
@@ -443,14 +477,22 @@ local F="0"
  [ ! -d $F ] && mkdir -p $F
  ui_print "- OrangeFox fresh installation - "$F"Fox_Installed"
  echo "FOX_NEW=1" > "$F"Fox_Installed
+
  [ ! -f "$F"Fox_Installed ] && {
     ui_print "- Error writing to the cache directory ($cache_dir); the post-install patches will not be processed."
+    return
  }
+
+ if [ "$BOOTMODE" = "true" ]; then
+    [ "$FOX_RESET_SETTINGS" != "disabled" ] && echo "BOOTMODE=1" >> "$F"Fox_Installed
+ fi
 }
 
 # unzip the installer package into /tmp
 Unzip_Installer_Package() {
-   cd /tmp
+   mkdir -p $TMP_DIR
+   cd $TMP_DIR
+   rm -rf $EX_DIR
    mkdir -p $EX_DIR
    cd $EX_DIR
    unzip -o "$ZIPFILE"
@@ -595,7 +637,7 @@ local PART
 	rm -f ramdisk-ofrp.cpio
 	"$tool" cleanup
 
-	cd /tmp
+	cd $TMP_DIR
 	if [ "$name" != "recovery" ]; then
 	   ui_print " "
 	   ui_print "*** NOTE: You are now unrooted! ***"
@@ -668,11 +710,13 @@ local F="$1"
 	rm -rf $FOX/.theme
 	rm -rf $FOX/.navbar
 	rm -f $FOX/.fox*
-	if [ -d /persist ]; then
-	   mount_part /persist
-	   rm -f /persist/.fsec*
-	   rm -f /persist/.fox*
-	   umount_part /persist
+	if [ "$PERSIST_PATH" != "ERROR" -a -d $PERSIST_PATH ]; then
+	   	[ "$BOOTMODE" != "true" ] && mount_part $PERSIST_PATH
+	   	rm -f $PERSIST_PATH/.fsec*
+	   	rm -f $PERSIST_PATH/.fox*
+	   	[ "$PERSIST_PATH" = "/dev/tmp/persist" -o "$BOOTMODE" != "true" ] && umount_part $PERSIST_PATH
+	else
+		[ "$PERSIST_PATH" = "ERROR" ] && ui_print "- Some old settings might remain."
 	fi
 }
 
@@ -685,6 +729,18 @@ Main() {
 	ui_print "*************************************"
 	ui_print " "
 
+	PERSIST_PATH=$(find_persist)
+	
+	if [ "$BOOTMODE" = "true" ]; then
+	   ui_print "- OrangeFox installation: running on Android."
+	   ui_print "- This installation mode is experimental."
+	   [ "$PERSIST_PATH" = "ERROR" ] && {
+	   	ui_print "- Some features might be missing - so,"
+	   	ui_print "- flash this zip again, with OrangeFox."
+	   }
+	   ui_print ""
+	fi
+
 # check if we have any device requirements
 	CheckRequirements
 
@@ -696,21 +752,36 @@ Main() {
 	Install_Recovery
 	
 	[ "$ERROR_CODE" = "1" ] && {
-	   ui_print "- The installation of OrangeFox recovery was not successful ..."
-	   exit 1
+	   abort "- The installation of OrangeFox recovery was not successful ..."
 	}
 
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."
-	local internal_SD="/sdcard"
-	mount_part "$internal_SD"
-	F=$(is_mounted "$internal_SD")
-	[ "$F" = "0" ] && {
-	   internal_SD="$EXTERNAL_STORAGE"
-	   [ -z "$internal_SD" ] && internal_SD="/data/media/0"
-	   mount_part "$internal_SD"
-	}
-	F=$(is_mounted "$internal_SD")
+	local internal_SD
+	if [ "$BOOTMODE" = "true" ]; then
+	    F=1
+	    if [ -d "$EXTERNAL_STORAGE" ]; then
+	       internal_SD="$EXTERNAL_STORAGE"
+	    elif [ -d /storage/emulated/0 ]; then
+	       internal_SD="/storage/emulated/0"
+	    elif [ -d /data/media/0 ]; then
+	       internal_SD="/data/media/0"
+	    elif [ -d /sdcard ]; then
+	       internal_SD="/sdcard"
+	    else
+	       F=0
+	    fi
+	else
+	    internal_SD="/sdcard"
+	    mount_part "$internal_SD"
+	    F=$(is_mounted "$internal_SD")
+	    [ "$F" = "0" ] && {
+	   	internal_SD="$EXTERNAL_STORAGE"
+	   	[ -z "$internal_SD" ] && internal_SD="/data/media/0"
+	   	mount_part "$internal_SD"
+	   	F=$(is_mounted "$internal_SD")
+	    }
+	fi
 	[ "$F" = "1" ] && {	
 	   ui_print "- internal_SD=$internal_SD"
 	   rm -rf "$internal_SD/Fox/FoxFiles"
@@ -734,10 +805,12 @@ Main() {
 
 # backup recovery.log -> Fox/logs/install.log
     	ui_print "- Finished."
-    	mkdir -p $internal_SD/Fox/logs
-    	ui_print "- Backing up recovery.log to $internal_SD/Fox/logs/install.log ..."
-	cp -a /tmp/recovery.log $internal_SD/Fox/logs/install.log
-   	[ "$internal_SD" = "/sdcard" ] && umount_part "$internal_SD" > /dev/null 2>&1
+    	[ "$BOOTMODE" = "true" ] || {
+    		mkdir -p $internal_SD/Fox/logs
+    		ui_print "- Backing up recovery.log to $internal_SD/Fox/logs/install.log ..."
+		cp -a /tmp/recovery.log $internal_SD/Fox/logs/install.log
+   		[ "$internal_SD" = "/sdcard" ] && umount_part "$internal_SD" > /dev/null 2>&1
+   	}
 
 # umount
 	UnMountThemAll
@@ -746,6 +819,7 @@ Main() {
 	ui_print "- Finished installing OrangeFox!" 
 	ui_print "- Extra files are in $internal_SD/Fox/"
 	ui_print " "
+	rm -rf $EX_DIR
 
 	# don't reboot automatically if it is an A/B device, and OrangeFox is running
 	if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
@@ -762,7 +836,7 @@ Main() {
 	   fi
 	fi
 
-	ui_print " >> Rebooting to Recovery in 5 seconds ..."
+	ui_print " >> Rebooting to OrangeFox Recovery in 5 seconds ..."
 	sleep 1
 	ui_print "-5s...."
 	sleep 1
