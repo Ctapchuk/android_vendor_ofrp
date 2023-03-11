@@ -214,6 +214,12 @@ if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
     export OF_AB_DEVICE=1
 fi
 
+# Disable the init.d addon for vAB devices
+if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
+    echo -e "${GREEN}-- Virtual A/B device - disabling the init.d addon .... ${NC}"
+    export FOX_DELETE_INITD_ADDON=1
+fi
+
 # Virtual A/B and vendor_boot recovery devices?
 if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
     COMPILED_IMAGE_FILE="boot.img"
