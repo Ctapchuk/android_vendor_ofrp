@@ -4,7 +4,7 @@
 # 	Custom script for OrangeFox Recovery
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2022 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2023 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20220128
+# * Date:   20230321
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20220128"
+SCRIPT_LASTMOD_DATE="20230321"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -36,9 +36,7 @@ DEBUG="0"  	  # enable for more debug messages
 VERBOSE_DEBUG="0" # enable for really verbose debug messages
 SYS_ROOT="0"	  # do we have system_root?
 SAR="0"	  	  # SAR set up properly in recovery?
-ADJUST_VENDOR="0" # enable to remove /vendor from fstab if not needed
-ADJUST_CUST="0"   # enable to remove /cust from fstab if not needed
-ANDROID_SDK="21"  # assume at least (and no more than) Lollipop in sdk checks
+ANDROID_SDK="30"  # assume at least Android 11 in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
 SUPER="0" # whether the rdevice has a "super" partition
 OUR_TMP="/FFiles/temp" # our "safe" temp directory
@@ -125,55 +123,6 @@ is_mounted() {
   return $?
 }
 
-# is it a treble ROM ?
-Has_Treble_Dirs() {
-local D="$1"
-  if [ -d $D/app ] && [ -d $D/bin ] && [ -d $D/etc ] && [ -d $D/firmware ] && [ -d $D/lib64 ]; then
-    echo "1"
-  else
-    echo "0"
-  fi	
-}
-
-realTreble() {
-local CC=/tmp_vendor
-local V=$VENDOR_BLOCK
-  [ ! -e $V ] && {
-    echo "0"
-    return
-  }
-  mkdir -p $CC > /dev/null 2>&1
-  $MOUNT_CMD -t ext4 $V $CC > /dev/null 2>&1
-  local R=$(Has_Treble_Dirs $CC)
-  umount $CC > /dev/null 2>&1
-  rmdir $CC > /dev/null 2>&1
-  echo $R
-}
-
-isTreble() {
-local TT=$(realTreble)
-  echo "REALTREBLE=$TT" >> $CFG
-  echo "" >> $LOG
-  echo "DEBUG: OrangeFox: REALTREBLE=$TT" >> $LOG
-  [ "$TT" = "1" ] && {
-     $SETPROP orangefox.realtreble.rom 1 > /dev/null 2>&1
-     echo "1"
-     return
-  }
-  $SETPROP orangefox.realtreble.rom 0  > /dev/null 2>&1
-
-  # try /cust
-local C="/tmp_cust"
-  mkdir -p $C > /dev/null 2>&1
-  $MOUNT_CMD -t ext4 /dev/block/bootdevice/by-name/cust $C > /dev/null 2>&1 
-  T=$(Has_Treble_Dirs $C)
-  DebugDirList "$C/"
-  DebugDirList "$C/app/"
-  umount $C > /dev/null 2>&1
-  rmdir $C > /dev/null 2>&1
-  echo "$T"
-}
-
 # do we have system_root?
 has_system_root() {
   local F=$(getprop "ro.build.system_root_image" 2>/dev/null)
@@ -256,7 +205,7 @@ local slot=$(getprop "ro.boot.slot_suffix")
    PROP="$OUR_TMP/system_build_prop"
    umount $S > /dev/null 2>&1
    rmdir $S > /dev/null 2>&1
-   
+  
    # now look for vendor prop
    local mv1="0"
    [ ! -d "$V" ] && mkdir -p $V > /dev/null 2>&1
@@ -364,10 +313,30 @@ local slot=$(getprop "ro.boot.slot_suffix")
 # is it miui ?
 isMIUI() {
    local M="0"
+
+   # look for product prop
+   local mv1=$(getprop "orangefox.product.partition")
+   if [ "$mv1" = "1" ]; then
+	$MOUNT_CMD "/product" > /dev/null 2>&1
+        is_mounted "/product" && {
+            cp "/product/etc/build.prop" "$OUR_TMP/product_build_prop" > /dev/null 2>&1
+            local appdir=/product/app
+            if [ -d $appdir/MIDrop -a -d $appdir/MiuiScanner -a -d $appdir/MIUIMiPicks ]; then
+            	M=1
+            	DebugMsg "Early miui checks succeeded."
+     	    else
+         	DebugMsg "Early miui checks returned negative."
+            fi
+            umount "/product"  > /dev/null 2>&1
+            if [ "$M" = "1" ]; then
+            	echo $M
+            	return
+            fi
+        }
+   fi
+
+   #
    local S="/tmp_system"
-   local A="$S/app"
-   local E="$S/etc"
-   local S_SAR="$S/system"
    local slot=$(getprop "ro.boot.slot_suffix")
 
    # don't use slots when using a dm-* block device name
@@ -384,42 +353,44 @@ isMIUI() {
    fi
 
    $MOUNT_CMD -t ext4 $SYSTEM_BLOCK"$slot" $S > /dev/null 2>&1
+
+   local S_SAR="$S/system"
+   M=$(is_SAR)
+   [ "$M" = "0" ] && S_SAR=$S
+   local A="$S_SAR/app"
+   local E="$S_SAR/etc"
+   M=0
    
-   DebugDirList "$S/"
+   DebugDirList "$S_SAR/"
    DebugDirList "$S/vendor"
 
    DebugDirList "$A/"
    DebugDirList "$E/"
    
-   if [ -f $S/init.miui.cust.rc ] && [ -f $S/init.miui.rc ]; then
-      DebugMsg "First round of miui checks succeeded."
-      M="1"
-   else
-      DebugMsg "First round of miui checks returned negative."
-   fi
-
    [ "$M" != "1" ] && {
-      if [ -d $A/miui ] && [ -d $A/miuisystem ]; then
-         DebugMsg "Second round of miui checks succeeded."
+      if [ -d $A/MIDrop -a -d $A/MiuiScanner -a -d $A/MIUIMiPicks ]; then
+         DebugMsg "First round of miui checks succeeded."
          M="1"
      else
-         DebugMsg "Second round of miui checks returned negative."
+         DebugMsg "First round of miui checks returned negative."
      fi
    }
 
+   [ "$M" != "1" ] && {   
+      if [ -d $E/cust -a -d $E/precust_theme -a -e $E/preloaded-miui-classes ]; then
+      	DebugMsg "Second round of miui checks succeeded."
+        M="1"
+      else
+        DebugMsg "Second round of miui checks returned negative."
+      fi
+   }
+
    [ "$M" != "1" ] && {
-      if [ -d $E/cust ] && [ -d $E/miui_feature ] && [ -d $E/precust_theme ]; then
+      if [ -e $S/init.miui.cust.rc -a -e $S/init.miui.rc ]; then
       	 DebugMsg "Third round of miui checks succeeded."
       	 M="1"
       else
       	 DebugMsg "Third round of miui checks returned negative."
-      	 E="$S_SAR/etc"
-      	 if [ -d $E/cust ] && [ -d $E/miui_feature ] && [ -d $E/precust_theme ]; then
-           DebugMsg "Fourth round of miui checks succeeded."
-           M="1"
-      	 else
-           DebugMsg "Fourth round of miui checks returned negative."
-      	 fi
       fi
    }
    
@@ -432,8 +403,21 @@ isMIUI() {
 
 # probe the installed ROM
 Get_Details() {
-   # check for Treble
-   T=$(isTreble)
+
+   # if not there already
+   mkdir -p $OUR_TMP
+
+   # product partition
+   local p1=/dev/block/by-name/product
+   local p2=/dev/block/bootdevice/by-name/product
+   if [ -e "$p1" -o -e "$p2" -o -h "$p1" -o -h "$p2" ]; then
+   	$SETPROP orangefox.product.partition "1" > /dev/null 2>&1
+   else
+   	$SETPROP orangefox.product.partition "0" > /dev/null 2>&1
+   fi
+
+   # Treble
+   T=1
 
    # check for MIUI
    M=$(isMIUI)
@@ -442,38 +426,13 @@ Get_Details() {
    ROM=$(get_ROM)
 }
 
-# remove /cust or /vendor from fstab
-mod_cust_vendor() {
-  if [ "$1" = "1" ]; then # treble - remove /cust
-     [ "$ADJUST_CUST" = "1" ] && {
-     	D="$D Removing \"/cust\" from $FS"
-     	sed -i -e 's|^/cust|##/cust|' $FS
-     }
-  else # non-treble -remove /vendor
-     [ "$ADJUST_VENDOR" = "1" ] && {
-     	D="$D  Removing \"/vendor\" from $FS"
-     	sed -i -e "s|^/vendor|##/vendor|g" $FS
-     }
-  fi
-}
-
 # report on Treble
 Treble_Action() {
-   echo "DEBUG: OrangeFox: check for Treble." >> $LOG
    if [ -z "$ROM" ]; then
-      echo "DEBUG: OrangeFox: detected no ROM" >> $LOG
-      echo "TREBLE=0" >> $CFG
-      return
-   fi   
-   if [ "$T" = "1" ]; then
-      D="DEBUG: OrangeFox: detected a Treble ROM."
+      	echo "DEBUG: OrangeFox: detected no ROM" >> $LOG
    else
-      D="DEBUG: OrangeFox: detected a Non-Treble ROM."
+   	echo "ROM=$ROM" >> $CFG
    fi
-   mod_cust_vendor "$T"
-   echo $D >> $LOG
-   echo "TREBLE=$T" >> $CFG
-   echo "ROM=$ROM" >> $CFG
 }
 
 # report on MIUI and take action
@@ -486,10 +445,6 @@ MIUI_Action() {
    D="DEBUG: OrangeFox: detected a Custom ROM."
    if [ "$M" = "1" ]; then
       D="DEBUG: OrangeFox: detected a MIUI ROM"
-      if [ "$T" = "1" ]; then
-         D="$D (Treble)"
-      fi
-      D=$D"."
    fi
   echo $D >> $LOG
   echo "MIUI=$M" >> $CFG
@@ -503,26 +458,6 @@ backup_restore_FS() {
    else   
       cp -a "$FS.org" "$FS"
    fi
-}
-
-# fix yellow flashlight on mido/vince/kenzo and configure Leds on others
-flashlight_Leds_config() {
-   case "$FOX_DEVICE" in
-       vince)
-   		echo "0" > /sys/devices/soc/qpnp-flash-led-24/leds/led:torch_1/max_brightness;
-       	;;
-       riva)
-            	echo 1 > /sys/class/leds/flashlight/max_brightness;
-            	echo 0 > /sys/class/leds/flashlight/brightness;
-         ;;
-       *)
-       		return;
-       	;;
-   esac
-
-   echo "0" > /sys/class/leds/led:torch_1/max_brightness
-   echo "0" > /sys/class/leds/torch-light1/max_brightness
-   echo "0" > /sys/class/leds/led:flash_1/max_brightness
 }
 
 # start, and mark that we have started
@@ -560,20 +495,6 @@ local fox_cfg="$ETC_DIR/fox.cfg"
    ln -s $CFG /tmp/orangefox.cfg
 }
 
-# cater for situations where setprop is a dead symlinked applet
-get_setprop() {
-local TPROP=""
-  $SETPROP > /dev/null 2>&1
-  [ $? == 0 ] && return
-  TPROP=/sbin/resetprop
-  [ ! -x "$TPROP" ] && TPROP=/system/bin/resetprop
-  [ -x "$TPROP" ] && {
-    rm -f $SETPROP
-    ln -sf $TPROP $SETPROP
-    return
-  }
-}
-
 # try to get display panel information
 Get_Display_Panel() {
 local F1="Panel Name = "
@@ -605,17 +526,6 @@ local KLOG="/tmp/dmesg.log"
    fi
 }
 
-# whether there is file-based encryption
-isFB_Encrypted() {
-  [ -e "/data/unencrypted/key/version" ] && echo "1" || echo "0"
-}
-
-# whether there is full-disk encryption
-isFD_Encrypted() {
-  local F=$(mount | grep "dm-")
-  [ -n "$F" ] && echo "1" || echo "0"
-}
-
 # post-init stuff
 post_init() {
   local M="/FFiles/magiskboot_new"
@@ -623,44 +533,13 @@ post_init() {
   M="/FFiles/fox_fix_date"
   [ -f $M ] && chmod 0755 $M
 
-  # FBE - remove the "del_pass" addon, but keep a copy in /FFiles/Tools/
-  M=$(isFB_Encrypted)
-  [ "$M" = "1" ] && {
-    local F=/FFiles/OF_DelPass/OF_DelPass.zip
-    if [ -f $F ]; then
-    	mkdir -p /FFiles/Tools
-    	cp -f $F /FFiles/Tools/
-    	rm -rf "/FFiles/OF_DelPass/"
-    fi
-  }
-  
   # write OrangeFox props to the log
   echo "DEBUG: OrangeFox: Fox properties:" >> $LOG
   getprop | grep 'orangefox' >> $LOG
 }
 
-# kludge for issues with mounting system/vendor logical partitions
-# TODO: one day, this will not be needed; can be moved to device tree
-fix_dynamic() {
-  if [ "$SUPER" = "1" ]; then
-     sleep 1
-     mount /product > /dev/null 2>&1
-     sleep 1
-     mount /vendor > /dev/null 2>&1
-     sleep 1
-     mount /system_root > /dev/null 2>&1
-     sleep 1
-     umount /product > /dev/null 2>&1
-     umount /vendor > /dev/null 2>&1
-     umount /system_root > /dev/null 2>&1
-  fi
-}
-
 ### main() ###
 extralog "foxstart: about to start"
-
-get_setprop
-extralog "foxstart: completed get_setprop()"
 
 # have we executed once before/are we running now?
 start_script
@@ -697,13 +576,6 @@ extralog "foxstart: completed Get_Display_Panel()"
 post_init
 extralog "foxstart: completed post_init()"
 
-# Leds
-flashlight_Leds_config
-extralog "foxstart: completed flashlight_Leds_config()"
-
-# dynamic
-# fix_dynamic
-
 # end
 exit 0
-### end main ###
+# end main #
