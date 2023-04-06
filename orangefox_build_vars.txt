@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 03 April 2023
+# Date: 06 April 2023
 #
 # -----------------------------------
 #
@@ -634,4 +634,9 @@
 - It is your responsibility to supply a valid timezone (see gui/theme/common/watch.xml for examples)
 - default = "CET-1;CEST,M3.5.0,M10.5.0"
 #
+"OF_ENABLE_FS_COMPRESSION" [NEW - Experimental]
+- Set this to 1 to enable f2fs filesystem compression
+- This requires support in your kernel, and the appropriate fstab flags
+- Do not use - unless you know what you are doing, and you also know that every ROM that you will use supports fscompression
+- default = 0
 # -----------------------------------
