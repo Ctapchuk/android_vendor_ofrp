@@ -54,8 +54,13 @@ SCREEN=/proc/self/fd/$2
 # the current zip installer
 ZIPFILE="$3"
 
+# detect Magisk app/ROM flashing
+BOOTMODE=false
+ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
+$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
+
 # temp directory
-TMP_DIR=/dev/tmp
+$BOOTMODE && TMP_DIR=/dev/tmp || TMP_DIR=/tmp
 
 # the zip extract directory
 EX_DIR=$TMP_DIR/ofox_installer
@@ -134,11 +139,6 @@ abort() {
    exit 1
 }
 
-# detect Magisk app/booted flashing
-BOOTMODE=false
-ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
-$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
-
 # 
 find_persist() {
 local P=/persist
@@ -147,7 +147,7 @@ local P=/persist
   P=/mnt/vendor/persist
   [ -d $P ] && { echo $P; return; }
 
-  P=/dev/tmp/persist
+  P=$TMP_DIR/persist
   if [ -e $PERSIST_PARTITION ]; then
      mkdir -p $P
      mount $PERSIST_PARTITION $P
@@ -714,7 +714,7 @@ local F="$1"
 	   	[ "$BOOTMODE" != "true" ] && mount_part $PERSIST_PATH
 	   	rm -f $PERSIST_PATH/.fsec*
 	   	rm -f $PERSIST_PATH/.fox*
-	   	[ "$PERSIST_PATH" = "/dev/tmp/persist" -o "$BOOTMODE" != "true" ] && umount_part $PERSIST_PATH
+	   	[ "$PERSIST_PATH" = "$TMP_DIR/persist" -o "$BOOTMODE" != "true" ] && umount_part $PERSIST_PATH
 	else
 		[ "$PERSIST_PATH" = "ERROR" ] && ui_print "- Some old settings might remain."
 	fi
