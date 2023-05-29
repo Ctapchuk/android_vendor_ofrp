@@ -3,7 +3,7 @@
 #
 
 # shell
-#export PS1='\s-\v \w > '
+export PS1='\s-\v \w > '
 
 # aliases
 alias cls="clear"
@@ -15,4 +15,8 @@ alias del="rm -i"
 alias ren="mv -i"
 alias copy="cp -i"
 alias diskfree="df -Ph"
+#
+
+# go to a neutral location
+cd /tmp
 #
