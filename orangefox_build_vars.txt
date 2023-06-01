@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 06 April 2023
+# Date: 01 June 2023
 #
 # -----------------------------------
 #
@@ -81,7 +81,7 @@
      (eg, some devices have a different location for boot)
    - default = "/dev/block/bootdevice/by-name/boot"
 #
-"FOX_USE_LZMA_COMPRESSION"
+"OF_USE_LZMA_COMPRESSION" (renamed from "FOX_USE_LZMA_COMPRESSION")
    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
    - * this requires you to have an up-to-date lzma binary in your build system, and 
    - * set this in your BoardConfig (it will be set automatically if you don't set it yourself):
@@ -89,7 +89,7 @@
    - * your kernel must also have built-in lzma compression support
    - default = 0 (meaning use standard gzip compression (fast, but doesn't compress as well))
 #
-"FOX_USE_LZ4_COMPRESSION"
+"OF_USE_LZ4_COMPRESSION" (renamed from "FOX_USE_LZ4_COMPRESSION")
    - set this to 1 if (for whatever reason) you want to use lz4 compression for your ramdisk;
    - * this requires you to have an up-to-date lz4 binary in your build system, and
    - * set this in your BoardConfig (it will be set automatically if you don't set it yourself):
@@ -416,7 +416,7 @@
 - the binary will add about 275kb to the size of the recovery image
 - default = 0
 #
-"FOX_ADVANCED_SECURITY"
+"OF_ADVANCED_SECURITY" (renamed from "FOX_ADVANCED_SECURITY")
 - set this to 1 to enable the advanced security features
 - this forces ADB and MTP to be disabled until after you enter the recovery (ie, until after
 - all decryption/recovery passwords are successfully entered)
