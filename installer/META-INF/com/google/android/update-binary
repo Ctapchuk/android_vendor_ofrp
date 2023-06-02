@@ -17,7 +17,7 @@ if [ "$FOX_INSTALLER_DEBUG_MODE" = "1" ]; then
 fi
 
 # the target device(s)
-TARGET_DEVICE="mido"
+TARGET_DEVICE="MAIN_DEVICE"
 TARGET_DEVICE_ALT="ALT_DEVICE"
 
 # getprop
@@ -61,6 +61,7 @@ $BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMO
 
 # temp directory
 $BOOTMODE && TMP_DIR=/dev/tmp || TMP_DIR=/tmp
+mkdir -p $TMP_DIR
 
 # the zip extract directory
 EX_DIR=$TMP_DIR/ofox_installer
@@ -69,22 +70,25 @@ EX_DIR=$TMP_DIR/ofox_installer
 ERROR_CODE=0
 
 # AB device?
-OF_AB_DEVICE=""
+FOX_AB_DEVICE=0
 
 # vendor_boot recovery?
-OF_VENDOR_BOOT_RECOVERY=0
+FOX_VENDOR_BOOT_RECOVERY=0
+
+# vendor_boot - whether to flash only the ramdisk
+FOX_VENDOR_BOOT_FLASH_RAMDISK_ONLY=0
 
 # enable vbmeta patching for magiskboot 24+ ?
-OF_PATCH_VBMETA_FLAG=0
+FOX_PATCH_VBMETA_FLAG=0
 
 # Reset OrangeFox settings to default?
 FOX_RESET_SETTINGS="1"
 
 # build a vanilla version that skips all OrangeFox patches?
-OF_VANILLA_BUILD=0
+FOX_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20230309"
+MOD_DATE="20230602"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -422,7 +426,7 @@ local C="/cache/"
 local AB="/data/cache/"
 local D="/data/"
 
-  if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
+  if [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
      [ -d $AB ] && { echo "$AB"; return; }
      mount_part "/data" > /dev/null 2>&1
      mkdir -p $AB > /dev/null 2>&1
@@ -468,7 +472,7 @@ local F="0"
      fi 
  fi
  
- if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
+ if [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
     ui_print "- A/B device: the post-install patches will not be processed."
     return
  fi
@@ -508,6 +512,18 @@ FileSize() {
   fi
 }
 
+# test the magiskboot binary for "--vendor" switch support
+is_vendor_boot_magiskboot() {
+local tool=$1
+local tmp=$TMP_DIR/tmp_mboot.txt
+
+	[ -z "$tool" -o ! -e "$tool" ] && { echo 0; return; }
+	$tool &> $tmp
+	local gr=$(grep "\-\-vendor" $tmp)
+	rm -f $tmp
+	[ -n "$gr" ] && echo 1 || echo 0
+}
+
 # routine for flashing on A/B devices (credits: osm0sis)
 # argument: "0" (if there is no recovery partition); or recovery partition size (if there is one)
 AB_Install_Recovery() {
@@ -543,7 +559,7 @@ local PART
 	    target="$RECOVERY_PARTITION"
 	    name="recovery"
 	else
-	    if [ "$OF_VENDOR_BOOT_RECOVERY" = "1" ]; then # vendor_boot bringup
+	    if [ "$FOX_VENDOR_BOOT_RECOVERY" = "1" ]; then # vendor_boot bringup
 	    	ui_print "- Vendor_boot device ..."
 	    	target="$VENDOR_BOOT_PARTITION"
 	    	name="vendor_boot"
@@ -575,20 +591,77 @@ local PART
 	   return
 	fi
 
-	# vendor_boot as recovery - flash both slots and return
-	if [ "$OF_VENDOR_BOOT_RECOVERY" = "1" ]; then
+# vendor_boot as recovery - flash both slots and return
+	if [ "$FOX_VENDOR_BOOT_RECOVERY" = "1" ]; then
 	   ui_print "- NOTE: vendor_boot-as-recovery is highly experimental! Do not use unless you are absolutely sure that it will not cause problems!"
+
+	   # replace the entire vendor_boot partition ?
+	   local no_ramdisk_only=0
+	   [ "$FOX_VENDOR_BOOT_FLASH_RAMDISK_ONLY" != "1" ] && no_ramdisk_only=1
+
+	   if [ "$no_ramdisk_only" != "1" ]; then
+	   	tmp=$($GETPROP "orangefox.vendor_boot.recovery")
+	   	[ "$tmp" != "true" ] && no_ramdisk_only=1
+	   fi
+
+	   # which magiskboot binary?
+	   if [ "$no_ramdisk_only" != "1" ]; then
+	   	tmp=$(is_vendor_boot_magiskboot "$tool")
+	   	[ "$tmp" != "1" ] && no_ramdisk_only=1
+	   fi
+
+	   # so, are we able to flash the ramdisk only?
+	   if [ "$no_ramdisk_only" != "1" ]; then
+	   	ui_print "- Installing only the ramdisk..."
+	   else
+	   	for slot in _a _b; do
+			ui_print "- Installing OrangeFox to $name$slot..."
+			PART=$target"$slot"
+			blockdev --setrw $PART
+			package_extract_file "recovery.img" "$PART"
+	   		done
+	   	return
+	   fi
+
+   	   #----- OrangeFox can replace just the vendor_boot recovery ramdisk -------
+	   # rename the installer's ramdisk image
+	   ui_print "- Backing up the OrangeFox ramdisk image..."
+	   mv -f vendor_ramdisk_recovery.cpio fox_vendor_ramdisk || abort "- I cannot backup the ramdisk image."
+
+	   # dump the vendor_boot partition and unpack
+	   slot=$($GETPROP "ro.boot.slot_suffix")
+	   ui_print "- Fetching the $target$slot image..."
+	   dd bs=1048576 if=$target$slot of=$name".img" || abort "- I cannot dump the $name$slot image."
+
+	   # unpack
+	   ui_print "- Unpacking the $target$slot image..."
+	   "$tool" unpack -n --vendor $name".img" || abort "- I cannot unpack the $name$slot image."
+
+	   # replace the vendor_boot ramdisk with our own
+	   cp -f fox_vendor_ramdisk vendor_ramdisk_recovery.cpio  || abort "- I cannot copy the ramdisk image."
+
+	   # repack
+	   ui_print "- Repacking the ROM's $name$slot image..."
+	   "$tool" repack $name".img" new_recovery.img || abort "- I cannot repack the $name$slot image."
+
+	   # flash both slots
 	   for slot in _a _b; do
 		ui_print "- Installing OrangeFox to $name$slot..."
 		PART=$target"$slot"
 		blockdev --setrw $PART
-		package_extract_file "recovery.img" "$PART"
+		package_extract_file "new_recovery.img" "$PART"
 	   done
+	   "$tool" cleanup
+	   rm -f $name".img"
+	   rm -f "new_recovery.img"
+	   mv -f fox_vendor_ramdisk vendor_ramdisk_recovery.cpio
 	   return
+   	   # -----------------------------------------------------
 	fi
+# end: vendor_boot-as-recovery
 
 	# enable the magiskboot 24+ vbmeta patch?
-	if [ "$OF_PATCH_VBMETA_FLAG" = "1" ]; then
+	if [ "$FOX_PATCH_VBMETA_FLAG" = "1" ]; then
 	   export PATCHVBMETAFLAG=true
 	else
 	   export PATCHVBMETAFLAG=false
@@ -655,7 +728,7 @@ local Is_ABD="0"
     [ -z "$PART" ] && PART=$RECOVERY_PARTITION
 
     # either we've been told that it is A/B, or, it really is A/B
-    [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ] && Is_ABD="1"
+    [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ] && Is_ABD="1"
     [ "$Is_ABD" = "1" ] && {
        ui_print "- The device is an A/B device."
        
@@ -746,7 +819,7 @@ Main() {
 
 # extract the zip installer
 	Unzip_Installer_Package
-	
+
 # Install the recovery
 	ui_print "- Installing OrangeFox recovery ..."
 	Install_Recovery
@@ -792,7 +865,7 @@ Main() {
 # Prevent the stock recovery from replacing this recovery
 	MountThemAll
 	
-	if [ "$OF_VANILLA_BUILD" = "1" ]; then
+	if [ "$FOX_VANILLA_BUILD" = "1" ]; then
 	   ui_print "- Not disabling stock recovery overwrites!"	
 	else
 	   ui_print "- Disabling stock recovery overwrites..."
@@ -822,7 +895,7 @@ Main() {
 	rm -rf $EX_DIR
 
 	# don't reboot automatically if it is an A/B device, and OrangeFox is running
-	if [ "$OF_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
+	if [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
 	   F=$($GETPROP "orangefox.postinit.status")
 	   [ -z "$F" ] && F=$($GETPROP "orangefox.crash_counter")
 	   if [ -n "$F" ]; then
