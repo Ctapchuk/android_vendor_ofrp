@@ -15,7 +15,7 @@ echo "Press CTRL-C to stop - or press ENTER to continue ..."
 read
 
 fastboot devices
-fastboot flash vendor_boot:recovery ramdisk.cpio.gz
+fastboot flash vendor_boot:recovery vendor_ramdisk_recovery.cpio
 fastboot reboot recovery
 
 echo "Finished!"

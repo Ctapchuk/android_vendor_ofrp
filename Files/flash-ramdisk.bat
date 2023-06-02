@@ -18,7 +18,7 @@ goto flash
 
 :flash
 fastboot devices
-fastboot flash vendor_boot:recovery ramdisk.cpio.gz
+fastboot flash vendor_boot:recovery vendor_ramdisk_recovery.cpio
 fastboot reboot recovery
 goto end
 
