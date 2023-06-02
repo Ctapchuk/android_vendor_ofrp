@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 15 February 2023
+# 02 June 2023
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -153,14 +153,6 @@ if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" = "1" ]; then
    fi
 fi
 
-if [ "$OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" = "1" ]; then
-   if [ "$OF_DISABLE_MIUI_SPECIFIC_FEATURES" = "1" -o "$OF_TWRP_COMPATIBILITY_MODE" = "1" -o "$OF_VANILLA_BUILD" = "1" ]; then
-      echo -e "${WHITEONRED}-- ERROR! \"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES\" is incompatible with \"OF_DISABLE_MIUI_SPECIFIC_FEATURES\" or \"OF_TWRP_COMPATIBILITY_MODE\"${NC}"
-      echo -e "${WHITEONRED}-- Sort out your build vars! Quitting ... ${NC}"
-      abort 98
-   fi
-fi
-
 # export whatever has been passed on by build/core/Makefile (we expect at least 4 arguments)
 if [ -n "$4" ]; then
    echo "#########################################################################"
@@ -198,35 +190,48 @@ fi
 
 # vendor_boot as recovery
 IS_VENDOR_BOOT_RECOVERY=0
-if [ "$OF_VENDOR_BOOT_RECOVERY" = "1" -o "$BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT" = "true" -o "$BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT" = "true" -o -n "$INSTALLED_VENDOR_BOOTIMAGE_TARGET" ]; then
+if [ "$FOX_VENDOR_BOOT_RECOVERY" = "1" -o "$BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT" = "true" -o "$BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT" = "true" -o -n "$INSTALLED_VENDOR_BOOTIMAGE_TARGET" ]; then
    IS_VENDOR_BOOT_RECOVERY=1
 fi
 
+# A/B
+IS_AB_DEVICE=0
+if [ "$FOX_AB_DEVICE" = "1" -o "$OF_AB_DEVICE" = "1" -o "$AB_OTA_UPDATER" = "true" -o "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+   IS_AB_DEVICE=1
+fi
+
 # virtual A/B (VAB)
-if [ "$OF_AB_DEVICE" = "1" -a "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+IS_VIRTUAL_AB_DEVICE=0
+if [ "$FOX_VIRTUAL_AB_DEVICE" = "1" -o "$OF_VIRTUAL_AB_DEVICE" = "1"  ]; then
+   IS_VIRTUAL_AB_DEVICE=1
+   IS_AB_DEVICE=1
+fi
+
+if [ "$IS_AB_DEVICE" = "1" ]; then
     if [ -n "$BOARD_BOOT_HEADER_VERSION" ]; then
-       [ "$BOARD_BOOT_HEADER_VERSION" -gt 2 -a -z "$OF_VIRTUAL_AB_DEVICE" ] && export OF_VIRTUAL_AB_DEVICE="1"
+       [ "$BOARD_BOOT_HEADER_VERSION" -gt 2 ] && IS_VIRTUAL_AB_DEVICE="1"
     fi
 fi
 
-if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
-    echo -e "${GREEN}-- The device is a virtual A/B device .... ${NC}"
-    export OF_AB_DEVICE=1
-fi
-
 # Disable the init.d addon for vAB devices
-if [ "$OF_VIRTUAL_AB_DEVICE" = "1" ]; then
-    echo -e "${GREEN}-- Virtual A/B device - disabling the init.d addon .... ${NC}"
+if [ "$IS_VIRTUAL_AB_DEVICE" = "1" ]; then
+    echo -e "${GREEN}-- The device is a virtual A/B device  - disabling the init.d addon .... ${NC}"
     export FOX_DELETE_INITD_ADDON=1
 fi
 
 # Virtual A/B and vendor_boot recovery devices?
-if [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
-    COMPILED_IMAGE_FILE="boot.img"
-elif  [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
+if  [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
     COMPILED_IMAGE_FILE="vendor_boot.img"
+elif [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+    COMPILED_IMAGE_FILE="boot.img"
 else
     COMPILED_IMAGE_FILE="recovery.img"
+fi
+
+# vanilla build
+IS_VANILLA_BUILD=0
+if [ "$FOX_VANILLA_BUILD" = "1" -o "$OF_VANILLA_BUILD" = "1" ]; then
+   IS_VANILLA_BUILD=1
 fi
 
 RECOVERY_DIR="recovery"
@@ -243,6 +248,22 @@ else
 	DEFAULT_PROP_ROOT="$FOX_WORK/../root/default.prop"
 fi
 echo -e "${BLUE}-- Setting up environment variables${NC}"
+
+# transitional after renaming of build vars
+if [ -n "$OF_NO_SAMSUNG_SPECIAL" -a -z "$FOX_NO_SAMSUNG_SPECIAL" ]; then
+   export FOX_NO_SAMSUNG_SPECIAL=$OF_NO_SAMSUNG_SPECIAL
+   echo -e "${RED}OF_NO_SAMSUNG_SPECIAL has been deprecated. Use FOX_NO_SAMSUNG_SPECIAL ${NC}"
+fi
+
+if [ -n "$OF_SAMSUNG_DEVICE" -a -z "$FOX_SAMSUNG_DEVICE" ]; then 
+   export FOX_SAMSUNG_DEVICE=$OF_SAMSUNG_DEVICE
+   echo -e "${RED}OF_SAMSUNG_DEVICE has been deprecated. Use FOX_SAMSUNG_DEVICE ${NC}"
+fi
+
+if [ -n "$OF_DISABLE_UPDATEZIP" -a -z "$FOX_DISABLE_UPDATEZIP" ]; then 
+   export FOX_DISABLE_UPDATEZIP=$OF_DISABLE_UPDATEZIP
+   echo -e "${RED}OF_DISABLE_UPDATEZIP has been deprecated. Use FOX_DISABLE_UPDATEZIP ${NC}"
+fi
 
 # default prop
 if [ -n "$TARGET_RECOVERY_ROOT_OUT" -a -e "$TARGET_RECOVERY_ROOT_OUT/default.prop" ]; then
@@ -324,7 +345,13 @@ if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
 fi
 
 # alternative devices
-[ -n "$OF_TARGET_DEVICES" -a -z "$TARGET_DEVICE_ALT" ] && export TARGET_DEVICE_ALT="$OF_TARGET_DEVICES"
+if [ -z "$TARGET_DEVICE_ALT" ]; then
+   if [ -n "$FOX_TARGET_DEVICES" ]; then
+   	export TARGET_DEVICE_ALT="$FOX_TARGET_DEVICES"
+   elif [ -n "$OF_TARGET_DEVICES" ]; then
+   	export TARGET_DEVICE_ALT="$OF_TARGET_DEVICES"
+   fi
+fi
 
 # copy recovery.img/boot.img
 [ -f $OUT/$COMPILED_IMAGE_FILE ] && $CP $OUT/$COMPILED_IMAGE_FILE $RECOVERY_IMAGE
@@ -408,7 +435,7 @@ local F="$DEFAULT_PROP"
 
 # if there is an ALT device, cater for it in update-binary
 Add_Target_Alt() {
-local D="$OF_WORKING_DIR"
+local D="$FOX_TMP_WORKING_DIR"
 local F="$D/META-INF/com/google/android/update-binary"
    if [ -n "$TARGET_DEVICE_ALT" ]; then
       sed -i -e "s/TARGET_DEVICE_ALT=.*/TARGET_DEVICE_ALT=\"$TARGET_DEVICE_ALT\"/" $F
@@ -473,6 +500,7 @@ local F=$1
    sed -i '/FOX_VENDOR_CMD/d' $F
    sed -i '/FOX_VENDOR/d' $F
    sed -i '/OF_MAINTAINER/d' $F
+   sed -i '/OLDPWD/d' $F
    sed -i "s/declare -x //g" $F
 }
 
@@ -491,16 +519,16 @@ local TDT=$(date "+%d %B %Y")
   echo "- Creating $ZIP_FILE for deployment ..."
 
   # clean any existing files
-  rm -rf $OF_WORKING_DIR
+  rm -rf $FOX_TMP_WORKING_DIR
   rm -f $ZIP_FILE_GO $ZIP_FILE
 
   # recreate dir
-  mkdir -p $OF_WORKING_DIR
-  cd $OF_WORKING_DIR
+  mkdir -p $FOX_TMP_WORKING_DIR
+  cd $FOX_TMP_WORKING_DIR
 
   # create some others
-  mkdir -p $OF_WORKING_DIR/sdcard/Fox
-  mkdir -p $OF_WORKING_DIR/META-INF/debug
+  mkdir -p $FOX_TMP_WORKING_DIR/sdcard/Fox
+  mkdir -p $FOX_TMP_WORKING_DIR/META-INF/debug
 
   # copy busybox
 #  $CP -p $FOX_VENDOR_PATH/Files/busybox .
@@ -518,9 +546,18 @@ local TDT=$(date "+%d %B %Y")
      $CP -p $RECOVERY_IMAGE $VBtmp/tmp.img
      $CP -p $FOX_VENDOR_PATH/Files/flash-* .
      cd $VBtmp/
-     $FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
-     $CP -p ramdisk.cpio $OF_WORKING_DIR/ramdisk.cpio.gz
-     cd $OF_WORKING_DIR
+
+# -------------------
+     if [ -x $FOX_VENDOR_PATH/tools/magiskboot.vendorboot ]; then
+     	$FOX_VENDOR_PATH/tools/magiskboot.vendorboot unpack -n --vendor tmp.img
+     	$CP -p vendor_ramdisk_recovery.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
+     else
+     	$FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
+     	$CP -p ramdisk.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
+     fi
+#--------------------
+
+     cd $FOX_TMP_WORKING_DIR
      rm -rf $VBtmp/
   fi
 
@@ -548,10 +585,9 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # patch update-binary (which is a script) to run only for the current device
-  # (mido is the default)
-  local F="$OF_WORKING_DIR/META-INF/com/google/android/update-binary"
-  sed -i -e "s/mido/$FOX_DEVICE/g" $F
-  sed -i -e "s/ALT_DEVICE/$FOX_DEVICE_ALT/g" $F
+  local F="$FOX_TMP_WORKING_DIR/META-INF/com/google/android/update-binary"
+  sed -i -e "s|^TARGET_DEVICE=.*|TARGET_DEVICE=\"$FOX_DEVICE\"|" $F
+  sed -i -e "s|^TARGET_DEVICE_ALT=.*|TARGET_DEVICE_ALT=\"$FOX_DEVICE_ALT\"|" $F
 
   # embed the release version
   sed -i -e "s/RELEASE_VER/$FOX_BUILD/" $F
@@ -596,7 +632,7 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # A/B devices
-  if [ "$OF_AB_DEVICE" = "1" ]; then
+  if [ "$IS_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
      tmp=$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
      [ ! -e "$tmp" ] && tmp=$FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/magiskboot
@@ -606,20 +642,25 @@ local TDT=$(date "+%d %B %Y")
        abort 200
      }
      $CP -pf $tmp ./magiskboot
-     sed -i -e "s/^OF_AB_DEVICE=.*/OF_AB_DEVICE=\"1\"/" $F
+     sed -i -e "s/^FOX_AB_DEVICE=.*/FOX_AB_DEVICE=\"1\"/" $F
   fi
   rm -rf /tmp/fox_build_tmp/
 
   # vendor_boot
   if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
      echo -e "${RED}-- Vendor_boot device - enabling vendor_boot mode for the installer ... ${NC}"
-     sed -i -e "s/^OF_VENDOR_BOOT_RECOVERY=.*/OF_VENDOR_BOOT_RECOVERY=\"1\"/" $F
+     sed -i -e "s/^FOX_VENDOR_BOOT_RECOVERY=.*/FOX_VENDOR_BOOT_RECOVERY=\"1\"/" $F
+
+     if [ "$FOX_VENDOR_BOOT_FLASH_RAMDISK_ONLY" = "1" ] ; then
+     	echo -e "${RED}-- Vendor_boot: - enabling vendor_boot ramdisk flash mode for the installer ... ${NC}"
+     	sed -i -e "s/^FOX_VENDOR_BOOT_FLASH_RAMDISK_ONLY=.*/FOX_VENDOR_BOOT_FLASH_RAMDISK_ONLY=\"1\"/" $F
+     fi
   fi
 
   # whether to enable magisk 24+ patching of vbmeta
-  if [ "$OF_PATCH_VBMETA_FLAG" = "1" ]; then
+  if [ "$FOX_PATCH_VBMETA_FLAG" = "1" -o "$OF_PATCH_VBMETA_FLAG" = "1" ]; then
      echo -e "${RED}-- Enabling PATCHVBMETAFLAG for the installation... ${NC}"
-     sed -i -e "s/^OF_PATCH_VBMETA_FLAG=.*/OF_PATCH_VBMETA_FLAG=\"1\"/" $F
+     sed -i -e "s/^FOX_PATCH_VBMETA_FLAG=.*/FOX_PATCH_VBMETA_FLAG=\"1\"/" $F
   fi
 
   # Reset Settings
@@ -629,29 +670,29 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # skip all patches ?
-  if [ "$OF_VANILLA_BUILD" = "1" ]; then
+  if [ "$IS_VANILLA_BUILD" = "1" ]; then
      echo -e "${RED}-- This build will skip all OrangeFox patches ... ${NC}"
-     sed -i -e "s/^OF_VANILLA_BUILD=.*/OF_VANILLA_BUILD=\"1\"/" $F
+     sed -i -e "s/^FOX_VANILLA_BUILD=.*/FOX_VANILLA_BUILD=\"1\"/" $F
   fi
 
   # omit AromaFM ?
   if [ "$FOX_DELETE_AROMAFM" = "1" ]; then
      echo -e "${GREEN}-- Deleting AromaFM ...${NC}"
-     rm -rf $OF_WORKING_DIR/sdcard/Fox/FoxFiles/AromaFM
+     rm -rf $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/AromaFM
   fi
 
   # delete the magisk addon zips ?
   if [ "$FOX_DELETE_MAGISK_ADDON" = "1" ]; then
      echo -e "${GREEN}-- Deleting the magisk addon zips ...${NC}"
-     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
-     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
+     rm -f $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
+     rm -f $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
   fi
 
   # are we using a specific magisk zip?
   if [ -n "$FOX_USE_SPECIFIC_MAGISK_ZIP" ]; then
      if [ -e $FOX_USE_SPECIFIC_MAGISK_ZIP ]; then
         echo -e "${WHITEONGREEN}-- Using magisk zip: \"$FOX_USE_SPECIFIC_MAGISK_ZIP\" ${NC}"
-        $CP -pf $FOX_USE_SPECIFIC_MAGISK_ZIP $OF_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
+        $CP -pf $FOX_USE_SPECIFIC_MAGISK_ZIP $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
      else
         echo -e "${WHITEONRED}-- I cannot find \"$FOX_USE_SPECIFIC_MAGISK_ZIP\"! Using the default.${NC}"
      fi
@@ -660,7 +701,7 @@ local TDT=$(date "+%d %B %Y")
   # OF_initd
   if [ "$FOX_DELETE_INITD_ADDON" = "1" ]; then
      echo -e "${GREEN}-- Deleting the initd addon ...${NC}"
-     rm -f $OF_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd*.zip
+     rm -f $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/OF_initd*.zip
   else
      echo -e "${GREEN}-- Copying the initd addon ...${NC}"
   fi
@@ -674,15 +715,15 @@ local TDT=$(date "+%d %B %Y")
   # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
   # "--last-call" = just before creating the OrangeFox update zip file
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$OF_WORKING_DIR" "--last-call"
+     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_TMP_WORKING_DIR" "--last-call"
   fi
 
   # save the build vars
-  save_build_vars "$OF_WORKING_DIR/META-INF/debug/fox_build_vars.txt"
+  save_build_vars "$FOX_TMP_WORKING_DIR/META-INF/debug/fox_build_vars.txt"
   tmp="$FOX_RAMDISK/prop.default"
   [ ! -e "$tmp" ] && tmp="$DEFAULT_PROP"
   [ ! -e "$tmp" ] && tmp="$FOX_RAMDISK/default.prop"
-  [ -e "$tmp" ] && $CP "$tmp" "$OF_WORKING_DIR/META-INF/debug/default.prop"
+  [ -e "$tmp" ] && $CP "$tmp" "$FOX_TMP_WORKING_DIR/META-INF/debug/default.prop"
 
   # create update zip
   ZIP_CMD="zip --exclude=*.git* -r9 $ZIP_FILE ."
@@ -732,7 +773,7 @@ local TDT=$(date "+%d %B %Y")
   [ -f $RECOVERY_IMAGE".tar" ] && echo "RECOVERY_ODIN=$RECOVERY_IMAGE.tar" >>/tmp/oFox00.tmp
 
   # delete OF Working dir
-  rm -rf $OF_WORKING_DIR 
+  rm -rf $FOX_TMP_WORKING_DIR 
 } # function
 
 # are we using toolbox/toybox?
@@ -773,7 +814,7 @@ local F=""
       	 rm -rf $FOX_RAMDISK/$RAMDISK_ETC/terminfo
       	 [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
       	 rm -rf $FFil/Tools
-      	 if [ "$OF_VANILLA_BUILD" = "1" ]; then
+      	 if [ "$IS_VANILLA_BUILD" = "1" ]; then
            rm -rf $FFil/OF_avb20
            rm -rf $FFil/OF_verity_crypt
       	 fi
@@ -975,7 +1016,7 @@ chmod 0755 $tmp1
 expand_vendor_path
 
 # did we export tmp directory for OrangeFox ports?
-[ -n "$FOX_PORTS_TMP" ] && OF_WORKING_DIR="$FOX_PORTS_TMP" || OF_WORKING_DIR="/tmp/fox_zip_tmp"
+[ -n "$FOX_PORTS_TMP" ] && FOX_TMP_WORKING_DIR="$FOX_PORTS_TMP" || FOX_TMP_WORKING_DIR="/tmp/fox_zip_tmp"
 
 # is the working directory still there from a previous build? If so, remove it
 if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
@@ -984,9 +1025,27 @@ if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
       rm -rf "$FOX_WORK"
    fi
 
+   mkdir -p "$FOX_WORK"
+
    # unpack recovery image into working directory
-   echo -e "${BLUE}-- Unpacking recovery image${NC}"
-   bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/$COMPILED_IMAGE_FILE" "$FOX_WORK" > /dev/null 2>&1
+   #echo -e "${BLUE}-- Unpacking recovery image${NC}"
+   #if [ -x $FOX_VENDOR_PATH/tools/magiskboot ]; then
+   #	mkdir -p "$FOX_WORK"/ramdisk
+   #	cd "$FOX_WORK"
+   #	tmp_mboot=$FOX_VENDOR_PATH/tools/magiskboot
+   #	tmp_cpio=$FOX_WORK/ramdisk.cpio
+   #	if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
+   #		tmp_mboot=$FOX_VENDOR_PATH/tools/magiskboot.vendorboot
+   #		tmp_cpio=$FOX_WORK/vendor_ramdisk_recovery.cpio
+   #	fi
+   #	$tmp_mboot unpack "$OUT/$COMPILED_IMAGE_FILE"
+   #	cd $FOX_WORK/ramdisk
+   #	$tmp_mboot cpio $tmp_cpio extract
+   #	cd "$FOX_WORK"
+   #	$tmp_mboot cleanup
+   #else
+   #	bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/$COMPILED_IMAGE_FILE" "$FOX_WORK" > /dev/null 2>&1
+   #fi
 
   # perhaps we don't need some "Tools" ?
   if [ "$(SAR_BUILD)" = "1" ]; then
@@ -1137,6 +1196,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   else
      echo -e "${GREEN}-- Copying bash ...${NC}"
      $CP -p $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/$RAMDISK_ETC/bash.bashrc
+     $CP -p $FOX_VENDOR_PATH/Files/fox.bashrc $FOX_RAMDISK/FFiles/fox.mkshrc
      
      if [ "$FOX_BUILD_BASH" = "1" ]; then
         if [ -z "$(cat $FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc | grep OrangeFox)" ]; then
@@ -1144,13 +1204,14 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
            echo "# OrangeFox" >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc"
            echo '[ -f /sdcard/Fox/fox.bashrc ] && source /sdcard/Fox/fox.bashrc' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc"
         fi
+        echo '[ ! -f /sdcard/Fox/fox.bashrc -a -f /FFiles/fox.mkshrc ] && source /sdcard/Fox/fox.mkshrc' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc"
      else
         rm -f $FOX_RAMDISK/$RAMDISK_SBIN/bash
         $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_SBIN/bash
         chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/bash
         rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash
      fi
-     
+
      if [ "$FOX_ASH_IS_BASH" = "1" ]; then
         export FOX_USE_BASH_SHELL="1"
      fi
@@ -1321,9 +1382,9 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   # enable the app manager?
   if [ "$FOX_ENABLE_APP_MANAGER" = "1" ]; then
      echo -e "${GREEN}-- Enabling the App Manager ...${NC}"
-  # remove aapt also, as it would be redundant
   else
      echo -e "${GREEN}-- Omitting the aapt binary (it is useless if the app manager is not enabled) ...${NC}"
+     # remove aapt also, as it would be redundant
      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   fi
 
@@ -1462,7 +1523,7 @@ fi
 # process the recovery image where necessary (and repack where necessary)
 if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
 
-     if [ "$OF_SAMSUNG_DEVICE" = "1" -o "$OF_SAMSUNG_DEVICE" = "true" ]; then
+     if [ "$FOX_SAMSUNG_DEVICE" = "1" -o "$FOX_SAMSUNG_DEVICE" = "true" ]; then
         SAMSUNG_DEVICE="samsung"
      else
         SAMSUNG_DEVICE=$(file_getprop "$DEFAULT_PROP" "ro.product.manufacturer")
@@ -1492,7 +1553,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      $CP -p "$INSTALLED_RECOVERYIMAGE_TARGET" "$RECOVERY_IMAGE"
 
      # samsung stuff?
-     if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     if [ "$SAMSUNG_DEVICE" = "samsung" -a "$FOX_NO_SAMSUNG_SPECIAL" != "1" ]; then
      	echo -e "${RED}-- Appending SEANDROIDENFORCE to $RECOVERY_IMAGE ${NC}"
      	echo -n "SEANDROIDENFORCE" >> $RECOVERY_IMAGE
      fi
@@ -1501,7 +1562,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      cd "$OUT" && md5sum "$RECOVERY_IMAGE" > "$RECOVERY_IMAGE.md5" && cd - > /dev/null 2>&1
 
      # more samsung stuff
-     if [ "$SAMSUNG_DEVICE" = "samsung" -a "$OF_NO_SAMSUNG_SPECIAL" != "1" ]; then
+     if [ "$SAMSUNG_DEVICE" = "samsung" -a "$FOX_NO_SAMSUNG_SPECIAL" != "1" ]; then
      	echo -e "${RED}-- Creating Odin flashable recovery tar ($RECOVERY_IMAGE.tar) ... ${NC}"
 
      	# make sure that the image being tarred is the correct one
@@ -1510,7 +1571,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
      fi
 
    # create update zip installer
-   if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
+   if [ "$FOX_DISABLE_UPDATEZIP" != "1" ]; then
       	do_create_update_zip
    else
 	echo -e "${RED}-- Skip creating recovery zip${NC}"
@@ -1528,7 +1589,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_After_Recovery_Image" ]; then
    echo -e "          MD5: $RECOVERY_IMAGE.md5"
    export RECOVERY_IMAGE
 
-   if [ "$OF_DISABLE_UPDATEZIP" != "1" ]; then
+   if [ "$FOX_DISABLE_UPDATEZIP" != "1" ]; then
 	echo -e ""
 	echo -e "${GREEN}Recovery zip:${NC} $ZIP_FILE"
 	echo -e "          MD5: $ZIP_FILE.md5"

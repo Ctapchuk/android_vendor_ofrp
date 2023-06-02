@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 01 June 2023
+# Date: 02 June 2023
 #
 # -----------------------------------
 #
@@ -15,7 +15,7 @@
   - eg., "export TARGET_ARCH=arm"
   - default = arm64
 #
-"OF_AB_DEVICE"
+"FOX_AB_DEVICE" (renamed from "OF_AB_DEVICE")
    - whether the device is an A/B device
    - set to 1 if your device is an A/B device (** make sure that it really is **)
    - if you enable this, all these will be set automatically to "1":
@@ -144,7 +144,7 @@
    - "OF_USE_MAGISKBOOT" must also be set to "1" if you want to use this
    - default = 0
 #
-"OF_DISABLE_UPDATEZIP"
+"FOX_DISABLE_UPDATEZIP" (renamed from "OF_DISABLE_UPDATEZIP")
    - set to 1 to disable recovery zip creation
    - default = 0
 #
@@ -321,13 +321,13 @@
  -     export TARGET_DEVICE_ALT="blue, green, yellow, orange" (for multiple alt devices)
  - default = nothing
 #
-"OF_TARGET_DEVICES"
+"FOX_TARGET_DEVICES" (renamed from "OF_TARGET_DEVICES")
 - Use this if the device has more than one code name, but ROMs and other zip installers
 - never check for all code names, therefore always causing "E3004 error 7" problems (eg, raphael/raphaelin)
 - What this does is to cause OrangeFox to temporarily switch devices names to prevent error 7 from happening
 - Note that this is temporary work-around that lasts until the recovery is rebooted.
 - You should list all the valid code names for the device.
-- eg, export OF_TARGET_DEVICES="raphaelin,raphael"
+- eg, export FOX_TARGET_DEVICES="raphaelin,raphael"
 -
 - NOTE: the purpose of this is quite different from TARGET_DEVICE_ALT (which only impacts on the creation of
 - the OrangeFox zip installer). This variable actually impacts on the operation of OrangeFox while flashing
@@ -340,7 +340,7 @@
  - If this is enabled, then "OF_DONT_PATCH_ON_FRESH_INSTALLATION" is also enabled automatically
  - default = 0
 #
-"OF_VANILLA_BUILD"
+"FOX_VANILLA_BUILD" (renamed from "OF_VANILLA_BUILD")
  - Set this to 1 to make a plain build that skips all the OrangeFox patches
  - If this is enabled, a whole lot of other variables are also enabled automatically to disable various
  - OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/orangefox.mk for details)
@@ -387,7 +387,7 @@
 "OF_SUPPORT_ALL_BLOCK_OTA_UPDATES"
 - Set this to 1 to enable support for block-based incremental OTA on custom ROMs that have this feature
 - If enabled, flashing a custom ROM will run the same OTA_BAK/OTA_RES processes as with MIUI
-- This setting is incompatible with OF_DISABLE_MIUI_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/OF_VANILLA_BUILD
+- This setting is incompatible with OF_DISABLE_MIUI_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/FOX_VANILLA_BUILD
 - The default position is to support block-based incremental OTA in MIUI ROMs only
 - default = 0
 #
@@ -422,7 +422,7 @@
 - all decryption/recovery passwords are successfully entered)
 - default = 0
 #
-"OF_NO_SAMSUNG_SPECIAL"
+"FOX_NO_SAMSUNG_SPECIAL" (renamed from "OF_NO_SAMSUNG_SPECIAL")
 - set this to 1 to disable some operations relating only to Samsung devices - these are:
 -   1) appending "SEANDROIDENFORCE" to the recovery image of a Samsung device
 -   2) creating an Odin flashable tar file of the recovery image
@@ -570,7 +570,7 @@
 - This requires syncing the lptools sources (just run "repo sync" from the usual place, or follow the instructions in the error message that will be generated if the sources are missing)
 - default = 0
 #
-"OF_PATCH_VBMETA_FLAG" [NEW] [EXPERIMENTAL WiP]
+"FOX_PATCH_VBMETA_FLAG" (renamed from "OF_PATCH_VBMETA_FLAG") [EXPERIMENTAL WiP]
 - Set to 1 to instruct magiskboot v24+ to always patch the vbmeta header when patching the recovery/boot image
 - It should not be necessary to use this variable under normal circumstances
 - Do *NOT* use this variable unless you are sure of what you are doing (and only if you are getting bootloops after flashing OrangeFox or Magisk or after changing the splash image)
@@ -582,9 +582,9 @@
 - Most devices should NOT need this at all. But some devices (eg, violet, and some Realme devices) need this setting
 - default = 0
 #
-"OF_VIRTUAL_AB_DEVICE"
+"FOX_VIRTUAL_AB_DEVICE" (renamed from "OF_VIRTUAL_AB_DEVICE")
 - Set to 1 to signify that the device is definitely a native Android 11+ Virtual A/B ("VAB") device
-- If this is set, some other relevant variables are enabled automatically (eg, "OF_AB_DEVICE" "OF_VANILLA_BUILD", etc)
+- If this is set, some other relevant variables are enabled automatically (eg, "FOX_AB_DEVICE" "FOX_VANILLA_BUILD", etc)
 - default = 0
 #
 "OF_DYNAMIC_FULL_SIZE" [NEW]
@@ -607,7 +607,7 @@
    	* "Reflash OrangeFox after flashing a ROM"
 - default = 0
 #
-"OF_VENDOR_BOOT_RECOVERY" [NEW - Experimental]
+"FOX_VENDOR_BOOT_RECOVERY" (renamed from "OF_VENDOR_BOOT_RECOVERY") [NEW - Experimental]
 - Do *NOT* use this variable unless you know what you are doing! Bootloops and bricks are *very* possible!
 - Set to 1 to build a recovery for a vendor_boot-as-recovery (hdr4) device (normally, hdr4 devices are also Virtual A/B devices)
 - There are currently *many* problems with vendor_boot-as-recovery, and custom recoveries are at a very early stage of development
