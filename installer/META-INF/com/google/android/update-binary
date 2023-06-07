@@ -18,7 +18,7 @@ fi
 
 # the target device(s)
 TARGET_DEVICE="MAIN_DEVICE"
-TARGET_DEVICE_ALT="ALT_DEVICE"
+TARGET_DEVICE_ALT=""
 
 # getprop
 GETPROP=$(which getprop)
@@ -88,7 +88,7 @@ FOX_RESET_SETTINGS="1"
 FOX_VANILLA_BUILD=0
 
 # last_modified
-MOD_DATE="20230602"
+MOD_DATE="20230607"
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"

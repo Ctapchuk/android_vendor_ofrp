@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 02 June 2023
+# Date: 07 June 2023
 #
 # -----------------------------------
 #
@@ -42,12 +42,6 @@
 "FOX_LOCAL_CALLBACK_SCRIPT"
    - point to a custom "callback" script that will be executed just before creating the final recovery image
    - eg, a script to delete some files, or add some files to the ramdisk
-#
-"FOX_REPLACE_BUSYBOX_PS"
-   - set to 1 to replace the (stripped down) busybox version of the "ps" command
-   - if this is defined, the busybox "ps" command will be replaced by a fuller (arm64) version
-   - default = 0
-   - this should NOT be enabled for arm32 devices
 #
 "FOX_REPLACE_TOOLBOX_GETPROP"
    - set to 1 to replace the (stripped down) toolbox version of the "getprop" command

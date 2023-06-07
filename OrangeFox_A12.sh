@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 02 June 2023
+# 07 June 2023
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -339,11 +339,6 @@ fi
 # tmp for "FOX_CUSTOM_BINS_TO_SDCARD"
 FOX_BIN_tmp=$OUT/tmp_bin/FoxFiles
 
-# FOX_REPLACE_BUSYBOX_PS: default to 0
-if [ -z "$FOX_REPLACE_BUSYBOX_PS" ]; then
-   export FOX_REPLACE_BUSYBOX_PS="0"
-fi
-
 # alternative devices
 if [ -z "$TARGET_DEVICE_ALT" ]; then
    if [ -n "$FOX_TARGET_DEVICES" ]; then
@@ -587,7 +582,6 @@ local TDT=$(date "+%d %B %Y")
   # patch update-binary (which is a script) to run only for the current device
   local F="$FOX_TMP_WORKING_DIR/META-INF/com/google/android/update-binary"
   sed -i -e "s|^TARGET_DEVICE=.*|TARGET_DEVICE=\"$FOX_DEVICE\"|" $F
-  sed -i -e "s|^TARGET_DEVICE_ALT=.*|TARGET_DEVICE_ALT=\"$FOX_DEVICE_ALT\"|" $F
 
   # embed the release version
   sed -i -e "s/RELEASE_VER/$FOX_BUILD/" $F
@@ -812,7 +806,6 @@ local F=""
       	 rm -f $FOX_RAMDISK/sbin/busybox
       	 rm -f $FOX_RAMDISK/etc/bash.bashrc
       	 rm -rf $FOX_RAMDISK/$RAMDISK_ETC/terminfo
-      	 [ "$FOX_REPLACE_BUSYBOX_PS" != "1" ] && rm -f $FFil/ps
       	 rm -rf $FFil/Tools
       	 if [ "$IS_VANILLA_BUILD" = "1" ]; then
            rm -rf $FFil/OF_avb20
@@ -1123,21 +1116,6 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
      ln -sf grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep
      ln -sf grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
-  fi
-
-  # replace busybox ps with our own ?
-  if [ "$FOX_REPLACE_BUSYBOX_PS" = "1" ]; then
-     if [ "$(readlink $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps)" = "toybox" ]; then # if using toybox, then we don't need this
-     	rm -f "$FOX_RAMDISK/FFiles/ps"
-     	export FOX_REPLACE_BUSYBOX_PS="0"
-     	echo -e "${GREEN}-- The \"ps\" command is symlinked to \"toybox\". NOT replacing it...${NC}"
-     elif [ "$(readlink $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps)" = "busybox" ]; then
-        if [ -f "$FOX_RAMDISK/FFiles/ps" ]; then
-           echo -e "${GREEN}-- Replacing the busybox \"ps\" command with our own full version ...${NC}"
-  	   rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps
-  	   ln -s /FFiles/ps $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/ps
-        fi
-     fi
   fi
 
   # Replace the toolbox "getprop" with "resetprop" ?
