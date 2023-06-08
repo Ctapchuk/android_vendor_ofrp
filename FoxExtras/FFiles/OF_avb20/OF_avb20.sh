@@ -1,7 +1,7 @@
 #!/sbin/sh
 #
 # Patch AVB 2.0 to prevent overwriting the custom recovery
-# Version: 0.5, 20221223
+# Version: 0.6, 20230608
 # Author : DarthJabba9
 # Credits: wzsx150
 #
@@ -46,12 +46,12 @@ OF_locate_boot() {
 # patch for AVB 2.0
 OF_patch_avb20() {
   local F="$bootpart";
-  local has_avb=$(tail -c 2k "$F" | grep "AVBf" 2>/dev/null);
+  local has_avb=$(tail -c 2k "$F" | grep "AVBf" | tr '\0' '\n' 2>/dev/null);
   [ -z "$has_avb" ] && {
      [ "$AVB_REPORT_PROGRESS" = "1" ] && ui_print "- Nothing to patch for AVB 2.0";
      return;
   }
-  local patched_avb=$(tail -c 2k "$F" | grep "pReAVBf" 2>/dev/null);
+  local patched_avb=$(tail -c 2k "$F" | grep "pReAVBf" | tr '\0' '\n' 2>/dev/null);
   [ -n "$patched_avb" ] && {
      [ "$AVB_REPORT_PROGRESS" = "1" ] && ui_print "- Nothing to patch for AVB 2.0";
      return;
