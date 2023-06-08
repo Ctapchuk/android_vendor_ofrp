@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 07 June 2023
+# Date: 08 June 2023
 #
 # -----------------------------------
 #
@@ -18,9 +18,6 @@
 "FOX_AB_DEVICE" (renamed from "OF_AB_DEVICE")
    - whether the device is an A/B device
    - set to 1 if your device is an A/B device (** make sure that it really is **)
-   - if you enable this, all these will be set automatically to "1":
-    	OF_USE_MAGISKBOOT
-    	OF_USE_MAGISKBOOT_FOR_ALL_PATCHES
    - default = 0
 #
 "OF_AB_DEVICE_WITH_RECOVERY_PARTITION" [NEW]
@@ -119,30 +116,23 @@
 #
 "OF_USE_MAGISKBOOT" [!NOW ENABLED AUTOMATICALLY IN ALL CASES!]
    - set to 1 to use magiskboot for patching the ROM's boot image
-   - else, mkbootimg/unpackbootimg will be used
-   - magiskboot does a better job of patching boot images, but it is slow
-   - default = 0
 #
 "OF_USE_MAGISKBOOT_FOR_ALL_PATCHES" [!NOW ENABLED AUTOMATICALLY IN ALL CASES!]
    - set to 1 to use magiskboot for all patching of boot images *and* recovery images
-   - this means that mkbootimg/unpackbootimg will be deleted
-   - if this is set, this script will also automatically set OF_USE_MAGISKBOOT to 1
-   - default = 0
 #
-"OF_FORCE_MAGISKBOOT_BOOT_PATCH_MIUI"
+"OF_FORCE_MAGISKBOOT_BOOT_PATCH_MIUI" [LEGACY]
    - set to 1 to force the use magiskboot for patching the ROM's boot image when
    - installing a MIUI ROM, or the OrangeFox zip on a MIUI ROM (regardless of
    - DM-Verity or Forced-Encryption settings, which will be left alone if that is
    - what the user has chosen) - this is for the purpose of stopping MIUI from
    - overwriting OrangeFox with its own stock recovery
-   - "OF_USE_MAGISKBOOT" must also be set to "1" if you want to use this
    - default = 0
 #
 "FOX_DISABLE_UPDATEZIP" (renamed from "OF_DISABLE_UPDATEZIP")
    - set to 1 to disable recovery zip creation
    - default = 0
 #
-"OF_DONT_PATCH_ON_FRESH_INSTALLATION"
+"OF_DONT_PATCH_ON_FRESH_INSTALLATION" [LEGACY]
    - set to 1 to prevent patching dm-verity and forced-encryption when the OrangeFox zip is flashed
    - default = 0
    - if dm-verity is enabled in the ROM, and this is turned on, there will be a bootloop
@@ -158,39 +148,39 @@
    - this should not be used unless the default is causing issues on your device
    - the newest Xiaomi devices seem to require this
 #
-"OF_KEEP_DM_VERITY"; 
+"OF_KEEP_DM_VERITY"; [LEGACY]
    - set to 1 to *UNTICK* the OrangeFox "Disable DM-Verity" box on every bootup
    - default = 0
 #
-"OF_KEEP_FORCED_ENCRYPTION"; 
+"OF_KEEP_FORCED_ENCRYPTION"; [LEGACY]
    - set to 1 to *UNTICK* the OrangeFox "Disable Forced Encryption" box on every bootup
    - default = 0 (in lavender, default=1)
 #
-"OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; 
+"OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; [LEGACY] 
    - set to 1 to *UNTICK* both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
    - default = 0
 #
-"OF_FORCE_DISABLE_DM_VERITY";
+"OF_FORCE_DISABLE_DM_VERITY"; [LEGACY]
    - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box on every bootup
    - default = 0
 #
-"OF_FORCE_DISABLE_FORCED_ENCRYPTION";
+"OF_FORCE_DISABLE_FORCED_ENCRYPTION"; [LEGACY]
    - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box on every bootup
    - default = 0
 #
-"OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION";
+"OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [LEGACY]
    - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
    - default = 0
 #
-"OF_DISABLE_DM_VERITY";
+"OF_DISABLE_DM_VERITY"; [LEGACY]
    - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box by default (on fresh installation)
    - default = 0 (should be set to "1" for older Xiaomi devices like kenzo, libra, mido)
 #
-"OF_DISABLE_FORCED_ENCRYPTION";
+"OF_DISABLE_FORCED_ENCRYPTION"; [LEGACY]
    - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box by default (on fresh installation)
    - default = 0
 #
-"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION";
+"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [LEGACY]
    - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes by default (on fresh installation)
    - default = 0
 #
@@ -211,11 +201,11 @@
    - NOTE: do NOT use "OF_SKIP_FBE_DECRYPTION" if you are using this variable, because it will supersede this variable
    - default = nothing (ie, try to decrypt all Android API levels)
 #
-"OF_OTA_RES_DECRYPT"
+"OF_OTA_RES_DECRYPT" [LEGACY]
    - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
    - default = 0
 #
-"OF_NO_MIUI_OTA_VENDOR_BACKUP"
+"OF_NO_MIUI_OTA_VENDOR_BACKUP" [LEGACY]
    - set to 1 to prevent backing up of vendor_image when preparing for incremental MIUI OTA (upon flashing a MIUI ROM)
    - such a backup is required for new (2019+) Xiaomi devices (eg, lavender, violet, raphael, ginkgo, etc)
    - default = 0
@@ -237,7 +227,7 @@
    - set to 1 to delete AromaFM from the zip installer (for devices where it doesn't work)
    - default = 0
 #
-"OF_USE_HEXDUMP"
+"OF_USE_HEXDUMP" [LEGACY]
    - set to 1 to use an external hexdump utility to get file header information (instead of internal code)
    - default = 0
 #
@@ -329,17 +319,18 @@
 - so that it can trigger all these impacts in the live recovery session. You should only deploy a
 - build using this variable after plenty of testing in all possible scenarios
 #
-"OF_SKIP_ORANGEFOX_PROCESS"
+"OF_SKIP_ORANGEFOX_PROCESS" [LEGACY]
  - Use this to 1 to skip the dm-verity/forced-encryption/boot images patches
  - If this is enabled, then "OF_DONT_PATCH_ON_FRESH_INSTALLATION" is also enabled automatically
  - default = 0
 #
 "FOX_VANILLA_BUILD" (renamed from "OF_VANILLA_BUILD")
- - Set this to 1 to make a plain build that skips all the OrangeFox patches
- - If this is enabled, a whole lot of other variables are also enabled automatically to disable various
- - OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/orangefox.mk for details)
- - With this enabled, it is very possible (even likely) that OrangeFox will be overwritten by stock recovery, so the
- - user may well need to flash some kind of "fcrypt" zip and/or magisk
+ - Set this to 1 to make a plain build that skips all the OrangeFox (mostly MIUI-related) patches
+ - You should probably enable it for A/B devices, for non-Xiaomi devices (and for all builds for Xiaomi devices, if you are not supporting MIUI)
+ - If this is enabled, a whole lot of other variables are also enabled automatically to disable various 
+   OrangeFox extras, including "OF_SKIP_ORANGEFOX_PROCESS" above (see bootable/recovery/orangefox.mk for details)
+ - On older A-only Xiaomi devices, if this is enabled, it is very possible (even likely) that OrangeFox will be 
+   overwritten by MIUI stock recovery, so the user may well need to flash some kind of "fcrypt" zip and/or magisk
  - default = 0
 #
 "OF_SUPPORT_OZIP_DECRYPTION"
@@ -353,7 +344,7 @@
  - This binary is 1.7mb in size, and using this variable is useful for reducing the size of the recovery
  - default = 0
 #
-"OF_CHECK_OVERWRITE_ATTEMPTS"
+"OF_CHECK_OVERWRITE_ATTEMPTS" [LEGACY]
  - Set this to 1 to check for attempts by a ROM's installer to overwrite OrangeFox with another recovery
  - If this is enabled, then OrangeFox will give users a 40-second countdown, to enable
  - them to reboot OrangeFox to stop the ROM installation, if they want
@@ -364,28 +355,29 @@
  - spammed with metadata mount errors in ROMs that don't use metadata encryption
  - default = 0
 #
-"OF_FIX_OTA_UPDATE_MANUAL_FLASH_ERROR"
+"OF_FIX_OTA_UPDATE_MANUAL_FLASH_ERROR" [LEGACY]
 - Set this to 1 to try to recover from error situations where people flash incremental block-based OTA zips manually
 - An error will still be displayed, but OrangeFox will reboot itself into "Ors" mode and attempt to apply the OTA update (this is not guaranteed to always work)
 - default = 0
 #
 "OF_PATCH_AVB20"
 - Set this to 1 to try patch AVB 2.0 so that OrangeFox is not replaced by stock recovery
-- This requires magiskboot
+- This is useful only for A-only devices, else it is ignored
+- It is also ignored when using OF_SKIP_ORANGEFOX_PROCESS or FOX_VANILLA_BUILD
 - default = 0
 #
-"OF_OTA_BACKUP_STOCK_BOOT_IMAGE"
+"OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [LEGACY]
 - Set this to 1 to create a backup of the boot.img from the ROM's zip during the OTA_BAK process when installing a ROM
 - default = 0
 #
-"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES"
+"OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" [LEGACY]
 - Set this to 1 to enable support for block-based incremental OTA on custom ROMs that have this feature
 - If enabled, flashing a custom ROM will run the same OTA_BAK/OTA_RES processes as with MIUI
 - This setting is incompatible with OF_DISABLE_MIUI_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/FOX_VANILLA_BUILD
 - The default position is to support block-based incremental OTA in MIUI ROMs only
 - default = 0
 #
-"OF_NO_MIUI_PATCH_WARNING"
+"OF_NO_MIUI_PATCH_WARNING" [LEGACY]
 - Set this to 1 to suppress warnings that not patching MIUI may cause MIUI to not boot, or to overwrite the recovery with stock recovery
 - default = 0
 #
@@ -416,7 +408,7 @@
 - all decryption/recovery passwords are successfully entered)
 - default = 0
 #
-"FOX_NO_SAMSUNG_SPECIAL" (renamed from "OF_NO_SAMSUNG_SPECIAL")
+"FOX_NO_SAMSUNG_SPECIAL" (renamed from "OF_NO_SAMSUNG_SPECIAL")  [LEGACY]
 - set this to 1 to disable some operations relating only to Samsung devices - these are:
 -   1) appending "SEANDROIDENFORCE" to the recovery image of a Samsung device
 -   2) creating an Odin flashable tar file of the recovery image
@@ -491,7 +483,7 @@
 - set this to 1 if you want the XZ Utils (lzma, xz) to be added to the build (the binary is about 260kb in size)
 - default = 0
 #
-"FOX_DYNAMIC_SAMSUNG_FIX"
+"FOX_DYNAMIC_SAMSUNG_FIX" [LEGACY]
 - set this to 1 to provide a workaround for bug in Samsung exynos dynamic partition devices, which causes a bootloop on encountering some binaries
 - when enabled, certain binaries (eg, bash, nano, aapt, etc) are removed from (or not added to) the build 
 - use this only if the recovery doesn't boot on your Samsung dynamic partition exynos device
@@ -609,9 +601,9 @@
    	* Changing the OrangeFox splash image/logo
    	* "Flash Current OrangeFox"
    	* "Reflash OrangeFox after flashing a ROM"
-- the zip installer that is created will also include the recovery ramdisk image ("ramdisk.cpio.gz")
+- the zip installer that is created will also include the recovery ramdisk image ("vendor_ramdisk_recovery.cpio")
 - if this is enabled, the proper way to flash the built recovery is to reboot an installed working recovery to "fastbootd" mode,
-- and extract and flash the recovery ramdisk image by running the command: "fastboot flash vendor_boot:recovery ramdisk.cpio.gz"
+- and extract and flash the recovery ramdisk image by running the command: "fastboot flash vendor_boot:recovery vendor_ramdisk_recovery.cpio"
 - Do NOT flash the zip installer itself, unless you have both of you ROM's original boot.img and vendor_boot.img, *and* know how to recover the device from bootloops or bricks
 - This is because the outcome of flashing the recovery.img is *unpredictable* - it might be fine, or brick the device, or make the ROM unbootable; any of these is equally possible
 - You really SHOULD stay away from using this variable unless you are a *highly technical risk-taker*, and you can fix any problem *on your own*. You have been warned!
