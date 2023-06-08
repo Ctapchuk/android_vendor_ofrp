@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 07 June 2023
+# 08 June 2023
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -680,6 +680,7 @@ local TDT=$(date "+%d %B %Y")
      echo -e "${GREEN}-- Deleting the magisk addon zips ...${NC}"
      rm -f $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
      rm -f $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/unrootmagisk.zip
+     rm -f $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk_uninstall.zip
   fi
 
   # are we using a specific magisk zip?
