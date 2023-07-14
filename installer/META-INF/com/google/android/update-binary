@@ -8,6 +8,9 @@
 # Date: 	TODAY
 # ******************************************************
 
+# last_modified
+MOD_DATE="20230714"
+
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
 
@@ -25,28 +28,32 @@ GETPROP=$(which getprop)
 if [ -z "$GETPROP" ]; then
    GETPROP=/system/bin/getprop
    [ ! -e "$GETPROP" ] && GETPROP=/sbin/getprop
+   [ ! -e "$GETPROP" ] && GETPROP=$(which resetprop)
 fi
 
 # the current device's codename
 PRODUCT_DEVICE=$($GETPROP "ro.product.device")
 
+# root of dev block partitions
+DEV_BLOCK_ROOT=/dev/block/by-name
+
 # target partition
-RECOVERY_PARTITION=/dev/block/bootdevice/by-name/recovery
+RECOVERY_PARTITION=$DEV_BLOCK_ROOT/recovery
 
 # boot partition
-BOOT_PARTITION=/dev/block/bootdevice/by-name/boot
+BOOT_PARTITION=$DEV_BLOCK_ROOT/boot
 
 # default system mount point
-SYSTEM_PARTITION=/dev/block/bootdevice/by-name/system
+SYSTEM_PARTITION=$DEV_BLOCK_ROOT/system
 
 # default vendor mount point
-VENDOR_PARTITION=/dev/block/bootdevice/by-name/vendor
+VENDOR_PARTITION=$DEV_BLOCK_ROOT/vendor
 
 # default vendor_boot mount point
-VENDOR_BOOT_PARTITION=/dev/block/bootdevice/by-name/vendor_boot
+VENDOR_BOOT_PARTITION="$DEV_BLOCK_ROOT/vendor_boot"
 
 # default persist partition
-PERSIST_PARTITION=/dev/block/bootdevice/by-name/persist
+PERSIST_PARTITION=$DEV_BLOCK_ROOT/persist
 
 # the display screen
 SCREEN=/proc/self/fd/$2
@@ -87,8 +94,8 @@ FOX_RESET_SETTINGS="1"
 # build a vanilla version that skips all OrangeFox patches?
 FOX_VANILLA_BUILD=0
 
-# last_modified
-MOD_DATE="20230607"
+# whether to disable auto-reboot after installing OrangeFox
+FOX_INSTALLER_DISABLE_AUTOREBOOT=0
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -711,7 +718,7 @@ local PART
 	"$tool" cleanup
 
 	cd $TMP_DIR
-	if [ "$name" != "recovery" ]; then
+	if [ "$name" = "boot" ]; then
 	   ui_print " "
 	   ui_print "*** NOTE: You are now unrooted! ***"
 	   ui_print " "
@@ -795,6 +802,7 @@ local F="$1"
 
 # main function
 Main() {
+	local F=""
 	ui_print "*************************************"
 	ui_print "*** |OrangeFox Recovery Project|  ***"
 	ui_print "***   |By The OrangeFox Team|     ***"
@@ -893,6 +901,7 @@ Main() {
 	ui_print "- Extra files are in $internal_SD/Fox/"
 	ui_print " "
 	rm -rf $EX_DIR
+	F=""
 
 	# don't reboot automatically if it is an A/B device, and OrangeFox is running
 	if [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
@@ -907,6 +916,15 @@ Main() {
 	   	ui_print " "
 	   	exit 0
 	   fi
+	fi
+
+	if [ "$FOX_INSTALLER_DISABLE_AUTOREBOOT" = "1" ]; then
+	   ui_print " "
+	   ui_print "- Now, you need to reboot OrangeFox."
+	   ui_print " "
+	   ui_print "- Auto-reboot has been disabled. Please reboot to Recovery manually."
+	   ui_print " "
+	   exit 0
 	fi
 
 	ui_print " >> Rebooting to OrangeFox Recovery in 5 seconds ..."
@@ -924,6 +942,7 @@ Main() {
 	
 	ui_print " "
 	ui_print "- Rebooting to Recovery now ..."
+	sleep 1
 	reboot recovery
 
 	# if we reach here, then the reboot command failed

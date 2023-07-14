@@ -1,11 +1,11 @@
 # ------------------------------------
 #
-# Custom build VARs for the OrangeFox Recovery, fox_12.1
+# Custom build VARs for the OrangeFox Recovery, fox_12.1 branch
 #
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 08 June 2023
+# Date: 13 July 2023
 #
 # -----------------------------------
 #
@@ -48,29 +48,35 @@
 "FOX_RECOVERY_INSTALL_PARTITION"
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's recovery partition is in a location that is
-     different from the default "/dev/block/bootdevice/by-name/recovery"
-   - default = "/dev/block/bootdevice/by-name/recovery"
+     different from the default "/dev/block/by-name/recovery"
+   - default = "/dev/block/by-name/recovery"
 #
 "FOX_RECOVERY_SYSTEM_PARTITION"
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's system partition is in a location that is
-     different from the default "/dev/block/bootdevice/by-name/system"
-     (eg, some Samsung/HTC devices have a different location for system)
-   - default = "/dev/block/bootdevice/by-name/system"
+     different from the default "/dev/block/by-name/system"
+     (eg, some Samsung devices have a different location for system)
+   - default = "/dev/block/by-name/system"
 #
 "FOX_RECOVERY_VENDOR_PARTITION"
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's vendor partition is in a location that is
-     different from the default "/dev/block/bootdevice/by-name/vendor"
+     different from the default "/dev/block/by-name/vendor"
      (eg, some Samsung devices have a different location for vendor)
-   - default = "/dev/block/bootdevice/by-name/vendor"
+   - default = "/dev/block/by-name/vendor"
+#
+"FOX_RECOVERY_VENDOR_BOOT_PARTITION" [NEW]
+   - this is for vendor_boot builds only; it shoul normally BE LEFT WELL ALONE !!!
+   - set this ONLY if your device's vendor_boot partition is in a location that is
+     different from the default "/dev/block/by-name/vendor_boot"
+   - default = "/dev/block/by-name/vendor_boot"
 #
 "FOX_RECOVERY_BOOT_PARTITION" [R11.1 only]
    - !!! this should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's boot partition is in a location that is
-     different from the default "/dev/block/bootdevice/by-name/boot"
+     different from the default "/dev/block/by-name/boot"
      (eg, some devices have a different location for boot)
-   - default = "/dev/block/bootdevice/by-name/boot"
+   - default = "/dev/block/by-name/boot"
 #
 "OF_USE_LZMA_COMPRESSION" (renamed from "FOX_USE_LZMA_COMPRESSION")
    - set this to 1 if you want to use (slow but better compression) lzma compression for your ramdisk; 
@@ -624,5 +630,12 @@
 - Set this to 1 to enable f2fs filesystem compression
 - This requires support in your kernel, and the appropriate fstab flags
 - Do not use - unless you know what you are doing, and you also know that every ROM that you will use supports fscompression
+- default = 0
+#
+"FOX_INSTALLER_DISABLE_AUTOREBOOT" [NEW]
+- Set this to 1 to prevent the OrangeFox installer from rebooting to recovery automatically after installing OrangeFox
+- Do NOT use in release builds!
+- This should only be used for pre-release testing purposes, and even then, only if absolutely necessary
+- The installer already does not perform an autoreboot if flashing from OrangeFox, so it should not be necessary to use this setting
 - default = 0
 # -----------------------------------

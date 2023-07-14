@@ -669,6 +669,12 @@ local TDT=$(date "+%d %B %Y")
      sed -i -e "s/^FOX_VANILLA_BUILD=.*/FOX_VANILLA_BUILD=\"1\"/" $F
   fi
 
+  # disable auto-reboot after installing OrangeFox?
+  if [ "$FOX_INSTALLER_DISABLE_AUTOREBOOT" = "1" ]; then
+     echo -e "${RED}-- This build will skip all OrangeFox patches ... ${NC}"
+     sed -i -e "s/^FOX_INSTALLER_DISABLE_AUTOREBOOT=.*/FOX_INSTALLER_DISABLE_AUTOREBOOT=\"1\"/" $F
+  fi
+
   # omit AromaFM ?
   if [ "$FOX_DELETE_AROMAFM" = "1" ]; then
      echo -e "${GREEN}-- Deleting AromaFM ...${NC}"
