@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 14 July 2023
+# Date: 21 July 2023
 #
 # -----------------------------------
 #
@@ -637,5 +637,10 @@
 - Do NOT use in release builds!
 - This should only be used for pre-release testing purposes, and even then, only if absolutely necessary
 - The installer already does not perform an autoreboot when appropriate (eg, vAB/AB devices) if flashing from OrangeFox, so it should not be necessary to use this setting
+- default = 0
+#
+"OF_LEGACY_PROCESS_FSTAB"
+- This should not be used unless absolutely necessary (see below)
+- If decryption fails on an Mtk device when it was working before, try setting this to 1 to bypass a part of the latest commits that processes fstab files
 - default = 0
 # -----------------------------------
