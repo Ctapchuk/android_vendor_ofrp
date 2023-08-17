@@ -9,7 +9,7 @@
 # ******************************************************
 
 # last_modified
-MOD_DATE="20230714"
+MOD_DATE="20230817"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
@@ -79,6 +79,9 @@ ERROR_CODE=0
 # AB device?
 FOX_AB_DEVICE=0
 
+# vAB device?
+FOX_VIRTUAL_AB_DEVICE=0
+
 # vendor_boot recovery?
 FOX_VENDOR_BOOT_RECOVERY=0
 
@@ -93,6 +96,9 @@ FOX_RESET_SETTINGS="1"
 
 # build a vanilla version that skips all OrangeFox patches?
 FOX_VANILLA_BUILD=0
+
+# whether to use /data/recovery/ for settings and other internal stuff
+FOX_USE_DATA_RECOVERY_FOR_SETTINGS=0
 
 # whether to disable auto-reboot after installing OrangeFox
 FOX_INSTALLER_DISABLE_AUTOREBOOT=0
@@ -839,7 +845,11 @@ Main() {
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."
 	local internal_SD
-	if [ "$BOOTMODE" = "true" ]; then
+	if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
+		internal_SD="/data/recovery"
+		[ ! -d $internal_SD ] && mkdir -p $internal_SD
+		F=1
+	elif [ "$BOOTMODE" = "true" ]; then
 	    F=1
 	    if [ -d "$EXTERNAL_STORAGE" ]; then
 	       internal_SD="$EXTERNAL_STORAGE"
@@ -863,6 +873,7 @@ Main() {
 	   	F=$(is_mounted "$internal_SD")
 	    }
 	fi
+
 	[ "$F" = "1" ] && {	
 	   ui_print "- internal_SD=$internal_SD"
 	   rm -rf "$internal_SD/Fox/FoxFiles"
@@ -911,9 +922,11 @@ Main() {
 	   	ui_print " "
 	   	ui_print "- Now, you need to reboot OrangeFox."
 	   	ui_print " "
-	   	ui_print "- If you have just flashed a ROM, first switch the slot before rebooting OrangeFox."
-	   	ui_print " "
-	   	ui_print " "
+	   	if [ "$FOX_VIRTUAL_AB_DEVICE" != "1" ]; then
+	   		ui_print "- If you have just flashed a ROM, first switch the slot before rebooting OrangeFox."
+	   		ui_print " "
+	   		ui_print " "
+	   	fi
 	   	exit 0
 	   fi
 	fi

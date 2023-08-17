@@ -202,7 +202,7 @@ fi
 
 # virtual A/B (VAB)
 IS_VIRTUAL_AB_DEVICE=0
-if [ "$FOX_VIRTUAL_AB_DEVICE" = "1" -o "$OF_VIRTUAL_AB_DEVICE" = "1"  ]; then
+if [ "$FOX_VIRTUAL_AB_DEVICE" = "1" -o "$OF_VIRTUAL_AB_DEVICE" = "1" -o "$FOX_VENDOR_BOOT_RECOVERY" = "1" -o "$PRODUCT_VIRTUAL_AB_OTA" = "true" ]; then
    IS_VIRTUAL_AB_DEVICE=1
    IS_AB_DEVICE=1
 fi
@@ -651,6 +651,12 @@ local TDT=$(date "+%d %B %Y")
      fi
   fi
 
+  # virtual A/B
+  if [ "$IS_VIRTUAL_AB_DEVICE" = "1" ]; then
+     echo -e "${RED}-- Saving the vAB flag ... ${NC}"
+     sed -i -e "s/^FOX_VIRTUAL_AB_DEVICE=.*/FOX_VIRTUAL_AB_DEVICE=\"1\"/" $F
+  fi
+
   # whether to enable magisk 24+ patching of vbmeta
   if [ "$FOX_PATCH_VBMETA_FLAG" = "1" -o "$OF_PATCH_VBMETA_FLAG" = "1" ]; then
      echo -e "${RED}-- Enabling PATCHVBMETAFLAG for the installation... ${NC}"
@@ -667,6 +673,12 @@ local TDT=$(date "+%d %B %Y")
   if [ "$IS_VANILLA_BUILD" = "1" ]; then
      echo -e "${RED}-- This build will skip all OrangeFox patches ... ${NC}"
      sed -i -e "s/^FOX_VANILLA_BUILD=.*/FOX_VANILLA_BUILD=\"1\"/" $F
+  fi
+
+  # use /data/recovery/Fox/ instead of /sdcard/Fox/ ?
+  if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
+     echo -e "${RED}-- This build will use /data/recovery/ for its internal settings ... ${NC}"
+     sed -i -e "s/^FOX_USE_DATA_RECOVERY_FOR_SETTINGS=.*/FOX_USE_DATA_RECOVERY_FOR_SETTINGS=\"1\"/" $F
   fi
 
   # disable auto-reboot after installing OrangeFox?
@@ -1333,21 +1345,28 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   F=$FOX_RAMDISK/$RAMDISK_SBIN/foxstart.sh
   if [ -n "$FOX_RECOVERY_SYSTEM_PARTITION" ]; then
      echo -e "${RED}-- Changing the recovery system partition to \"$FOX_RECOVERY_SYSTEM_PARTITION\" ${NC}"
-     sed -i -e "s|^SYSTEM_PARTITION=.*|SYSTEM_PARTITION=\"$FOX_RECOVERY_SYSTEM_PARTITION\"|" $F
+     sed -i -e "s|^SYSTEM_BLOCK=.*|SYSTEM_BLOCK=\"$FOX_RECOVERY_SYSTEM_PARTITION\"|" $F
   fi
 
   # embed the vendor partition (in foxstart.sh)
   F=$FOX_RAMDISK/$RAMDISK_SBIN/foxstart.sh
   if [ -n "$FOX_RECOVERY_VENDOR_PARTITION" ]; then
      echo -e "${RED}-- Changing the recovery vendor partition to \"$FOX_RECOVERY_VENDOR_PARTITION\" ${NC}"
-     sed -i -e "s|^VENDOR_PARTITION=.*|VENDOR_PARTITION=$FOX_RECOVERY_VENDOR_PARTITION|" $F
+     sed -i -e "s|^VENDOR_BLOCK=.*|VENDOR_BLOCK=\"$FOX_RECOVERY_VENDOR_PARTITION\"|" $F
   fi
 
   # embed the boot partition (in foxstart.sh)
   F=$FOX_RAMDISK/sbin/foxstart.sh
   if [ -n "$FOX_RECOVERY_BOOT_PARTITION" ]; then
      echo -e "${RED}-- Changing the recovery boot partition to \"$FOX_RECOVERY_BOOT_PARTITION\" ${NC}"
-     sed -i -e "s|^BOOT_PARTITION=.*|BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION|" $F
+     sed -i -e "s|^BOOT_BLOCK=.*|BOOT_BLOCK=\"$FOX_RECOVERY_BOOT_PARTITION\"|" $F
+  fi
+
+  # embed the build var (in foxstart.sh)
+  F=$FOX_RAMDISK/sbin/foxstart.sh
+  if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
+     echo -e "${RED}-- This build will use /data/recovery/ for its internal settings ... ${NC}"
+     sed -i -e "s/^FOX_USE_DATA_RECOVERY_FOR_SETTINGS=.*/FOX_USE_DATA_RECOVERY_FOR_SETTINGS=\"1\"/" $F
   fi
 
   # Include mmgui

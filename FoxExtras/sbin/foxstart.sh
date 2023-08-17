@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20230321
+# * Date:   20230817
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20230321"
+SCRIPT_LASTMOD_DATE="20230817"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -40,6 +40,8 @@ ANDROID_SDK="30"  # assume at least Android 11 in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
 SUPER="0" # whether the rdevice has a "super" partition
 OUR_TMP="/FFiles/temp" # our "safe" temp directory
+# whether to use /data/recovery/ for settings
+FOX_USE_DATA_RECOVERY_FOR_SETTINGS=0
 
 # etc dir
 if [ -h /etc ]; then 
@@ -56,8 +58,9 @@ FS="$ETC_DIR/twrp.fstab"
 [ ! -f $FS ] && FS="$ETC_DIR/recovery.fstab"
 
 FOX_DEVICE=$(getprop "ro.product.device")
-SETPROP=/sbin/setprop
-[ ! -e "$SETPROP" ] && SETPROP=/system/bin/setprop
+SETPROP=/sbin/resetprop
+[ ! -x "$SETPROP" ] && SETPROP=/system/bin/resetprop
+[ ! -x "$SETPROP" ] && SETPROP=/system/bin/setprop
 
 T=0
 M=0
@@ -84,8 +87,9 @@ extralog() {
 }
 
 # partition mountpoints
-SYSTEM_BLOCK=/dev/block/bootdevice/by-name/system
-VENDOR_BLOCK=/dev/block/bootdevice/by-name/vendor
+BOOT_BLOCK="/dev/block/bootdevice/by-name/boot"
+SYSTEM_BLOCK="/dev/block/bootdevice/by-name/system"
+VENDOR_BLOCK="/dev/block/bootdevice/by-name/vendor"
 if [ "$(getprop ro.boot.dynamic_partitions)" = "true" -o "$(getprop orangefox.super.partition)" = "true" ]; then
    SUPER="1"
    tmp01=$(getprop orangefox.system.block_device)
@@ -490,6 +494,12 @@ local fox_cfg="$ETC_DIR/fox.cfg"
    $SETPROP orangefox.postinit.status 1
    $SETPROP ro.orangefox.sar "$SAR"
    $SETPROP ro.orangefox.kernel "$OPS"
+
+   local fox_home="/sdcard/Fox"
+   if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
+   	fox_home="/data/recovery/Fox"
+   fi
+   $SETPROP ro.orangefox.home "$fox_home"
    
    # if someone is still using old recovery sources
    ln -s $CFG /tmp/orangefox.cfg
