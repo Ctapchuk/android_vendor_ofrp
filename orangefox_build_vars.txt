@@ -143,9 +143,9 @@
    - default = 0
    - if dm-verity is enabled in the ROM, and this is turned on, there will be a bootloop
 #
- "OF_TWRP_COMPATIBILITY_MODE" ; "OF_DISABLE_MIUI_SPECIFIC_FEATURES"
+ "OF_TWRP_COMPATIBILITY_MODE" ; "OF_DISABLE_INCREMENTAL_OTA_FEATURES"
    - set either of them to 1 to enable stock TWRP-compatibility mode 
-   - in this mode, MIUI OTA, and dm-verity/forced-encryption patching will be disabled
+   - in this mode, incremental OTA, and dm-verity/forced-encryption patching will be disabled
    - default = 0
 #
 "OF_DONT_PATCH_ENCRYPTED_DEVICE"
@@ -208,11 +208,11 @@
    - default = nothing (ie, try to decrypt all Android API levels)
 #
 "OF_OTA_RES_DECRYPT" [LEGACY]
-   - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
+   - set to 1 to try and decrypt internal storage (instead bailing out with an error) during incremental OTA restore
    - default = 0
 #
-"OF_NO_MIUI_OTA_VENDOR_BACKUP" [LEGACY]
-   - set to 1 to prevent backing up of vendor_image when preparing for incremental MIUI OTA (upon flashing a MIUI ROM)
+"OF_NO_INCREMENTAL_OTA_VENDOR_BACKUP" [LEGACY]
+   - set to 1 to prevent backing up of vendor_image when preparing for incremental OTA (upon flashing a MIUI ROM)
    - such a backup is required for new (2019+) Xiaomi devices (eg, lavender, violet, raphael, ginkgo, etc)
    - default = 0
 #
@@ -378,8 +378,8 @@
 #
 "OF_SUPPORT_ALL_BLOCK_OTA_UPDATES" [LEGACY]
 - Set this to 1 to enable support for block-based incremental OTA on custom ROMs that have this feature
-- If enabled, flashing a custom ROM will run the same OTA_BAK/OTA_RES processes as with MIUI
-- This setting is incompatible with OF_DISABLE_MIUI_SPECIFIC_FEATURES/OF_TWRP_COMPATIBILITY_MODE/FOX_VANILLA_BUILD
+- If enabled, flashing a custom ROM will run the same OTA_BAK/OTA_RES processes as with stock
+- This setting is incompatible with OF_DISABLE_INCREMENTAL_OTA_FEATURES/OF_TWRP_COMPATIBILITY_MODE/FOX_VANILLA_BUILD
 - The default position is to support block-based incremental OTA in MIUI ROMs only
 - default = 0
 #
@@ -387,7 +387,7 @@
 - Set this to 1 to suppress warnings that not patching MIUI may cause MIUI to not boot, or to overwrite the recovery with stock recovery
 - default = 0
 #
-"OF_DISABLE_MIUI_OTA_BY_DEFAULT"
+"OF_DISABLE_INCREMENTAL_OTA_BY_DEFAULT"
 - Set this to 1 to disable the OTA settings by default, meaning that users have to enable OTA manually
 - default = 0
 #
