@@ -546,6 +546,11 @@ post_init() {
   # write OrangeFox props to the log
   echo "DEBUG: OrangeFox: Fox properties:" >> $LOG
   getprop | grep 'orangefox' >> $LOG
+  
+  # use new magisk uninstall zip for saving space
+  unzip /FFiles/OF_Magisk/Magisk.zip magisk/magisk_zip.zip -d /FFiles/OF_Magisk
+  mv /FFiles/OF_Magisk/magisk/magisk_zip.zip /FFiles/OF_Magisk/uninstall.zip
+  rm -rf /FFiles/OF_Magisk/magisk
 }
 
 ### main() ###
