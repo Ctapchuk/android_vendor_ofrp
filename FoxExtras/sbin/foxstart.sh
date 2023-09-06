@@ -40,8 +40,8 @@ ANDROID_SDK="30"  # assume at least Android 11 in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
 SUPER="0" # whether the rdevice has a "super" partition
 OUR_TMP="/FFiles/temp" # our "safe" temp directory
-# whether to use /data/recovery/ for settings
-FOX_USE_DATA_RECOVERY_FOR_SETTINGS=0
+# whether to use $FOX_CUSTOM_FOLDER_FOR_SETTINGS for settings
+FOX_CUSTOM_FOLDER_FOR_SETTINGS=""
 
 # etc dir
 if [ -h /etc ]; then 
@@ -496,8 +496,8 @@ local fox_cfg="$ETC_DIR/fox.cfg"
    $SETPROP ro.orangefox.kernel "$OPS"
 
    local fox_home="/sdcard/Fox"
-   if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
-   	fox_home="/data/recovery/Fox"
+   if [ "$FOX_CUSTOM_FOLDER_FOR_SETTINGS" != "" ]; then
+   	fox_home=$FOX_CUSTOM_FOLDER_FOR_SETTINGS"/Fox"
    fi
    $SETPROP ro.orangefox.home "$fox_home"
    

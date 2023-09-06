@@ -676,9 +676,9 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # use /data/recovery/Fox/ instead of /sdcard/Fox/ ?
-  if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
-     echo -e "${RED}-- This build will use /data/recovery/ for its internal settings ... ${NC}"
-     sed -i -e "s/^FOX_USE_DATA_RECOVERY_FOR_SETTINGS=.*/FOX_USE_DATA_RECOVERY_FOR_SETTINGS=\"1\"/" $F
+  if [ "$FOX_CUSTOM_FOLDER_FOR_SETTINGS" != "" ]; then
+     echo -e "${RED}-- This build will use $FOX_CUSTOM_FOLDER_FOR_SETTINGS for its internal settings ... ${NC}"
+     sed -i -e "s|^FOX_CUSTOM_FOLDER_FOR_SETTINGS=.*|FOX_CUSTOM_FOLDER_FOR_SETTINGS=\"$FOX_CUSTOM_FOLDER_FOR_SETTINGS\"|" $F
   fi
 
   # disable auto-reboot after installing OrangeFox?
@@ -1362,9 +1362,9 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
 
   # embed the build var (in foxstart.sh)
   F=$FOX_RAMDISK/sbin/foxstart.sh
-  if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
-     echo -e "${RED}-- This build will use /data/recovery/ for its internal settings ... ${NC}"
-     sed -i -e "s/^FOX_USE_DATA_RECOVERY_FOR_SETTINGS=.*/FOX_USE_DATA_RECOVERY_FOR_SETTINGS=\"1\"/" $F
+  if [ "$FOX_CUSTOM_FOLDER_FOR_SETTINGS" != "" ]; then
+     echo -e "${RED}-- This build will use $FOX_CUSTOM_FOLDER_FOR_SETTINGS for its internal settings ... ${NC}"
+     sed -i -e "s|^FOX_CUSTOM_FOLDER_FOR_SETTINGS=.*|FOX_CUSTOM_FOLDER_FOR_SETTINGS=\"$FOX_CUSTOM_FOLDER_FOR_SETTINGS\"|" $F
   fi
 
   # Include mmgui
