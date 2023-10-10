@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 03 August 2023
+# Date: 10 October 2023
 #
 # -----------------------------------
 #
@@ -639,11 +639,6 @@
 - The installer already does not perform an autoreboot when appropriate (eg, vAB/AB devices) if flashing from OrangeFox, so it should not be necessary to use this setting
 - default = 0
 #
-"OF_LEGACY_PROCESS_FSTAB" [NEW]
-- This should not be used unless absolutely necessary (see below)
-- If decryption fails on an Mtk device when it was working before, try setting this to 1 to bypass a part of the latest commits that processes fstab files
-- default = 0
-#
 "OF_MANUAL_ROOT_VENDOR_ERROR_FIX" [NEW]
 - Set this to 1 to work around "cannot delete non-empty directory: root/vendor" build errors
 - This should not be used unless absolutely necessary, because that build error shows that something is wrong with the device tree, and that really should be fixed
@@ -653,6 +648,41 @@
 "OF_LOOP_DEVICE_ERRORS_TO_LOG" [NEW]
 - Set this 1 to prevent spamming the recovery console with noisy loop device mount errors (instead it will just write the errors to the log file)
 - This is only a work-around, not a fix; the errors show that something is wrong with the device tree, and that really should be fixed
+- default = 0
+#
+"FOX_USE_DATA_RECOVERY_FOR_SETTINGS" [NEW] [EXPERIMENTAL]
+- Set this to 1 to use /data/recovery/Fox/ for storage, instead of /sdcard/Fox/
+- This has only one advantage - because /data/recovery/ is always available, settings can be saved and used even when decryption fails
+- The big disadvantage is that /data/recovery/ is erased every time you wipe the data partition - and so the settings will be lost even if don't format data
+- This feature is HIGHLY EXPERIMENTAL! - do NOT use it without prolonged and deep testing in every possible scenario!
+- default = 0
+#
+"OF_DISPLAY_FORMAT_FILESYSTEMS_DEBUG_INFO" [NEW]
+- Set this to 1 to display debug information about the target partition when formatting data
+- This is mainly for use during testing; do not use for release builds
+- default = 0
+#
+"OF_FORCE_USE_RECOVERY_FSTAB" [NEW] (renamed from OF_LEGACY_PROCESS_FSTAB")
+- If decryption fails on an Mtk device when it was working before, try setting this to 1 to bypass processing of ROM fstabs, and only use the recovery's fstab
+- This var is equivalent to setting "TW_SKIP_ADDITIONAL_FSTAB := true" in BoardConfig.mk or device.mk
+- This should not be used unless absolutely necessary
+- default = 0
+#
+"OF_DEFAULT_KEYMASTER_VERSION" [NEW]
+- Use this to specify the default version for the keymaster services used for decryption
+- The value given to this will be used if the keymaster version cannot be determined automatically
+- If you use this, you should make sure that you are specifying the correct keymaster version provided by your device tree
+- eg, "export OF_DEFAULT_KEYMASTER_VERSION=4.0" (meaning using keymaster version 4.0 by default)
+- This var is equivalent to setting a value for the "keymaster_ver" prop in system.prop or device.mk
+- If the installed ROM uses a different keymaster version, that will be used instead and will override whatever is specified here
+- If you do not want your specified value to be overridden, then set "TW_FORCE_KEYMASTER_VER := true" in your BoardConfig.mk or device.mk
+- default = empty
+#
+"OF_NO_KEYMASTER_VER_4X" [NEW]
+- Set this to 1 to disable the merging at runtime of keymaster 4.0 and 4.1 props to "4.x"
+- Only use this as a last resort
+- There is no reason to use it if your build system is up-to-date (ie, if you have run a "repo sync" after 10 October 2023)
+- Do not use this unless your recovery build is hanging at the OrangeFox logo (and even then, you should first run a "repo sync" to update your build system before trying this)
 - default = 0
 #
 # -----------------------------------
