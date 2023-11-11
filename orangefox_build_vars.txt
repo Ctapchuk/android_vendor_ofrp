@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 10 October 2023
+# Date: 11 November 2023
 #
 # -----------------------------------
 #
@@ -368,8 +368,15 @@
 #
 "OF_PATCH_AVB20"
 - Set this to 1 to try patch AVB 2.0 so that OrangeFox is not replaced by stock recovery
+- This works by patching the boot image
 - This is useful only for A-only devices, else it is ignored
 - It is also ignored when using OF_SKIP_ORANGEFOX_PROCESS or FOX_VANILLA_BUILD
+- default = 0
+#
+"OF_SUPPORT_VBMETA_AVB2_PATCHING" [NEW] [EXPERIMENTAL!!]
+- Set this to support disabling AVB2.0 by patching vbmeta/vbmeta_system (instead of patching the boot image) after flashing a ROM
+- This is an experimental feature; test very carefullt, and handle with great care!!
+- This feature is not needed on most devices (and certainly not on pre-2021 devices)
 - default = 0
 #
 "OF_OTA_BACKUP_STOCK_BOOT_IMAGE" [LEGACY]
@@ -684,5 +691,23 @@
 - There is no reason to use it if your build system is up-to-date (ie, if you have run a "repo sync" after 10 October 2023)
 - Do not use this unless your recovery build is hanging at the OrangeFox logo (and even then, you should first run a "repo sync" to update your build system before trying this)
 - default = 0
+#
+"FOX_SETTINGS_ROOT_DIRECTORY" [NEW] [EXPERIMENTAL!!]
+- This allows specifying a custom settings directory for the recovery (ie, instead of the default "/sdcard/Fox/")
+- If used, you should specify the directory on the device that OrangeFox should use for its settings/configuration stuff
+- The specified directory name should ALWAYS be terminated with a front-slash (ie, "/"); and it must ALWAYS be available on the device whenever the recovery is running
+- OrangeFox will automatically append "Fox" to the end of the directory that is specified
+-
+- Examples:
+-
+-  "export FOX_SETTINGS_ROOT_DIRECTORY=/sdcard/PRIVATE/"
+-
+-  "export FOX_SETTINGS_ROOT_DIRECTORY=/sdcard1/MyDev/"
+-
+- This is a HIGHLY EXPERIMENTAL feature, which may have bugs; use with GREAT caution, and with lots of testing
+- It is essential for the programmer's convenience, at the development stages, to avoid the need for constant reconfigurations during testing
+- Do NOT use this in a release build; and you CANNOT use it in a Stable build (the build process will simply terminate with an error)
+-
+- default = none
 #
 # -----------------------------------
