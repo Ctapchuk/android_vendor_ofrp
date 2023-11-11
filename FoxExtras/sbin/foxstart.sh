@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20230817
+# * Date:   20231111
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20230817"
+SCRIPT_LASTMOD_DATE="20231111"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -40,8 +40,12 @@ ANDROID_SDK="30"  # assume at least Android 11 in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
 SUPER="0" # whether the rdevice has a "super" partition
 OUR_TMP="/FFiles/temp" # our "safe" temp directory
+
 # whether to use /data/recovery/ for settings
 FOX_USE_DATA_RECOVERY_FOR_SETTINGS=0
+
+# whether we have been given a fixed settings directory
+FOX_SETTINGS_ROOT_DIRECTORY=""
 
 # etc dir
 if [ -h /etc ]; then 
@@ -496,7 +500,9 @@ local fox_cfg="$ETC_DIR/fox.cfg"
    $SETPROP ro.orangefox.kernel "$OPS"
 
    local fox_home="/sdcard/Fox"
-   if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
+   if [ -n "$FOX_SETTINGS_ROOT_DIRECTORY" ]; then
+   	fox_home=$FOX_SETTINGS_ROOT_DIRECTORY"Fox"
+   elif [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
    	fox_home="/data/recovery/Fox"
    fi
    $SETPROP ro.orangefox.home "$fox_home"

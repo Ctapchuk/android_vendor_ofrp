@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 08 June 2023
+# 11 November 2023
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -676,7 +676,10 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # use /data/recovery/Fox/ instead of /sdcard/Fox/ ?
-  if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
+  if [ -n "$FOX_SETTINGS_ROOT_DIRECTORY" ]; then
+     echo -e "${RED}-- This build will use $FOX_SETTINGS_ROOT_DIRECTORY for its internal settings ... ${NC}"
+     sed -i -e "s|^FOX_SETTINGS_ROOT_DIRECTORY=.*|FOX_SETTINGS_ROOT_DIRECTORY=\"$FOX_SETTINGS_ROOT_DIRECTORY\"|" $F
+  elif [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
      echo -e "${RED}-- This build will use /data/recovery/ for its internal settings ... ${NC}"
      sed -i -e "s/^FOX_USE_DATA_RECOVERY_FOR_SETTINGS=.*/FOX_USE_DATA_RECOVERY_FOR_SETTINGS=\"1\"/" $F
   fi
@@ -706,6 +709,7 @@ local TDT=$(date "+%d %B %Y")
      if [ -e $FOX_USE_SPECIFIC_MAGISK_ZIP ]; then
         echo -e "${WHITEONGREEN}-- Using magisk zip: \"$FOX_USE_SPECIFIC_MAGISK_ZIP\" ${NC}"
         $CP -pf $FOX_USE_SPECIFIC_MAGISK_ZIP $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk.zip
+        $CP -pf $FOX_USE_SPECIFIC_MAGISK_ZIP $FOX_TMP_WORKING_DIR/sdcard/Fox/FoxFiles/Magisk_uninstall.zip
      else
         echo -e "${WHITEONRED}-- I cannot find \"$FOX_USE_SPECIFIC_MAGISK_ZIP\"! Using the default.${NC}"
      fi
@@ -1362,9 +1366,12 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      sed -i -e "s|^BOOT_BLOCK=.*|BOOT_BLOCK=\"$FOX_RECOVERY_BOOT_PARTITION\"|" $F
   fi
 
-  # embed the build var (in foxstart.sh)
+  # embed the build var (in foxstart.sh) FOX_SETTINGS_ROOT_DIRECTORY
   F=$FOX_RAMDISK/sbin/foxstart.sh
-  if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
+  if [ -n "$FOX_SETTINGS_ROOT_DIRECTORY" ]; then
+     echo -e "${RED}-- This build will use $FOX_SETTINGS_ROOT_DIRECTORY for its internal settings ... ${NC}"
+     sed -i -e "s|^FOX_SETTINGS_ROOT_DIRECTORY=.*|FOX_SETTINGS_ROOT_DIRECTORY=\"$FOX_SETTINGS_ROOT_DIRECTORY\"|" $F
+  elif [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
      echo -e "${RED}-- This build will use /data/recovery/ for its internal settings ... ${NC}"
      sed -i -e "s/^FOX_USE_DATA_RECOVERY_FOR_SETTINGS=.*/FOX_USE_DATA_RECOVERY_FOR_SETTINGS=\"1\"/" $F
   fi
@@ -1476,6 +1483,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   echo "FOX_BUILD_DATE=$BUILD_DATE" > $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   [ -z "$FOX_CURRENT_DEV_STR" ] && FOX_CURRENT_DEV_STR=$(git -C $FOX_VENDOR_PATH/../../bootable/recovery log -1 --format='%ad (%h)' --date=short) > /dev/null 2>&1
   if [ -n "$FOX_CURRENT_DEV_STR" ]; then
+    export FOX_CURRENT_DEV_STR
     echo "FOX_CODE_BASE=$FOX_CURRENT_DEV_STR" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
 
@@ -1493,6 +1501,15 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   if [ -n "$FOX_RECOVERY_BOOT_PARTITION" ]; then
      echo "BOOT_PARTITION=$FOX_RECOVERY_BOOT_PARTITION" >> $FOX_RAMDISK/$RAMDISK_ETC/fox.cfg
   fi
+
+  # save the codebase information
+  grep -q "ro.build.fox_codebase=" $DEFAULT_PROP && \
+  	sed -i -e "s/ro.build.fox_codebase=.*/ro.build.fox_codebase=$FOX_CURRENT_DEV_STR/g" $DEFAULT_PROP || \
+  	echo "ro.build.fox_codebase=$FOX_CURRENT_DEV_STR" >> $DEFAULT_PROP
+
+  grep -q "ro.build.fox_codebase=" $DEFAULT_PROP_ROOT && \
+  	sed -i -e "s/ro.build.fox_codebase=.*/ro.build.fox_codebase=$FOX_CURRENT_DEV_STR/g" $DEFAULT_PROP_ROOT || \
+  	echo "ro.build.fox_codebase=$FOX_CURRENT_DEV_STR" >> $DEFAULT_PROP_ROOT
 
   # save the build id
    echo -e "${GREEN}-- Generating the build ID ${NC}"

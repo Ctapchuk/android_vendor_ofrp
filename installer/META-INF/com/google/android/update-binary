@@ -9,7 +9,7 @@
 # ******************************************************
 
 # last_modified
-MOD_DATE="20230817"
+MOD_DATE="20231111"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
@@ -99,6 +99,9 @@ FOX_VANILLA_BUILD=0
 
 # whether to use /data/recovery/ for settings and other internal stuff
 FOX_USE_DATA_RECOVERY_FOR_SETTINGS=0
+
+# whether we have been given a fixed settings directory
+FOX_SETTINGS_ROOT_DIRECTORY=""
 
 # whether to disable auto-reboot after installing OrangeFox
 FOX_INSTALLER_DISABLE_AUTOREBOOT=0
@@ -845,8 +848,8 @@ Main() {
 # Install /sdcard stuff
 	ui_print "- Installing FoxFiles on the internal SD ..."
 	local internal_SD
-	if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
-		internal_SD="/data/recovery"
+	if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" -o -n "$FOX_SETTINGS_ROOT_DIRECTORY" ]; then
+		[ -n "$FOX_SETTINGS_ROOT_DIRECTORY" ] && internal_SD="$FOX_SETTINGS_ROOT_DIRECTORY" || internal_SD="/data/recovery"
 		[ ! -d $internal_SD ] && mkdir -p $internal_SD
 		F=1
 	elif [ "$BOOTMODE" = "true" ]; then
