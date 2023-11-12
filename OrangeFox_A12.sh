@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 11 November 2023
+# 12 November 2023
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -1207,10 +1207,11 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
         fi
         echo '[ ! -f /sdcard/Fox/fox.bashrc -a -f /FFiles/fox.mkshrc ] && source /sdcard/Fox/fox.mkshrc' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_ETC/bash/bashrc"
      else
-        rm -f $FOX_RAMDISK/$RAMDISK_SBIN/bash
-        $CP -pf $FOX_VENDOR_PATH/Files/bash $FOX_RAMDISK/$RAMDISK_SBIN/bash
-        chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/bash
-        rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash
+	rm -f $FOX_RAMDISK/$RAMDISK_SBIN/bash
+	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash
+	[ "$FOX_BASH_TO_SYSTEM_BIN" = "1" ] && F=$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash || F=$FOX_RAMDISK/$RAMDISK_SBIN/bash
+	$CP -pf $FOX_VENDOR_PATH/Files/bash $F
+	chmod 0775 $F
      fi
 
      if [ "$FOX_ASH_IS_BASH" = "1" ]; then

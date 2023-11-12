@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 11 November 2023
+# Date: 12 November 2023
 #
 # -----------------------------------
 #
@@ -710,4 +710,8 @@
 -
 - default = none
 #
+"FOX_BASH_TO_SYSTEM_BIN" [NEW]
+- Set this to 1 to install the prebuilt bash binary in /system/bin/, instead of the standard /sbin/ (at build time)
+- If this is used, a symlink is created in /sbin/ to the binary in /system/bin/
+- default = 0
 # -----------------------------------
