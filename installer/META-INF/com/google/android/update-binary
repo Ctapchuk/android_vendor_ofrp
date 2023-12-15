@@ -9,7 +9,7 @@
 # ******************************************************
 
 # last_modified
-MOD_DATE="20231111"
+MOD_DATE="20231215"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
@@ -300,6 +300,15 @@ CheckRequirements() {
    fi
 }
 
+# do we have a virtual A/B device?
+is_VAB() {
+	if [ "$FOX_VIRTUAL_AB_DEVICE" = "1" -o "$(getprop ro.orangefox.virtual_ab)" = "1" -o "$(getprop ro.virtual_ab.enabled)" = "true" ]; then
+		echo "1"
+	else
+		echo "0"
+	fi
+}
+
 # do we have a SAR build?
 is_SAR() {
   local F=$($GETPROP "ro.build.system_root_image")
@@ -580,7 +589,11 @@ local PART
 	    	target="$VENDOR_BOOT_PARTITION"
 	    	name="vendor_boot"
 	    else
-	    	ui_print "- Standard A/B device ..."
+		if [ "$(is_VAB)" = "1" ]; then
+			ui_print "- Virtual A/B device ..."
+		else
+			ui_print "- Standard A/B device ..."
+		fi
 	    	target="$BOOT_PARTITION"
 	    	name="boot"
 	    fi
@@ -635,7 +648,7 @@ local PART
 			PART=$target"$slot"
 			blockdev --setrw $PART
 			package_extract_file "recovery.img" "$PART"
-	   		done
+	   	done
 	   	return
 	   fi
 
@@ -651,7 +664,7 @@ local PART
 
 	   # unpack
 	   ui_print "- Unpacking the $target$slot image..."
-	   "$tool" unpack -n --vendor $name".img" || abort "- I cannot unpack the $name$slot image."
+	   "$tool" unpack --vendor $name".img" || abort "- I cannot unpack the $name$slot image."
 
 	   # replace the vendor_boot ramdisk with our own
 	   cp -f fox_vendor_ramdisk vendor_ramdisk_recovery.cpio  || abort "- I cannot copy the ramdisk image."
@@ -686,7 +699,7 @@ local PART
    	# extract the ramdisk from the OrangeFox image
    	chmod 0755 "$tool"
    	ui_print "- Extracting the OrangeFox ramdisk ..."
-   	"$tool" unpack -n recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
+   	"$tool" unpack recovery.img || abort "- I cannot extract the OrangeFox ramdisk. Quitting!"
 
 	# deal with ramdisk cpio
    	if [ ! -f "ramdisk.cpio" ]; then
@@ -702,7 +715,7 @@ local PART
 
 		# dump the partition and unpack
 		dd bs=1048576 if=$target$slot of=boot.img || abort "- I cannot dump the $name$slot image."
-		"$tool" unpack -h -n boot.img || abort "- I cannot unpack the $name$slot image."
+		"$tool" unpack -h boot.img || abort "- I cannot unpack the $name$slot image."
 
 		# kernel string want_initramfs -> skip_initramfs (Magisk)
 		"$tool" hexpatch kernel 77616E745F696E697472616D6673 736B69705F696E697472616D6673
@@ -714,7 +727,7 @@ local PART
 		sed -i "s|$(grep '^cmdline=' header | cut -d= -f2-)|$(grep '^cmdline=' header | cut -d= -f2- | sed -e 's/skip_override//' -e 's/  */ /g' -e 's/[ \t]*$//')|" header
 
 		cp -f ramdisk-ofrp.cpio ramdisk.cpio
-		"$tool" repack -n boot.img || abort "- I cannot repack the $name$slot image!"
+		"$tool" repack boot.img || abort "- I cannot repack the $name$slot image!"
 
 		blockdev --setrw $target$slot
 		cat new-boot.img /dev/zero > $target$slot 2>/dev/null || true
@@ -723,7 +736,7 @@ local PART
 	done
 
 	# tidy up
-	rm -f ramdisk-ofrp.cpio
+	rm -f ramdisk-ofrp.cpio boot.img new-boot.img
 	"$tool" cleanup
 
 	cd $TMP_DIR
@@ -809,45 +822,11 @@ local F="$1"
 	fi
 }
 
-# main function
-Main() {
-	local F=""
-	ui_print "*************************************"
-	ui_print "*** |OrangeFox Recovery Project|  ***"
-	ui_print "***   |By The OrangeFox Team|     ***"
-	ui_print "***   |Installer V:$MOD_DATE|      ***"
-	ui_print "*************************************"
-	ui_print " "
-
-	PERSIST_PATH=$(find_persist)
-	
-	if [ "$BOOTMODE" = "true" ]; then
-	   ui_print "- OrangeFox installation: running on Android."
-	   ui_print "- This installation mode is experimental."
-	   [ "$PERSIST_PATH" = "ERROR" ] && {
-	   	ui_print "- Some features might be missing - so,"
-	   	ui_print "- flash this zip again, with OrangeFox."
-	   }
-	   ui_print ""
-	fi
-
-# check if we have any device requirements
-	CheckRequirements
-
-# extract the zip installer
-	Unzip_Installer_Package
-
-# Install the recovery
-	ui_print "- Installing OrangeFox recovery ..."
-	Install_Recovery
-	
-	[ "$ERROR_CODE" = "1" ] && {
-	   abort "- The installation of OrangeFox recovery was not successful ..."
-	}
-
-# Install /sdcard stuff
-	ui_print "- Installing FoxFiles on the internal SD ..."
+# install the OrangeFox extras to internal SD
+Install_OrangeFox_Extras_To_sdcard() {
+	local F=0
 	local internal_SD
+	ui_print "- Installing FoxFiles on the internal SD ..."
 	if [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" -o -n "$FOX_SETTINGS_ROOT_DIRECTORY" ]; then
 		[ -n "$FOX_SETTINGS_ROOT_DIRECTORY" ] && internal_SD="$FOX_SETTINGS_ROOT_DIRECTORY" || internal_SD="/data/recovery"
 		[ ! -d $internal_SD ] && mkdir -p $internal_SD
@@ -877,12 +856,81 @@ Main() {
 	    }
 	fi
 
+	echo "$internal_SD"
+
 	[ "$F" = "1" ] && {	
 	   ui_print "- internal_SD=$internal_SD"
 	   rm -rf "$internal_SD/Fox/FoxFiles"
    	   rm -f "$internal_SD/Fox/.wolfs"
    	   package_extract_dir "sdcard" "$internal_SD"
-   	} 
+   	}
+}
+
+# main function
+Main() {
+	local internal_SD=""
+	local F=0
+
+	ui_print "*************************************"
+	ui_print "*** |OrangeFox Recovery Project|  ***"
+	ui_print "***   |By The OrangeFox Team|     ***"
+	ui_print "***   |Installer V:$MOD_DATE|      ***"
+	ui_print "*************************************"
+	ui_print " "
+
+# are we installing only the fox extras?
+	if echo "$ZIPFILE" | grep -q "fox_extras"; then
+		F=1
+	fi
+
+# persist
+	PERSIST_PATH=$(find_persist)
+
+# are we running on Android?
+	if [ "$BOOTMODE" = "true" ]; then
+		if [ "$F" = "1" ]; then
+			ui_print "- OrangeFox installation: running on Android."
+			abort "- You cannot install only the OrangeFox extra files from Android."
+		fi
+
+		ui_print "- OrangeFox installation: running on Android."
+		ui_print "- This installation mode is experimental."
+
+		[ "$PERSIST_PATH" = "ERROR" ] && {
+			ui_print "- Some features might be missing - so,"
+			ui_print "- flash this zip again, with OrangeFox."
+		}
+		ui_print ""
+	fi
+
+# check if we have any device requirements
+	CheckRequirements
+
+# extract the zip installer
+	Unzip_Installer_Package
+
+# Install the recovery
+	if [ "$F" != "1" ]; then
+		ui_print "- Installing OrangeFox recovery ..."
+
+		Install_Recovery
+
+		[ "$ERROR_CODE" = "1" ] && {
+			abort "- The installation of OrangeFox recovery was not successful ..."
+		}
+	fi
+
+# Install /sdcard stuff
+	internal_SD=$(Install_OrangeFox_Extras_To_sdcard)
+
+# If we only installed the extras
+	if [ "$F" = "1" ]; then
+		ui_print "- Finished installing the OrangeFox extras"
+		ui_print "- The extra files are in $internal_SD/Fox/"
+		ui_print " "
+		rm -rf $EX_DIR
+		exit 0
+	fi
 
 # Prevent the stock recovery from replacing this recovery
 	MountThemAll
@@ -899,13 +947,13 @@ Main() {
 	[ "$FOX_RESET_SETTINGS" != "disabled" ] && Reset_Settings "$internal_SD"
 
 # backup recovery.log -> Fox/logs/install.log
-    	ui_print "- Finished."
-    	[ "$BOOTMODE" = "true" ] || {
-    		mkdir -p $internal_SD/Fox/logs
-    		ui_print "- Backing up recovery.log to $internal_SD/Fox/logs/install.log ..."
+    ui_print "- Finished."
+    [ "$BOOTMODE" = "true" ] || {
+	mkdir -p $internal_SD/Fox/logs
+	ui_print "- Backing up recovery.log to $internal_SD/Fox/logs/install.log ..."
 		cp -a /tmp/recovery.log $internal_SD/Fox/logs/install.log
-   		[ "$internal_SD" = "/sdcard" ] && umount_part "$internal_SD" > /dev/null 2>&1
-   	}
+		[ "$internal_SD" = "/sdcard" ] && umount_part "$internal_SD" > /dev/null 2>&1
+	}
 
 # umount
 	UnMountThemAll
