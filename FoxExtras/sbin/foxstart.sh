@@ -501,7 +501,7 @@ local fox_cfg="$ETC_DIR/fox.cfg"
 
    local fox_home="/sdcard/Fox"
    if [ -n "$FOX_SETTINGS_ROOT_DIRECTORY" ]; then
-   	fox_home=$FOX_SETTINGS_ROOT_DIRECTORY"Fox"
+   	fox_home=$FOX_SETTINGS_ROOT_DIRECTORY"/Fox"
    elif [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
    	fox_home="/data/recovery/Fox"
    fi
