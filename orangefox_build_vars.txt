@@ -4,8 +4,8 @@
 #
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
-# Copyright (C) 2019-2023 OrangeFox Recovery Project
-# Date: 12 November 2023
+# Copyright (C) 2019-2024 OrangeFox Recovery Project
+# Date: 13 January 2024
 #
 # -----------------------------------
 #
@@ -375,7 +375,7 @@
 #
 "OF_SUPPORT_VBMETA_AVB2_PATCHING" [NEW] [EXPERIMENTAL!!]
 - Set this to support disabling AVB2.0 by patching vbmeta/vbmeta_system (instead of patching the boot image) after flashing a ROM
-- This is an experimental feature; test very carefullt, and handle with great care!!
+- This is an experimental feature; test very carefully, and handle with great care!!
 - This feature is not needed on most devices (and certainly not on pre-2021 devices)
 - default = 0
 #
@@ -714,4 +714,30 @@
 - Set this to 1 to install the prebuilt bash binary in /system/bin/, instead of the standard /sbin/ (at build time)
 - If this is used, a symlink is created in /sbin/ to the binary in /system/bin/
 - default = 0
+#
+"OF_OPTIONS_LIST_NUM" [NEW]
+- This can be used to override the default number of items on the "options" listbox (when flashing a zip) before a scrollbar is created
+- This should NOT be used on devices with a 16:9 screen
+- It is your responsibility to test the results of any value you use
+- The new number must be between 5 and 8, else the default will be used
+- Example:
+-   "export OF_OPTIONS_LIST_NUM=6"
+- default = 4
+#
+"OF_USE_LEGACY_BATTERY_SERVICES" [NEW]
+- Set to 1 if the battery percentage in the status bar is not working properly (eg, if it shows 100% at all times)
+- default = 0
+#
+"OF_WIPE_METADATA_AFTER_DATAFORMAT" [NEW] [EXPERIMENTAL!!]
+- Set to 1 to automatically wipe /metadata after formatting the data partition
+- Use with care: use only if the device/ROM has a metadata partition - and - formatting /data doesn't automatically wipe it
+- It is up to you to verify for yourself that this is needed in the first place, and if used, that it works as expected
+- default = 0
+#
+"OF_BIND_MOUNT_SDCARD_ON_FORMAT" [NEW] [HIGHLY EXPERIMENTAL!!]
+- Set to 1 to automatically bind-mount /sdcard to /data/media/0 after formatting data, to resolve MTP issues
+- Note that such bind-mounting can break encryption; so only use this if it is absolutely necessary
+- This is a HIGHLY EXPERIMENTAL feature, which may have bugs; use with EXTREME caution, and with lots of testing, especially with lockscreen PINs/passwords
+- default = 0
+#
 # -----------------------------------
