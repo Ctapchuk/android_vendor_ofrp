@@ -4,7 +4,7 @@
 # 	Custom script for OrangeFox Recovery
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2023 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2024 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20231111
+# * Date:   20240113
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20231111"
+SCRIPT_LASTMOD_DATE="20240113"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -38,7 +38,7 @@ SYS_ROOT="0"	  # do we have system_root?
 SAR="0"	  	  # SAR set up properly in recovery?
 ANDROID_SDK="30"  # assume at least Android 11 in sdk checks
 MOUNT_CMD="mount -r" # only mount in readonly mode
-SUPER="0" # whether the rdevice has a "super" partition
+SUPER="0" # whether the device has a "super" partition
 OUR_TMP="/FFiles/temp" # our "safe" temp directory
 
 # whether to use /data/recovery/ for settings
@@ -193,8 +193,11 @@ local slot=$(getprop "ro.boot.slot_suffix")
       mkdir -p $S
    fi
 
-   # mount
+   # mount system as ext4
    $MOUNT_CMD -t ext4 $SYSTEM_BLOCK"$slot" $S > /dev/null 2>&1
+
+   # if that doesn't succeed, try mounting as erofs
+   [ "$?" != "0" ] && $MOUNT_CMD -t erofs $SYSTEM_BLOCK"$slot" $S > /dev/null 2>&1
 
    # look for build.prop
    [ ! -e "$PROP" ] && PROP="$S/system/build.prop" # test for SAR
@@ -437,7 +440,7 @@ Get_Details() {
 # report on Treble
 Treble_Action() {
    if [ -z "$ROM" ]; then
-      	echo "DEBUG: OrangeFox: detected no ROM" >> $LOG
+      	echo "DEBUG: OrangeFox: can't identify the ROM" >> $LOG
    else
    	echo "ROM=$ROM" >> $CFG
    fi
