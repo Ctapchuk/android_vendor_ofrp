@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2018-2023 The OrangeFox Recovery Project
+# 	Copyright (C) 2018-2024 The OrangeFox Recovery Project
 #
 #	OrangeFox is free software: you can redistribute it and/or modify
 #	it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 12 November 2023
+# 13 January 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -1375,6 +1375,12 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   elif [ "$FOX_USE_DATA_RECOVERY_FOR_SETTINGS" = "1" ]; then
      echo -e "${RED}-- This build will use /data/recovery/ for its internal settings ... ${NC}"
      sed -i -e "s/^FOX_USE_DATA_RECOVERY_FOR_SETTINGS=.*/FOX_USE_DATA_RECOVERY_FOR_SETTINGS=\"1\"/" $F
+  fi
+
+  # mark whether this is a vAB or vanilla build
+  if [ "$IS_VIRTUAL_AB_DEVICE" = "1" -o "$IS_VANILLA_BUILD=1" = "1" ]; then
+	F=$FOX_RAMDISK/sbin/foxstart.sh
+	sed -i -e "s/^VIRTUAL_AB_OR_VANILLA=.*/VIRTUAL_AB_OR_VANILLA=\"1\"/" $F
   fi
 
   # Include mmgui

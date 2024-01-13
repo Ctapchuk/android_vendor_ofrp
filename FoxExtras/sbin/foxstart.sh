@@ -41,6 +41,9 @@ MOUNT_CMD="mount -r" # only mount in readonly mode
 SUPER="0" # whether the device has a "super" partition
 OUR_TMP="/FFiles/temp" # our "safe" temp directory
 
+# whether this is a vAB or vanilla build
+VIRTUAL_AB_OR_VANILLA=0
+
 # whether to use /data/recovery/ for settings
 FOX_USE_DATA_RECOVERY_FOR_SETTINGS=0
 
