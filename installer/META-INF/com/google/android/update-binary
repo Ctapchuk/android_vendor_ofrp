@@ -3,13 +3,13 @@
 # ******************************************************
 # Description: 	Installer script for OrangeFox Recovery
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2018-2023 The OrangeFox Recovery Project
+# Copyright (C) 2018-2024 The OrangeFox Recovery Project
 # Author: 	DarthJabba9
 # Date: 	TODAY
 # ******************************************************
 
 # last_modified
-MOD_DATE="20231215"
+MOD_DATE="20240119"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
@@ -105,6 +105,9 @@ FOX_SETTINGS_ROOT_DIRECTORY=""
 
 # whether to disable auto-reboot after installing OrangeFox
 FOX_INSTALLER_DISABLE_AUTOREBOOT=0
+
+# whether we have an A/B device with dedicated recovery partitions
+FOX_AB_DEVICE_WITH_RECOVERY_PARTITION=0
 
 # sundry glodal defaults
 # VEND_DIR="/vendor"
@@ -583,6 +586,7 @@ local PART
 	if [ "$part_size" != "0" -a -e $RECOVERY_PARTITION"_b" ]; then
 	    target="$RECOVERY_PARTITION"
 	    name="recovery"
+	    FOX_AB_DEVICE_WITH_RECOVERY_PARTITION=1
 	else
 	    if [ "$FOX_VENDOR_BOOT_RECOVERY" = "1" ]; then # vendor_boot bringup
 	    	ui_print "- Vendor_boot device ..."
@@ -965,8 +969,10 @@ Main() {
 	rm -rf $EX_DIR
 	F=""
 
-	# don't reboot automatically if it is an A/B device, and OrangeFox is running
-	if [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
+	# don't reboot automatically if it is an A/B device, OrangeFox is running, and there is no dedicated recovery partition
+	if [ "$FOX_AB_DEVICE_WITH_RECOVERY_PARTITION" = "1" -o -e $RECOVERY_PARTITION"_b" ]; then
+	   F=""; # dummy, to prevent a runtime error
+	elif [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ]; then
 	   F=$($GETPROP "orangefox.postinit.status")
 	   [ -z "$F" ] && F=$($GETPROP "orangefox.crash_counter")
 	   if [ -n "$F" ]; then
