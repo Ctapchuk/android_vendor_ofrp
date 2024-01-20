@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 13 January 2024
+# Date: 19 January 2024
 #
 # -----------------------------------
 #
@@ -360,6 +360,10 @@
  - Set this to 1 if you are supporting FBE metadata encryption in your fstab, but don't want the user to be
  - spammed with metadata mount errors in ROMs that don't use metadata encryption
  - default = 0
+#
+"OF_IGNORE_LOGICAL_MOUNT_ERRORS"
+- Set to 1 to record some errors in mounting logical partitions as log entries only
+- default = 0
 #
 "OF_FIX_OTA_UPDATE_MANUAL_FLASH_ERROR" [LEGACY]
 - Set this to 1 to try to recover from error situations where people flash incremental block-based OTA zips manually
@@ -738,6 +742,10 @@
 - Set to 1 to automatically bind-mount /sdcard to /data/media/0 after formatting data, to resolve MTP issues
 - Note that such bind-mounting can break encryption; so only use this if it is absolutely necessary
 - This is a HIGHLY EXPERIMENTAL feature, which may have bugs; use with EXTREME caution, and with lots of testing, especially with lockscreen PINs/passwords
+- default = 0
+#
+"OF_UNMOUNT_SDCARDS_BEFORE_REBOOT" [NEW]
+- Set to 1 to attempt to unmount the SD cards before rebooting
 - default = 0
 #
 # -----------------------------------
