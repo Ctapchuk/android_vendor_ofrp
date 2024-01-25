@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 13 January 2024
+# 25 January 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -503,6 +503,8 @@ local F=$1
 # create zip file
 do_create_update_zip() {
 local tmp=""
+local F=""
+local isVB_V3=0
 local TDT=$(date "+%d %B %Y")
   echo -e "${BLUE}-- Creating the OrangeFox zip installer ...${NC}"
   FILES_DIR=$FOX_VENDOR_PATH/FoxFiles
@@ -543,13 +545,24 @@ local TDT=$(date "+%d %B %Y")
      cd $VBtmp/
 
 # -------------------
-     if [ -x $FOX_VENDOR_PATH/tools/magiskboot.vendorboot ]; then
-     	$FOX_VENDOR_PATH/tools/magiskboot.vendorboot unpack -n --vendor tmp.img
-     	$CP -p vendor_ramdisk_recovery.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
-     else
-     	$FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
-     	$CP -p ramdisk.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
+     $FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
+     F="vendor_ramdisk_recovery.cpio"; #v4 header
+     [ ! -f $F ] && F="ramdisk.cpio"; #v3 header
+     if [ -f $F ]; then
+     	$CP -p $F $FOX_TMP_WORKING_DIR/$F
+	# check for v3 header and compensate
+     	if [ "$F" = "ramdisk.cpio" ]; then
+     	   isVB_V3=1;
+  	   sed -i -e "s/vendor_ramdisk_recovery.cpio/$F/" $FOX_TMP_WORKING_DIR/flash-*
+     	fi
      fi
+#     if [ -x $FOX_VENDOR_PATH/tools/magiskboot.vendorboot ]; then
+#     	$FOX_VENDOR_PATH/tools/magiskboot.vendorboot unpack -n --vendor tmp.img
+#     	$CP -p vendor_ramdisk_recovery.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
+#     else
+#     	$FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
+#     	$CP -p ramdisk.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
+#     fi
 #--------------------
 
      cd $FOX_TMP_WORKING_DIR
@@ -580,7 +593,7 @@ local TDT=$(date "+%d %B %Y")
   fi
 
   # patch update-binary (which is a script) to run only for the current device
-  local F="$FOX_TMP_WORKING_DIR/META-INF/com/google/android/update-binary"
+  F="$FOX_TMP_WORKING_DIR/META-INF/com/google/android/update-binary"
   sed -i -e "s|^TARGET_DEVICE=.*|TARGET_DEVICE=\"$FOX_DEVICE\"|" $F
 
   # embed the release version
@@ -644,6 +657,7 @@ local TDT=$(date "+%d %B %Y")
   if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
      echo -e "${RED}-- Vendor_boot device - enabling vendor_boot mode for the installer ... ${NC}"
      sed -i -e "s/^FOX_VENDOR_BOOT_RECOVERY=.*/FOX_VENDOR_BOOT_RECOVERY=\"1\"/" $F
+     sed -i -e "s/^FOX_VENDOR_BOOT_RECOVERY_V3_HDR=.*/FOX_VENDOR_BOOT_RECOVERY_V3_HDR=\"$isVB_V3\"/" $F
 
      if [ "$FOX_VENDOR_BOOT_FLASH_RAMDISK_ONLY" = "1" ] ; then
      	echo -e "${RED}-- Vendor_boot: - enabling vendor_boot ramdisk flash mode for the installer ... ${NC}"

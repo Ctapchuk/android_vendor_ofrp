@@ -9,7 +9,7 @@
 # ******************************************************
 
 # last_modified
-MOD_DATE="20240119"
+MOD_DATE="20240125"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
@@ -87,6 +87,9 @@ FOX_VENDOR_BOOT_RECOVERY=0
 
 # vendor_boot - whether to flash only the ramdisk
 FOX_VENDOR_BOOT_FLASH_RAMDISK_ONLY=0
+
+# vendor_boot recovery with V3 header?
+FOX_VENDOR_BOOT_RECOVERY_V3_HDR=0
 
 # enable vbmeta patching for magiskboot 24+ ?
 FOX_PATCH_VBMETA_FLAG=0
@@ -562,6 +565,7 @@ local slot
 local name
 local tmp
 local PART
+local F_RAM
 
    	cd "$EX_DIR"
    	
@@ -657,9 +661,13 @@ local PART
 	   fi
 
    	   #----- OrangeFox can replace just the vendor_boot recovery ramdisk -------
+	   F_RAM=vendor_ramdisk_recovery.cpio
+	   [ ! -f $F_RAM ] && F_RAM=ramdisk.cpio
+	   #[ "$FOX_VENDOR_BOOT_RECOVERY_V3_HDR" = "1" -a ! -f $F_RAM ] && F_RAM=ramdisk.cpio
+
 	   # rename the installer's ramdisk image
 	   ui_print "- Backing up the OrangeFox ramdisk image..."
-	   mv -f vendor_ramdisk_recovery.cpio fox_vendor_ramdisk || abort "- I cannot backup the ramdisk image."
+	   mv -f $F_RAM fox_vendor_ramdisk || abort "- I cannot backup the ramdisk image."
 
 	   # dump the vendor_boot partition and unpack
 	   slot=$($GETPROP "ro.boot.slot_suffix")
@@ -668,10 +676,10 @@ local PART
 
 	   # unpack
 	   ui_print "- Unpacking the $target$slot image..."
-	   "$tool" unpack --vendor $name".img" || abort "- I cannot unpack the $name$slot image."
+	   "$tool" unpack $name".img" || abort "- I cannot unpack the $name$slot image."
 
 	   # replace the vendor_boot ramdisk with our own
-	   cp -f fox_vendor_ramdisk vendor_ramdisk_recovery.cpio  || abort "- I cannot copy the ramdisk image."
+	   cp -f fox_vendor_ramdisk $F_RAM  || abort "- I cannot copy the ramdisk image."
 
 	   # repack
 	   ui_print "- Repacking the ROM's $name$slot image..."
@@ -684,10 +692,11 @@ local PART
 		blockdev --setrw $PART
 		package_extract_file "new_recovery.img" "$PART"
 	   done
+
 	   "$tool" cleanup
 	   rm -f $name".img"
 	   rm -f "new_recovery.img"
-	   mv -f fox_vendor_ramdisk vendor_ramdisk_recovery.cpio
+	   mv -f fox_vendor_ramdisk $F_RAM
 	   return
    	   # -----------------------------------------------------
 	fi
