@@ -544,7 +544,6 @@ local TDT=$(date "+%d %B %Y")
      $CP -p $FOX_VENDOR_PATH/Files/flash-* .
      cd $VBtmp/
 
-# -------------------
      $FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
      F="vendor_ramdisk_recovery.cpio"; #v4 header
      [ ! -f $F ] && F="ramdisk.cpio"; #v3 header
@@ -556,14 +555,6 @@ local TDT=$(date "+%d %B %Y")
   	   sed -i -e "s/vendor_ramdisk_recovery.cpio/$F/" $FOX_TMP_WORKING_DIR/flash-*
      	fi
      fi
-#     if [ -x $FOX_VENDOR_PATH/tools/magiskboot.vendorboot ]; then
-#     	$FOX_VENDOR_PATH/tools/magiskboot.vendorboot unpack -n --vendor tmp.img
-#     	$CP -p vendor_ramdisk_recovery.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
-#     else
-#     	$FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
-#     	$CP -p ramdisk.cpio $FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio
-#     fi
-#--------------------
 
      cd $FOX_TMP_WORKING_DIR
      rm -rf $VBtmp/
@@ -1056,26 +1047,6 @@ if [ "$FOX_VENDOR_CMD" != "Fox_Before_Recovery_Image" ]; then
    fi
 
    mkdir -p "$FOX_WORK"
-
-   # unpack recovery image into working directory
-   #echo -e "${BLUE}-- Unpacking recovery image${NC}"
-   #if [ -x $FOX_VENDOR_PATH/tools/magiskboot ]; then
-   #	mkdir -p "$FOX_WORK"/ramdisk
-   #	cd "$FOX_WORK"
-   #	tmp_mboot=$FOX_VENDOR_PATH/tools/magiskboot
-   #	tmp_cpio=$FOX_WORK/ramdisk.cpio
-   #	if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
-   #		tmp_mboot=$FOX_VENDOR_PATH/tools/magiskboot.vendorboot
-   #		tmp_cpio=$FOX_WORK/vendor_ramdisk_recovery.cpio
-   #	fi
-   #	$tmp_mboot unpack "$OUT/$COMPILED_IMAGE_FILE"
-   #	cd $FOX_WORK/ramdisk
-   #	$tmp_mboot cpio $tmp_cpio extract
-   #	cd "$FOX_WORK"
-   #	$tmp_mboot cleanup
-   #else
-   #	bash "$FOX_VENDOR_PATH/tools/mkboot" "$OUT/$COMPILED_IMAGE_FILE" "$FOX_WORK" > /dev/null 2>&1
-   #fi
 
   # perhaps we don't need some "Tools" ?
   if [ "$(SAR_BUILD)" = "1" ]; then
