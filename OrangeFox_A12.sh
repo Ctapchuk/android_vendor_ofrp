@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 25 January 2024
+# 27 January 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -544,21 +544,23 @@ local TDT=$(date "+%d %B %Y")
      $CP -p $FOX_VENDOR_PATH/Files/flash-* .
      cd $VBtmp/
 
+     [ "$BOARD_BOOT_HEADER_VERSION" = "3" ] && isVB_V3=1
+
      $FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
-     F="vendor_ramdisk_recovery.cpio"; #v4 header
-     [ ! -f $F ] && F="ramdisk.cpio"; #v3 header
+     F="vendor_ramdisk_recovery.cpio"; #v4+ header
+     [ ! -f $F ] && F="ramdisk.cpio"; #v3 or earlier header
      if [ -f $F ]; then
      	$CP -p $F $FOX_TMP_WORKING_DIR/$F
 	# check for v3 header and compensate
      	if [ "$F" = "ramdisk.cpio" ]; then
-     	   isVB_V3=1;
+	   isVB_V3=1
   	   sed -i -e "s/vendor_ramdisk_recovery.cpio/$F/" $FOX_TMP_WORKING_DIR/flash-*
      	fi
      fi
 
      cd $FOX_TMP_WORKING_DIR
      rm -rf $VBtmp/
-  fi
+  fi # vendor_boot
 
   # copy the Samsung .tar file if it exists
   if [ -f $RECOVERY_IMAGE".tar" ]; then
