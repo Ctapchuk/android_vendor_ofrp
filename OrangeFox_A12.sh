@@ -320,10 +320,15 @@ if [ "$FOX_BUILD_TYPE" = "Unofficial" ] && [ "$FOX_BUILD" = "Unofficial" ]; then
    FOX_OUT_NAME=OrangeFox-$FOX_BUILD-$FOX_DEVICE
 else
    if [ "$FOX_VARIANT" = "default" ]; then
-      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
-   else
-      FOX_OUT_NAME=OrangeFox-"$FOX_BUILD"_"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
+      if [ "$IS_VENDOR_BOOT_RECOVERY" = "1" ]; then
+         export FOX_VARIANT="VBOOT"
+      elif [ "$BOARD_USES_RECOVERY_AS_BOOT" = "true" ]; then
+         export FOX_VARIANT="BOOT"
+      else
+         export FOX_VARIANT="RECOVERY"
+      fi
    fi
+   FOX_OUT_NAME=OFRP-"$FOX_BUILD"_"$FOX_VARIANT"-"$FOX_BUILD_TYPE"-"$FOX_DEVICE"
 fi
 
 RECOVERY_IMAGE="$OUT/$FOX_OUT_NAME.img"
