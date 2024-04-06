@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 25 January 2024
+# Date: 06 April 2024
 #
 # -----------------------------------
 #
@@ -30,6 +30,8 @@
 #
 "FOX_PORTS_TMP"
    - point to a custom temp directory for creating the zip installer
+   - ensure that this is a directory that you have write access to
+   - there is no default
 #
 "FOX_PORTS_INSTALLER" 
    - point to a custom directory for amended/additional installer files 
@@ -38,6 +40,8 @@
 "FOX_LOCAL_CALLBACK_SCRIPT"
    - point to a custom "callback" script that will be executed just before creating the final recovery image
    - eg, a script to delete some files, or add some files to the ramdisk
+   - ensure that you set the executable bit of the script (eg, "chmod 0755 my-callback-script.sh")
+   - there is no default
 #
 "FOX_REPLACE_TOOLBOX_GETPROP"
    - set to 1 to replace the (stripped down) toolbox version of the "getprop" command
@@ -127,9 +131,7 @@
 #
 "OF_FORCE_MAGISKBOOT_BOOT_PATCH_MIUI" [LEGACY]
    - set to 1 to force the use magiskboot for patching the ROM's boot image when
-   - installing a MIUI ROM, or the OrangeFox zip on a MIUI ROM (regardless of
-   - DM-Verity or Forced-Encryption settings, which will be left alone if that is
-   - what the user has chosen) - this is for the purpose of stopping MIUI from
+   - installing a MIUI ROM, or the OrangeFox zip on a MIUI ROM - this is for the purpose of stopping MIUI from
    - overwriting OrangeFox with its own stock recovery
    - default = 0
 #
@@ -144,50 +146,28 @@
 #
  "OF_TWRP_COMPATIBILITY_MODE" ; "OF_DISABLE_MIUI_SPECIFIC_FEATURES"
    - set either of them to 1 to enable stock TWRP-compatibility mode 
-   - in this mode, MIUI OTA, and dm-verity/forced-encryption patching will be disabled
+   - in this mode, MIUI OTA will be disabled
    - default = 0
 #
-"OF_DONT_PATCH_ENCRYPTED_DEVICE"
-   - set to 1 to avoid applying the forced-encryption patches on encrypted devices
-   - default = 0
-   - this should not be used unless the default is causing issues on your device
-   - the newest Xiaomi devices seem to require this
+"OF_DONT_PATCH_ENCRYPTED_DEVICE" [Always enabled now]
 #
-"OF_KEEP_DM_VERITY"; [LEGACY]
-   - set to 1 to *UNTICK* the OrangeFox "Disable DM-Verity" box on every bootup
-   - default = 0
+"OF_KEEP_DM_VERITY"; [Always enabled now]
 #
-"OF_KEEP_FORCED_ENCRYPTION"; [LEGACY]
-   - set to 1 to *UNTICK* the OrangeFox "Disable Forced Encryption" box on every bootup
-   - default = 0 (in lavender, default=1)
+"OF_KEEP_FORCED_ENCRYPTION"; [Always enabled now]
 #
-"OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; [LEGACY] 
-   - set to 1 to *UNTICK* both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
-   - default = 0
+"OF_KEEP_DM_VERITY_FORCED_ENCRYPTION"; [Always enabled now]
 #
-"OF_FORCE_DISABLE_DM_VERITY"; [LEGACY]
-   - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box on every bootup
-   - default = 0
+"OF_FORCE_DISABLE_DM_VERITY"; [OBSOLETE]
 #
-"OF_FORCE_DISABLE_FORCED_ENCRYPTION"; [LEGACY]
-   - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box on every bootup
-   - default = 0
+"OF_FORCE_DISABLE_FORCED_ENCRYPTION"; [OBSOLETE]
 #
-"OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [LEGACY]
-   - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes on every bootup
-   - default = 0
+"OF_FORCE_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [OBSOLETE]
 #
-"OF_DISABLE_DM_VERITY"; [LEGACY]
-   - set to 1 to **TICK** the OrangeFox "Disable DM-Verity" box by default (on fresh installation)
-   - default = 0 (should be set to "1" for older Xiaomi devices like kenzo, libra, mido)
+"OF_DISABLE_DM_VERITY"; [OBSOLETE]
 #
-"OF_DISABLE_FORCED_ENCRYPTION"; [LEGACY]
-   - set to 1 to **TICK** the OrangeFox "Disable Forced Encryption" box by default (on fresh installation)
-   - default = 0
+"OF_DISABLE_FORCED_ENCRYPTION"; [OBSOLETE]
 #
-"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [LEGACY]
-   - set to 1 to **TICK** both the OrangeFox "Disable DM-Verity" and "Disable Forced Encryption" boxes by default (on fresh installation)
-   - default = 0
+"OF_DISABLE_DM_VERITY_FORCED_ENCRYPTION"; [OBSOLETE]
 #
 "OF_CLASSIC_LEDS_FUNCTION"
    - set to 1 to use the old R9.x Leds function
