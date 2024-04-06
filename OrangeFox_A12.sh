@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 27 January 2024
+# 06 April 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -738,8 +738,8 @@ local TDT=$(date "+%d %B %Y")
 
   # if a local callback script is declared, run it, passing to it the temporary working directory (Last call)
   # "--last-call" = just before creating the OrangeFox update zip file
-  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_TMP_WORKING_DIR" "--last-call"
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" -a -f "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+	bash $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_TMP_WORKING_DIR" "--last-call"
   fi
 
   # save the build vars
@@ -1430,8 +1430,8 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   $CP -p $FOX_VENDOR_PATH/Files/changelog.txt $FOX_RAMDISK/twres/changelog.txt
 
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
-  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" ] && [ -x "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
-     $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
+  if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" -a -f "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
+	bash $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
   fi
 
   # reduce ramdisk size drastically?
