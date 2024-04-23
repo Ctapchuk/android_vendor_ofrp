@@ -2,9 +2,12 @@
 
 # ******************************************************
 # Description: 	Theme Installer for OrangeFox Recovery
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2018-2024 The OrangeFox Recovery Project
 # Author: 	DarthJabba9
-# Date: 	26 April 2019
+# Date: 	23 April 2024 (R4)
 # ******************************************************
+
 
 # the display screen
 SCREEN=/proc/self/fd/$2
@@ -12,18 +15,31 @@ SCREEN=/proc/self/fd/$2
 # the current zip installer
 ZIPFILE="$3"
 
+# detect Magisk app/ROM flashing
+BOOTMODE=false
+ps | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
+$BOOTMODE || ps -A 2>/dev/null | grep zygote | grep -v grep >/dev/null && BOOTMODE=true
+
+# temp directory
+$BOOTMODE && TMP_DIR=/dev/tmp || TMP_DIR=/tmp
+mkdir -p $TMP_DIR
+
 # the zip extract directory
-EX_DIR=/tmp/ofox_theme_installer
+EX_DIR=$TMP_DIR/ofox_theme_installer
 
 # the description of the theme
-THEME_NAME="OrangeFox Classic Theme"
+THEME_NAME="OrangeFox Classic Theme R4"
 
 # ui_print "<message>" ["<message 2>" ...]
 ui_print() {
-  until [ ! "$1" ]; do
-    echo -e "ui_print $1\nui_print" >> $SCREEN
-    shift
-  done
+  if [ "$BOOTMODE" = "true" ]; then
+  	echo "$1"
+  else
+  	until [ ! "$1" ]; do
+    		echo -e "ui_print $1\nui_print" >> $SCREEN
+    		shift
+  	done
+  fi
 }
 
 # is_mounted <partition>
@@ -69,6 +85,14 @@ cleanup () {
   rm -rf $EX_DIR
 }
 
+# getprop
+GETPROP=$(which getprop)
+if [ -z "$GETPROP" ]; then
+   GETPROP=/system/bin/getprop
+   [ ! -e "$GETPROP" ] && GETPROP=$(which resetprop)
+   [ ! -e "$GETPROP" ] && GETPROP=getprop
+fi
+
 # main function
 Main() {
 	ui_print "*************************************"
@@ -83,17 +107,37 @@ Main() {
 	# install the theme	
 	ui_print "- Installing $THEME_NAME ..."
 	local internal_SD="/sdcard"
-	local F=$(is_mounted "$internal_SD")
-	[ "$F" = "0" ] && mount $internal_SD
-	F=$(is_mounted "$internal_SD")
-	[ "$F" = "0" ] && {
-	   internal_SD="$EXTERNAL_STORAGE"
-	   [ -z "$internal_SD" ] && internal_SD="/data/media/0"
-	   mount $internal_SD
-	}	
+	local fox_path=""
+	local F=0
+	if [ "$BOOTMODE" = "true" ]; then
+	    	F=1
+	    	if [ -d "$EXTERNAL_STORAGE" ]; then
+	       		internal_SD="$EXTERNAL_STORAGE"
+	    	elif [ -d /storage/emulated/0 ]; then
+	       		internal_SD="/storage/emulated/0"
+	    	elif [ -d /data/media/0 ]; then
+	       		internal_SD="/data/media/0"
+	    	elif [ -d /sdcard ]; then
+	       		internal_SD="/sdcard"
+	    	else
+	       		F=0
+	    	fi
+	else
+		F=$(is_mounted "$internal_SD")
+		[ "$F" = "0" ] && mount $internal_SD
+		F=$(is_mounted "$internal_SD")
+		[ "$F" = "0" ] && {
+	   		internal_SD="$EXTERNAL_STORAGE"
+	   		[ -z "$internal_SD" ] && internal_SD="/data/media/0"
+	   		mount $internal_SD
+		}
+		fox_path=$($GETPROP "ro.orangefox.home")
+	fi
 
-	THEME_FILE=$EX_DIR/pa.zip
-	THEME_DEST="$internal_SD/Fox/.bin."
+	[ -z "$fox_path" ] && fox_path=$internal_SD"/Fox"
+
+	THEME_FILE=$EX_DIR/ui.zip
+	THEME_DEST="$fox_path/theme/"
 	[ ! -d $THEME_DEST ] && mkdir -p $THEME_DEST
 	[ ! -d $THEME_DEST ] && {
 	   cleanup
@@ -105,10 +149,9 @@ Main() {
 
 	# cleanup
 	cleanup
-   	# [ "$internal_SD" = "/sdcard" ] &&  umount "$internal_SD"
 	
 	# report
-	if [ -f $THEME_DEST/pa.zip ]; then
+	if [ -f $THEME_DEST/ui.zip ]; then
 	   ui_print "- Successfully installed $THEME_NAME."
 	else
 	   ui_print "- Error installing $THEME_NAME."	
