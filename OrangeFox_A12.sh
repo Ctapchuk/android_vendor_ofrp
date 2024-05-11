@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 06 April 2024
+# 11 May 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -56,6 +56,12 @@ if [ -z "$FOX_BUILD_DEBUG_MESSAGES" ]; then
 elif [ "$FOX_BUILD_DEBUG_MESSAGES" = "1" ]; then
    export FOX_BUILD_DEBUG_MESSAGES="1"
    set -o xtrace
+fi
+
+# should we use an updated magiskboot binary?
+UPDATED=""
+if [ "$FOX_USE_UPDATED_MAGISKBOOT" = "1" ]; then
+   UPDATED="_updated"
 fi
 
 # some colour codes
@@ -635,7 +641,7 @@ local TDT=$(date "+%d %B %Y")
   if [ "$IS_AB_DEVICE" = "1" ]; then
      echo -e "${RED}-- A/B device - copying magiskboot to zip installer ... ${NC}"
      tmp=$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot
-     [ ! -e "$tmp" ] && tmp=$FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/magiskboot
+     [ ! -e "$tmp" ] && tmp=$FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/magiskboot"$UPDATED"
      [ ! -e "$tmp" ] && tmp=/tmp/fox_build_tmp/magiskboot
      [ ! -e "$tmp" ] && {
        echo -e "${WHITEONRED}-- I cannot find magiskboot. Quitting! ${NC}"
@@ -1068,13 +1074,13 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
       $CP "$FOX_VENDOR_PATH/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       $CP "$FOX_VENDOR_PATH/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm/magiskboot" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm/magiskboot$UPDATED" "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot"
       ;;
   "arm64")
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
       $CP "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       $CP "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/magiskboot" "$FOX_RAMDISK/$RAMDISK_SBIN/"
+      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/magiskboot$UPDATED" "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot"
       ;;
   "x86")
       echo -e "${GREEN}-- x86 arch detected. Copying x86 binaries${NC}"
@@ -1108,7 +1114,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   rm -f $FOX_RAMDISK/$RAMDISK_SBIN/unpackbootimg
   echo -e "${GREEN}-- Backing up $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot to: /tmp/fox_build_tmp/ ...${NC}"
   mkdir -p /tmp/fox_build_tmp/
-  $CP -pf $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot /tmp/fox_build_tmp/
+  $CP -pf $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot /tmp/fox_build_tmp/magiskboot
 
   # symlink for openrecovery binary
   if [ -f "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/twrp" ]; then

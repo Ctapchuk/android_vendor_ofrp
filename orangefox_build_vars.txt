@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 06 April 2024
+# Date: 11 May 2024
 #
 # -----------------------------------
 #
@@ -725,6 +725,13 @@
 #
 "OF_UNMOUNT_SDCARDS_BEFORE_REBOOT" [NEW]
 - Set to 1 to attempt to unmount the SD cards before rebooting
+- default = 0
+#
+"FOX_USE_UPDATED_MAGISKBOOT" [NEW]
+- Set to 1 to use a newer (2024+) magiskboot binary. This may be required for very new devices.
+- This should be tested vigorously, because the updated magiskboot binaries can cause issues (eg, with changing the slash screen).
+- If using this is required on a device, but it causes issues with changing the splash screen, then you might need to
+- disable changing the splash screen with "OF_NO_SPLASH_CHANGE".
 - default = 0
 #
 # -----------------------------------
