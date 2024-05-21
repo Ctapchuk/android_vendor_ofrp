@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 11 May 2024
+# 21 May 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -1318,7 +1318,9 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   fi
 
   # Include our own "zip" binary ?
-  if [ "$FOX_REMOVE_ZIP_BINARY" = "1" ]; then
+  if [ -f "$FOX_VENDOR_PATH/../../external/zip/Android.mk" -a "$FOX_EXCLUDE_ZIP" != "1" ]; then
+         echo -e "${RED}-- Using the InfoZip \"zip\" built from source ...${NC}"
+  elif [ "$FOX_REMOVE_ZIP_BINARY" = "1" ]; then
       [ -e $FOX_RAMDISK/$RAMDISK_SBIN/zip ] && {
          echo -e "${RED}-- Removing the OrangeFox InfoZip \"zip\" binary ...${NC}"
          rm -f $FOX_RAMDISK/$RAMDISK_SBIN/zip

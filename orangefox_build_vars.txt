@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 11 May 2024
+# Date: 21 May 2024
 #
 # -----------------------------------
 #
@@ -734,4 +734,8 @@
 - disable changing the splash screen with "OF_NO_SPLASH_CHANGE".
 - default = 0
 #
+"FOX_EXCLUDE_ZIP" [NEW]
+- Set to 1 to skip building the InfoZip zip binary from source and use the prebuilt version instead
+- If this is used, "TW_EXCLUDE_ZIP := true" will also be set automatically
+- default = 0
 # -----------------------------------
