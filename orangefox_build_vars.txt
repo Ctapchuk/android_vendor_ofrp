@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 21 May 2024
+# Date: 27 May 2024
 #
 # -----------------------------------
 #
@@ -107,6 +107,11 @@
    - set this to 1 if you want the gnu sed binary to be added (/sbin/gnused)
    - this must be set in a shell script, or at the command line, before building
    - this will add about 200kb to the size of the recovery image
+   - default = 0
+#
+"FOX_USE_ZSTD_BINARY" [NEW]
+   - set this to 1 if you want the zstd binary to be added (/sbin/zstd)
+   - this must be set in a shell script, or at the command line, before building
    - default = 0
 #
 "FOX_USE_BASH_SHELL"
@@ -738,4 +743,5 @@
 - Set to 1 to skip building the InfoZip zip binary from source and use the prebuilt version instead
 - If this is used, "TW_EXCLUDE_ZIP := true" will also be set automatically
 - default = 0
+#
 # -----------------------------------
