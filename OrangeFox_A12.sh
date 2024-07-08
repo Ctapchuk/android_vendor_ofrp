@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 27 May 2024
+# 8 July 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -373,6 +373,7 @@ if [ "$FOX_DRASTIC_SIZE_REDUCTION" = "1" -a "$(enabled $FOX_CUSTOM_BINS_TO_SDCAR
    export BUILD_2GB_VERSION=0
    export FOX_USE_XZ_UTILS=0
    export FOX_USE_ZSTD_BINARY=0
+   export FOX_USE_LZ4_BINARY=0
    export FOX_REMOVE_BASH=1
    export FOX_REMOVE_AAPT=1
    export FOX_REMOVE_ZIP_BINARY=1
@@ -409,6 +410,7 @@ if [ "$FOX_DYNAMIC_SAMSUNG_FIX" = "1" ]; then
    unset FOX_USE_TAR_BINARY
    unset FOX_USE_GREP_BINARY
    unset FOX_USE_ZSTD_BINARY
+   unset FOX_USE_LZ4_BINARY
 fi
 
 # disable all nano editor stuff
@@ -840,6 +842,7 @@ local F=""
       	 rm -f $FOX_RAMDISK/sbin/nano
       	 rm -f $FOX_RAMDISK/sbin/gnutar
 	 rm -f $FOX_RAMDISK/sbin/zstd
+	 rm -f $FOX_RAMDISK/sbin/lz4
       	 rm -f $FOX_RAMDISK/sbin/gnused
       	 rm -f $FOX_RAMDISK/sbin/bash
       	 rm -f $FOX_RAMDISK/sbin/busybox
@@ -1007,7 +1010,7 @@ cat << EOF >> "$tmp1"
            [ -d $sdcard_bin/nano/ ] && { cp -af $sdcard_bin/nano/ /FFiles/nano/; rm -rf /sbin/nano/; mv -f /sbin/nano_script /sbin/nano; }
            [ -f $sdcard_bin/nano ] && cp -af $sdcard_bin/nano /system/bin/
    	else
-	   files="aapt bash gnused gnutar lzma zip zstd"
+	   files="aapt bash gnused gnutar lzma zip zstd lz4"
 	   set -- \$files
 	   while [ -n "\$1" ]
   	   do
@@ -1320,13 +1323,22 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep
   fi
 
-  # Include standalone "tar" binary ?
+  # Include standalone "zstd" binary ?
   if [ "$FOX_USE_ZSTD_BINARY" = "1" ]; then
       echo -e "${GREEN}-- Copying the \"zstd\" binary ...${NC}"
       $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/zstd $FOX_RAMDISK/$RAMDISK_SBIN/
       chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/zstd
   else
       rm -f $FOX_RAMDISK/$RAMDISK_SBIN/zstd
+  fi
+
+  # Include standalone "lz4" binary ?
+  if [ "$FOX_USE_LZ4_BINARY" = "1" ]; then
+      echo -e "${GREEN}-- Copying the \"lz4\" binary ...${NC}"
+      $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/lz4 $FOX_RAMDISK/$RAMDISK_SBIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/lz4
+  else
+      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/lz4
   fi
 
   # Include our own "zip" binary ?
