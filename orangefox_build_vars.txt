@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 27 May 2024
+# Date: 8 July 2024
 #
 # -----------------------------------
 #
@@ -26,6 +26,14 @@
    	* Changing the OrangeFox splash image/logo
    	* "Flash Current OrangeFox"
    	* "Reflash OrangeFox after flashing a ROM"
+   - default = 0
+#
+"OF_RECOVERY_AB_FULL_REFLASH_RAMDISK" [NEW]
+   - set to 1 to trigger flashing the live recovery ramdisk (instead of the recovery partition) to both slots
+   - this is only useful if "OF_AB_DEVICE_WITH_RECOVERY_PARTITION" is also enabled.
+   - use with caution!
+   - if this is enabled, it applies to "Flash current OrangeFox" and "Reflash OrangeFox after flashing a ROM"
+     (the process will take much more time, but less vulnerable to non-standard ROM installers overwriting the recovery partition)
    - default = 0
 #
 "FOX_PORTS_TMP"
@@ -107,6 +115,11 @@
    - set this to 1 if you want the gnu sed binary to be added (/sbin/gnused)
    - this must be set in a shell script, or at the command line, before building
    - this will add about 200kb to the size of the recovery image
+   - default = 0
+#
+"FOX_USE_LZ4_BINARY" [NEW]
+   - set this to 1 if you want the prebuilt lz4 binary to be added (/sbin/lz4)
+   - this must be set in a shell script, or at the command line, before building
    - default = 0
 #
 "FOX_USE_ZSTD_BINARY" [NEW]
