@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 8 July 2024
+# Date: 11 July 2024
 #
 # -----------------------------------
 #
@@ -755,6 +755,13 @@
 "FOX_EXCLUDE_ZIP" [NEW]
 - Set to 1 to skip building the InfoZip zip binary from source and use the prebuilt version instead
 - If this is used, "TW_EXCLUDE_ZIP := true" will also be set automatically
+- default = 0
+#
+"FOX_COMPRESS_EXECUTABLES" [NEW] [EXPERIMENTAL!!]
+- Set to 1 to compress (with upx) executable binaries (in /sbin/ and /system/bin/ by default) if they are bigger than 128kb
+- This feature is experimental. Use with great care; subject every build to extensive testing to ensure that nothing is broken
+- If set to "1", qualifying binaries in /sbin/ and /system/bin/ will be compressed
+- If you want to choose manually the directories to be processed, then specify them, instead of using "1" (eg, export FOX_COMPRESS_EXECUTABLES="/sbin /system/bin /vendor/bin")
 - default = 0
 #
 # -----------------------------------

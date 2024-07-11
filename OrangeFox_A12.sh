@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 8 July 2024
+# 11 July 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -917,6 +917,42 @@ local F=""
 	cd $CURRDIR
 }
 
+# is this an executable arm binary?
+is_arm() {
+	local i=$(file $1 | grep "ARM" | grep "ELF");
+	[ -n "$i" ] && echo "1" || echo "0";
+}
+
+# compress some binaries with upx
+compress_some_executables() {
+local upx_bin=$FOX_VENDOR_PATH/tools/upx;
+    if [ -x "$upx_bin" ]; then
+	local min=131072; # only process binaries bigger than 128kb
+	local HERE=$PWD;
+	local size;
+	local bins;
+	local dir;
+	for bin_dirs in $FOX_COMPRESS_EXECUTABLES
+	do
+		dir=$FOX_RAMDISK/$bin_dirs;
+		if [ -d $dir ]; then
+			cd $dir;
+			bins=$(ls ./);
+			for i in $bins
+			do
+				size=$(filesize $i);
+				if [ $size -gt $min -a "$(is_arm $i)" = "1" ]; then
+					echo -e "${WHITEONRED}-- Compressing \"$i\" with upx ... ${NC}";
+					chmod 0755 $i; # if the executable bit is not set, upx will reject it
+					$upx_bin --lzma $i;
+				fi
+			done
+		fi
+	done # for bin_dirs
+	cd $HERE;
+    fi
+}
+
 # have some big binaries in /sdcard/Fox/FoxFiles/bin/ ?
 process_custom_bins_to_sdcard() {
 local tmp1
@@ -1464,6 +1500,12 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   # if a local callback script is declared, run it, passing to it the ramdisk directory (first call)
   if [ -n "$FOX_LOCAL_CALLBACK_SCRIPT" -a -f "$FOX_LOCAL_CALLBACK_SCRIPT" ]; then
 	bash $FOX_LOCAL_CALLBACK_SCRIPT "$FOX_RAMDISK" "--first-call"
+  fi
+
+  # compress some executables?
+  if [ -n "$FOX_COMPRESS_EXECUTABLES" -a "$FOX_COMPRESS_EXECUTABLES" != "0" ]; then
+	[  "$FOX_COMPRESS_EXECUTABLES" = "1" ] && export FOX_COMPRESS_EXECUTABLES="/sbin /system/bin";
+	compress_some_executables;
   fi
 
   # reduce ramdisk size drastically?
