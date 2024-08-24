@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 11 July 2024
+# 24 August 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -1448,8 +1448,9 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      # remove aapt if it is there from a previous build
      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   else
-     $CP -p $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/$RAMDISK_SBIN/aapt
-     chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/aapt
+	$CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/aapt $FOX_RAMDISK/$RAMDISK_SBIN/aapt
+	#$CP -p $FOX_VENDOR_PATH/Files/aapt $FOX_RAMDISK/$RAMDISK_SBIN/aapt
+	chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   fi
 
   # enable the app manager?
