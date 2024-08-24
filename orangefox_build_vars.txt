@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 11 July 2024
+# Date: 24 August 2024
 #
 # -----------------------------------
 #
@@ -204,7 +204,7 @@
    - NOTE: do NOT use "OF_SKIP_FBE_DECRYPTION" if you are using this variable, because it will supersede this variable
    - default = nothing (ie, try to decrypt all Android API levels)
 #
-"OF_OTA_RES_DECRYPT" [LEGACY]
+"OF_OTA_RES_DECRYPT" [OBSOLETE]
    - set to 1 to try and decrypt internal storage (instead bailing out with an error) during MIUI OTA restore
    - default = 0
 #
@@ -230,7 +230,7 @@
    - set to 1 to delete AromaFM from the zip installer (for devices where it doesn't work)
    - default = 0
 #
-"OF_USE_HEXDUMP" [LEGACY]
+"OF_USE_HEXDUMP" [OBSOLETE]
    - set to 1 to use an external hexdump utility to get file header information (instead of internal code)
    - default = 0
 #
@@ -298,7 +298,7 @@
  - Use this to set an old UTC time for the build, to work around bugged alleged anti-rollback protection in some ROMs
  - eg, export FOX_BUGGED_AOSP_ARB_WORKAROUND="1546300800" [Tue Jan 1 2019 00:00:00 GMT]
  -     export FOX_BUGGED_AOSP_ARB_WORKAROUND="1420041600" [Wed Dec 31 2014 16:00:00 GMT]
- - default = nothing
+ - default = 0 (ie, automatically zeroed on bootup by default)
 #
 "TARGET_DEVICE_ALT"
  - Use this if the device has more than one code name, so that the OrangeFox zip
