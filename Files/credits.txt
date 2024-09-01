@@ -1,27 +1,12 @@
 OrangeFox Recovery Credits
 --------------------------
 
-* KMP Design - for amazing splash
-* TWRP Team - for base recovery
-
-== Guys who help to moderate OrangeFox chats ==
-* @zakaryan2004
-* @ko_he
-* @Steamrev
-* @N1mu3h
-* @Palmbeach05
-* @Diodelvento
-
-== People that are protecting our chats against spammers ==
-* @SitiSchu
-* @brombinmirko
-* @GodOfOwls
-* @Felenov
+* TWRP Team
+* The Posy - for cursor
 
 == For donating ==
-* @GodOfOwls
-* GitLab.com team
-* Packet.net team
+* GitLab.com
+* JetBrains
 * ua-hosting.company
 
 * Our maintainers
