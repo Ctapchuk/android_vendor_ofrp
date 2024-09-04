@@ -1,7 +1,7 @@
-#!/sbin/sh
+#!/system/bin/sh
 #
 # stub to run /system/bin/nano with some useful arguments
-# DarthJabba9, 20210226
+# DarthJabba9, 20240904
 #
 
 # the nano binary
