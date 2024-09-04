@@ -1,9 +1,9 @@
-#!/sbin/sh
+#!/system/bin/sh
 #
 # nano: set up and run nano from recovery/terminal
 # osm0sis @ xda-developers
 # DarthJabba9  @ xda-developers
-# Date: 16 February 2021
+# Date: 4 September 2024
 
 NANO_DIR=/FFiles/nano;
 nano_bin=$NANO_DIR/bin/nano.bin;
