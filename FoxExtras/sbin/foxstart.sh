@@ -23,12 +23,12 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20240113
+# * Date:   20240904
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #
 #
-SCRIPT_LASTMOD_DATE="20240113"
+SCRIPT_LASTMOD_DATE="20240904"
 C="/tmp_cust"
 LOG="/tmp/recovery.log"
 LOG2="/sdcard/foxstart.log"
@@ -515,6 +515,9 @@ local fox_cfg="$ETC_DIR/fox.cfg"
    
    # if someone is still using old recovery sources
    ln -s $CFG /tmp/orangefox.cfg
+
+   # bashrc
+   ln -sf /system/etc/bash/bashrc /.bashrc
 }
 
 # try to get display panel information
