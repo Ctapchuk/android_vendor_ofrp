@@ -1,9 +1,9 @@
 #!/system/bin/sh
 #
-# nano: set up and run nano from recovery/terminal
+# nano: set up and run prebuilt nano from recovery/terminal
 # osm0sis @ xda-developers
 # DarthJabba9  @ xda-developers
-# Date: 4 September 2024
+# Date: 7 September 2024
 
 NANO_DIR=/FFiles/nano;
 nano_bin=$NANO_DIR/bin/nano.bin;
@@ -28,17 +28,15 @@ if [ "$1" == "--term" ]; then
    term=$2;
    shift 2;
 else
-   [ -n "$TERM"] && term=$TERM || term=pcansi;
+   if [ -n "$TERM" ]; then
+	term=$TERM;
+   else
+	term=pcansi;
+   fi
 fi
 
 # *************************************
-#NANO_VERSION=3.2; # old version
-NANO_VERSION=5.5; # current version
-if [ "$NANO_VERSION" = "3.2" ]; then
-   DEFAULT_ARGS="-A -l -u -y -w -c -S";
-else
-   DEFAULT_ARGS="-A -l -u -y -w -c";
-fi
+DEFAULT_ARGS="-A -l -u -y -w -c";
 # *************************************
 
 clear;
@@ -50,4 +48,6 @@ export TERM=$term;
 $nano_bin $DEFAULT_ARGS "$@";
 
 export TERM=$OLD_TERM;
+
+clear;
 #
