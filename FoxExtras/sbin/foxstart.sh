@@ -1,4 +1,4 @@
-#!/sbin/sh
+#!/system/bin/sh
 #
 # 	/sbin/foxstart.sh
 # 	Custom script for OrangeFox Recovery
@@ -23,7 +23,7 @@
 #
 #
 # * Author: DarthJabba9
-# * Date:   20240904
+# * Date:   20240905
 # * Identify some ROM features and hardware components
 # * Do some other sundry stuff
 #

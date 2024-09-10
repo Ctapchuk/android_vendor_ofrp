@@ -1,4 +1,4 @@
-#!/sbin/sh
+#!/system/bin/sh
 
 [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] && {
   echo "Usage =  $0 <pin/password>"

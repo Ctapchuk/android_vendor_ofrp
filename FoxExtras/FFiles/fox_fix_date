@@ -1,11 +1,11 @@
-#!/sbin/sh
+#!/system/bin/sh
 # ---------------------------
 # Fix epoch issues in OrangeFox recovery by storing the offset drifts in since_epoch
 # Useful in OrangeFox recovery when the device's RTC is misbehaving
 #
 # By DarthJabba9
 #
-# Copyright (C) 2018-2020 The OrangeFox Recovery Project
+# Copyright (C) 2018-2024 The OrangeFox Recovery Project
 # -------------------------
 
 save_drift() {
@@ -27,5 +27,4 @@ local drift=$(expr $now - $epoch)
 	fi
 }
 
-save_drift
-
+save_drift;

@@ -1,7 +1,7 @@
-#!/sbin/sh
+#!/system/bin/sh
 #
 # Patch AVB 2.0 to prevent overwriting the custom recovery
-# Version: 0.6, 20230608
+# Version: 0.7, 20240905
 # Author : DarthJabba9
 # Credits: wzsx150
 #

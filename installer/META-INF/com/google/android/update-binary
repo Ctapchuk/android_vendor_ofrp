@@ -1,4 +1,4 @@
-#!/sbin/sh
+#!/system/bin/sh
 
 # ******************************************************
 # Description: 	Installer script for OrangeFox Recovery
@@ -9,7 +9,7 @@
 # ******************************************************
 
 # last_modified
-MOD_DATE="20240125"
+MOD_DATE="20240905"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0

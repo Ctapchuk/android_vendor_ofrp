@@ -1,11 +1,11 @@
-#!/sbin/sh
+#!/system/bin/sh
 
 # ******************************************************
 # Description: 	Theme Installer for OrangeFox Recovery
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2018-2024 The OrangeFox Recovery Project
 # Author: 	DarthJabba9
-# Date: 	23 April 2024 (R4)
+# Date: 	07 September 2024 (R4)
 # ******************************************************
 
 

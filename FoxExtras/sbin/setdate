@@ -1,4 +1,4 @@
-#!/sbin/sh
+#!/system/bin/sh
 
 # ---------------------------
 # Set date + time in OrangeFox recovery
@@ -8,8 +8,8 @@
 # Usage: setdate "2021-04-28-16:31"
 # 
 # date format: date +%Y%m%d%H%M -s 202104271715
-# Copyright (C) 2018-2021 The OrangeFox Recovery Project
-# 28 April 2021
+# Copyright (C) 2018-2024 The OrangeFox Recovery Project
+# 05 September 2024
 # -------------------------
 
 # process the arguments

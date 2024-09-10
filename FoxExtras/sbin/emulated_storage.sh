@@ -1,7 +1,7 @@
-#!/sbin/sh
+#!/system/bin/sh
 #
 #	This file is part of the OrangeFox Recovery Project
-# 	Copyright (C) 2023 The OrangeFox Recovery Project
+# 	Copyright (C) 2023-2024 The OrangeFox Recovery Project
 #
 #	SPDX-License-Identifier: GPL-3.0-or-later
 #

@@ -1,7 +1,7 @@
-#!/sbin/sh
+#!/system/bin/sh
 #
 # Custom script for OrangeFox TWRP Recovery
-# Copyright (C) 2018-2022 OrangeFox Recovery Project
+# Copyright (C) 2018-2024 OrangeFox Recovery Project
 #
 # This software is licensed under the terms of the GNU General Public
 # License version 2, as published by the Free Software Foundation, and
