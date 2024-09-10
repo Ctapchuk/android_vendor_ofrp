@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 24 August 2024
+# Date: 10 September 2024
 #
 # -----------------------------------
 #
@@ -127,15 +127,21 @@
    - this must be set in a shell script, or at the command line, before building
    - default = 0
 #
+"FOX_USE_RESETPROP_BINARY" [NEW]
+   - set this to 1 if you want the prebuilt resetprop binary to be added (/sbin/resetprop)
+   - if this is not used, then the resetprop built from source will be used
+   - this must be set in a shell script, or at the command line, before building
+   - default = 0
+#
 "FOX_USE_BASH_SHELL"
-   - set this to 1 if you the bash shell to replace the busybox "sh"
+   - set this to 1 if you want bash to be the default shell, instead of "sh"
    - default = 0
    - if not set, bash will still be copied, but it will not replace "sh"
 #
 "FOX_ASH_IS_BASH"
-   - set this to 1 if you the bash shell to replace the busybox "ash"
+   - set this to 1 if you bash to also be available as "ash"
    - default = 0
-   - if not set, bash will still be copied, but it will not replace "ash"
+   - if not set, bash will still be copied, but there will be no "ash" symlink
 #
 "FOX_REMOVE_BASH"
    - set this to 1 if you want to remove bash completely from the recovery
@@ -294,10 +300,11 @@
   - enable this to turn off this feature (meaning that lastrecoverylog.log will be overwritten each time the recovery is rebooted)
   - default = 0
 #
-"FOX_BUGGED_AOSP_ARB_WORKAROUND"
+"FOX_BUGGED_AOSP_ARB_WORKAROUND" [OBSOLESCENT]
  - Use this to set an old UTC time for the build, to work around bugged alleged anti-rollback protection in some ROMs
  - eg, export FOX_BUGGED_AOSP_ARB_WORKAROUND="1546300800" [Tue Jan 1 2019 00:00:00 GMT]
  -     export FOX_BUGGED_AOSP_ARB_WORKAROUND="1420041600" [Wed Dec 31 2014 16:00:00 GMT]
+ - Unless you have a very specific need to set a specific date/time, consider this flag to be obsolescent
  - default = 0 (ie, automatically zeroed on bootup by default)
 #
 "TARGET_DEVICE_ALT"
@@ -471,12 +478,15 @@
 - default = 0
 #
 "FOX_USE_GREP_BINARY"
-- set this to 1 to replace the toybox/busybox "grep" with a full standalone GNU grep
+- set this to 1 to replace the toybox "grep" with a full standalone GNU grep
 - this is useful in cases where the original grep is causing problems
 - default = 0
 #
-"FOX_REMOVE_BUSYBOX_BINARY" [FOX_10+ builds only]
-- set this to 1 to delete the extra standalone /sbin/busybox binary from the fox_10+ builds
+"FOX_REMOVE_BUSYBOX_BINARY" [OBSOLETE]
+- this is obsolete - see "FOX_USE_BUSYBOX_BINARY" below
+#
+"FOX_USE_BUSYBOX_BINARY" [NEW] [ARM64 only]
+- set this to 1 to add a standalone /sbin/busybox binary to the build
 - default = 0
 #
 "FOX_JAVA8_PATH"
@@ -515,9 +525,10 @@
 - set this to 1 to exclude every specie of nano from the build
 - default = 0
 #
-"FOX_BUILD_BASH"
-- set this to 1 to compile bash from source during the build process; this will replace the standard OrangeFox bash binary
+"FOX_BUILD_BASH" [Use with caution]
+- set this to 1 to build bash from source during the build process; this will replace the standard OrangeFox bash binary
 - this might require cloning the bash sources from upstream (or updating them if the current version generates build errors)
+- use this with caution; in particular, your shell scripts should use "/system/bin/sh", instead of "/sbin/sh", in the shebang
 #
 "FOX_USE_SPECIFIC_MAGISK_ZIP"
 - use this to point to an alternative Magisk addon installer zip, if the default one does not work well for your device (eg, if it causes bootloops)
