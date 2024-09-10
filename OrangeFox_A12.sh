@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 24 August 2024
+# 10 September 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -815,8 +815,8 @@ uses_toolbox() {
  [ "$TW_USE_TOOLBOX" = "true" ] && { echo "1"; return; }
  local T=$(filesize $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/toybox)
  [ "$T" = "0" ] && { echo "0"; return; }
- local B=$(filesize $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/busybox)
- [ $T -gt $B ] && { echo "1"; return; }
+ #local B=$(filesize $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/busybox)
+ #[ $T -gt $B ] && { echo "1"; return; }
  T=$(readlink "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/yes")
  [ "$T" = "toybox" ] && echo "1" || echo "0"
 }
@@ -999,8 +999,8 @@ local mksync="3"
      	[ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && ln -sf $sdcard_bin/aapt $ramdisk_sbindir/aapt
   }
 
-  [ "$FOX_USE_XZ_UTILS" = "1" -a -f $FOX_VENDOR_PATH/Files/xz ] && {
-     $CP -pf $FOX_VENDOR_PATH/Files/xz $FOX_BIN_tmp/bin/lzma
+  [ "$FOX_USE_XZ_UTILS" = "1" -a -f $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/xz ] && {
+     $CP -pf $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/xz $FOX_BIN_tmp/bin/lzma
      [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "$mksync" ] && {
      	 rm -f $ramdisk_sbindir_10/lzma $ramdisk_sbindir_10/xz $ramdisk_sbindir/lzma $ramdisk_sbindir/xz
      	 ln -sf $sdcard_bin/lzma $ramdisk_sbindir/lzma
@@ -1037,7 +1037,7 @@ local mksync="3"
 tmp1=$FOX_BIN_tmp/bin/sdcard_to_bin.sh
 rm -f $tmp1
 cat << EOF >> "$tmp1"
-#!/sbin/sh -x
+#!/system/bin/sh -x
    	cmd="$tmp2"
    	chmod +x $sdcard_bin/*
    	if [ "\$cmd" = "cp" ]; then
@@ -1110,18 +1110,13 @@ fi
 ###############################################################
 # copy stuff to the ramdisk and do all necessary patches before the build system creates the recovery image
 if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
-  echo -e "${BLUE}-- Copying mkbootimg, unpackbootimg binaries to sbin${NC}"
   case "$TARGET_ARCH" in
   "arm")
       echo -e "${GREEN}-- ARM arch detected. Copying ARM binaries${NC}"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       $CP "$FOX_VENDOR_PATH/prebuilt/arm/magiskboot$UPDATED" "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot"
       ;;
   "arm64")
       echo -e "${GREEN}-- ARM64 arch detected. Copying ARM64 binaries${NC}"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/mkbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
-      $CP "$FOX_VENDOR_PATH/prebuilt/arm64/unpackbootimg" "$FOX_RAMDISK/$RAMDISK_SBIN/"
       $CP "$FOX_VENDOR_PATH/prebuilt/arm64/magiskboot$UPDATED" "$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot"
       ;;
   "x86")
@@ -1147,13 +1142,20 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   mkdir -p $FOX_RAMDISK/$RAMDISK_SBIN/
 
   # copy resetprop (armeabi)
-  $CP -p $FOX_VENDOR_PATH/Files/resetprop $FOX_RAMDISK/$RAMDISK_SBIN/
+  if [ "$FOX_USE_RESETPROP_BINARY" = "1" ]; then
+      echo -e "${GREEN}-- Copying the \"resetprop\" binary ...${NC}"
+      $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/resetprop $FOX_RAMDISK/$RAMDISK_SBIN/
+      chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/resetprop
+      if [ "$TARGET_ARCH" = "arm64" ]; then
+	ln -sf /system/bin/linker64 "$FOX_RAMDISK/$RAMDISK_SBIN/linker64"
+      fi
+  else
+      echo -e "${GREEN}-- Symlinking \"resetprop\" ...${NC}"
+      ln -sf /system/bin/resetprop "$FOX_RAMDISK/$RAMDISK_SBIN/resetprop"
+  fi
 
-  # deal with magiskboot/mkbootimg/unpackbootimg
+  # deal with magiskboot
   echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
-  echo -e "${GREEN}-- Using magiskboot [$FOX_RAMDISK/$RAMDISK_SBIN/magiskboot] - deleting mkbootimg/unpackbootimg ...${NC}"
-  rm -f $FOX_RAMDISK/$RAMDISK_SBIN/mkbootimg
-  rm -f $FOX_RAMDISK/$RAMDISK_SBIN/unpackbootimg
   echo -e "${GREEN}-- Backing up $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot to: /tmp/fox_build_tmp/ ...${NC}"
   mkdir -p /tmp/fox_build_tmp/
   $CP -pf $FOX_RAMDISK/$RAMDISK_SBIN/magiskboot /tmp/fox_build_tmp/magiskboot
@@ -1191,7 +1193,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
      	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
      	if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
-     	   $CP -p $FOX_VENDOR_PATH/Files/xz $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
+     	   $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/xz $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/lzma
            ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
      	else
      	   [ "$FOX_CUSTOM_BINS_TO_SDCARD" = "1" ] && ln -s lzma $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/xz
@@ -1245,7 +1247,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
 	rm -f $FOX_RAMDISK/$RAMDISK_SBIN/bash
 	rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash
 	[ "$FOX_BASH_TO_SYSTEM_BIN" = "1" ] && F=$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/bash || F=$FOX_RAMDISK/$RAMDISK_SBIN/bash
-	$CP -pf $FOX_VENDOR_PATH/Files/bash $F
+	$CP -pf $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/bash $F
 	chmod 0775 $F
      fi
 
@@ -1254,7 +1256,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      fi
   fi
 
-  # replace busybox "sh" with bash ?
+  # replace system "sh" with bash ?
   if [ "$FOX_BUILD_BASH" = "1" ]; then
      BASH_BIN=$RAMDISK_SYSTEM_BIN/bash
   else
@@ -1307,7 +1309,8 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
       mkdir -p $FOX_RAMDISK/FFiles/nano/
       $CP -af $FOX_VENDOR_PATH/Files/nano/sbin/nano $FOX_RAMDISK/$RAMDISK_SBIN/
       if [ "$(enabled $FOX_CUSTOM_BINS_TO_SDCARD)" != "1" ]; then
-      	 $CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
+	$CP -af $FOX_VENDOR_PATH/Files/nano/ $FOX_RAMDISK/FFiles/
+	$CP -af $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/nano.bin $FOX_RAMDISK/FFiles/nano/bin/nano.bin
       fi
   else
       if [ -d $FOX_RAMDISK/FFiles/nano/ ]; then
@@ -1332,7 +1335,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   # Include standalone "tar" binary ?
   if [ "$FOX_USE_TAR_BINARY" = "1" ]; then
       echo -e "${GREEN}-- Copying the GNU \"tar\" binary (gnutar) ...${NC}"
-      $CP -p $FOX_VENDOR_PATH/Files/gnutar $FOX_RAMDISK/$RAMDISK_SBIN/
+      $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/gnutar $FOX_RAMDISK/$RAMDISK_SBIN/
       chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/gnutar
   else
       rm -f $FOX_RAMDISK/$RAMDISK_SBIN/gnutar
@@ -1341,19 +1344,19 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   # Include standalone "sed" binary ?
   if [ "$FOX_USE_SED_BINARY" = "1" ]; then
       echo -e "${GREEN}-- Copying the GNU \"sed\" binary (gnused) ...${NC}"
-      $CP -p $FOX_VENDOR_PATH/Files/gnused $FOX_RAMDISK/$RAMDISK_SBIN/
+      $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/gnused $FOX_RAMDISK/$RAMDISK_SBIN/
       chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/gnused
   else
       rm -f $FOX_RAMDISK/$RAMDISK_SBIN/gnused
   fi
 
   # Include standalone "grep" binary ?
-  if [ "$FOX_USE_GREP_BINARY" = "1"  -a -x $FOX_VENDOR_PATH/Files/grep ]; then
+  if [ "$FOX_USE_GREP_BINARY" = "1"  -a -x $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/grep ]; then
       echo -e "${GREEN}-- Copying the GNU \"grep\" binary ...${NC}"
       rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
-      $CP -pf $FOX_VENDOR_PATH/Files/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
-      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep"
-      echo '#!/sbin/sh' &> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep"
+      $CP -pf $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/
+      echo '#!/system/bin/sh' &> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep"
+      echo '#!/system/bin/sh' &> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep"
       echo 'exec grep -F "$@"' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep"
       echo 'exec grep -E "$@"' >> "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep"
       chmod 0755 $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep
@@ -1391,7 +1394,7 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
          if [ -e $FOX_RAMDISK/$RAMDISK_SBIN/zip ]; then
             rm -f $FOX_RAMDISK/$RAMDISK_SBIN/zip
          fi
-         $CP -pf $FOX_VENDOR_PATH/Files/zip $FOX_RAMDISK/$RAMDISK_SBIN/
+         $CP -pf $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/zip $FOX_RAMDISK/$RAMDISK_SBIN/
          chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/zip
       fi
   fi
@@ -1462,12 +1465,12 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      rm -f $FOX_RAMDISK/$RAMDISK_SBIN/aapt
   fi
 
-  # fox_10 and later - include some stuff (busybox, new magisk)
-  if [ "$FOX_REMOVE_BUSYBOX_BINARY" = "1" ]; then
-     rm -f $FOX_RAMDISK/$RAMDISK_SBIN/busybox
-  else
-     $CP -p $FOX_VENDOR_PATH/Files/busybox $FOX_RAMDISK/$RAMDISK_SBIN/busybox
+  # fox_10 and later - include busybox
+  if [ "$FOX_USE_BUSYBOX_BINARY" = "1" ]; then
+     $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/busybox $FOX_RAMDISK/$RAMDISK_SBIN/busybox
      chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/busybox
+  else
+     rm -f $FOX_RAMDISK/$RAMDISK_SBIN/busybox
   fi
 
 #########################################################################################
