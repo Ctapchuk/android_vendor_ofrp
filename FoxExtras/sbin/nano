@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# stub to run /system/bin/nano with some useful arguments
+# stub to run inline built nano (/system/bin/nano) with some useful arguments
 # DarthJabba9, 20240904
 #
 
@@ -22,5 +22,6 @@ if [ -n "$ANDROID_SOCKET_adbd" ]; then
 elif [ -n "$ANDROID_SOCKET_recovery" ]; then
    export TERM=pcansi;
 fi
-[ -x $N ] && $N $ARGS "$@";
 
+[ -x $N ] && $N $ARGS "$@";
+#
