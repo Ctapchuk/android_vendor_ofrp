@@ -558,9 +558,14 @@ local TDT=$(date "+%d %B %Y")
 
      $FOX_VENDOR_PATH/tools/magiskboot unpack -n tmp.img
      F="vendor_ramdisk_recovery.cpio"; #v4+ header
+     [ ! -f $F ] && F="vendor_ramdisk/recovery.cpio"; #v4+ header+latest magiskboot canary
      [ ! -f $F ] && F="ramdisk.cpio"; #v3 or earlier header
      if [ -f $F ]; then
-     	$CP -p $F $FOX_TMP_WORKING_DIR/$F
+	if [ "$F" = "vendor_ramdisk/recovery.cpio" ]; then
+		$CP -p $F "$FOX_TMP_WORKING_DIR/vendor_ramdisk_recovery.cpio";
+	else
+		$CP -p $F $FOX_TMP_WORKING_DIR/$F
+	fi
 	# check for v3 header and compensate
      	if [ "$F" = "ramdisk.cpio" ]; then
 	   isVB_V3=1

@@ -9,7 +9,7 @@
 # ******************************************************
 
 # last_modified
-MOD_DATE="20240905"
+MOD_DATE="20240912"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
@@ -641,11 +641,11 @@ local F_RAM
 	   	[ "$tmp" != "true" ] && no_ramdisk_only=1
 	   fi
 
-	   # which magiskboot binary?
-	   if [ "$no_ramdisk_only" != "1" ]; then
-	   	tmp=$(is_vendor_boot_magiskboot "$tool")
-	   	[ "$tmp" != "1" ] && no_ramdisk_only=1
-	   fi
+	   # which magiskboot binary? (broken on latest magiskboot canary)
+#	   if [ "$no_ramdisk_only" != "1" ]; then
+#	   	tmp=$(is_vendor_boot_magiskboot "$tool")
+#	   	[ "$tmp" != "1" ] && no_ramdisk_only=1
+#	   fi
 
 	   # so, are we able to flash the ramdisk only?
 	   if [ "$no_ramdisk_only" != "1" ]; then
@@ -665,7 +665,7 @@ local F_RAM
 	   [ ! -f $F_RAM ] && F_RAM=ramdisk.cpio
 	   #[ "$FOX_VENDOR_BOOT_RECOVERY_V3_HDR" = "1" -a ! -f $F_RAM ] && F_RAM=ramdisk.cpio
 
-	   # rename the installer's ramdisk image
+	   # rename the OrangeFox installer's ramdisk image to "fox_vendor_ramdisk"
 	   ui_print "- Backing up the OrangeFox ramdisk image..."
 	   mv -f $F_RAM fox_vendor_ramdisk || abort "- I cannot backup the ramdisk image."
 
@@ -676,7 +676,13 @@ local F_RAM
 
 	   # unpack
 	   ui_print "- Unpacking the $target$slot image..."
-	   "$tool" unpack $name".img" || abort "- I cannot unpack the $name$slot image."
+	   "$tool" unpack -n $name".img" || abort "- I cannot unpack the $name$slot image."
+	   # after unpacking, there should be - either: ./ramdisk.cpio (v3 header); or ./vendor_ramdisk_recovery.cpio (v4 header + old magiskboot); or vendor_ramdisk/recovery.cpio (v4 header + latest magiskboot canary)
+
+	   # check for latest magiskboot canary operations
+	   if [ ! -f $F_RAM -a -f "vendor_ramdisk/recovery.cpio" ]; then
+		F_RAM="vendor_ramdisk/recovery.cpio"
+	   fi
 
 	   # replace the vendor_boot ramdisk with our own
 	   cp -f fox_vendor_ramdisk $F_RAM  || abort "- I cannot copy the ramdisk image."
