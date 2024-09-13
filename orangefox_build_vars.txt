@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 10 September 2024
+# Date: 13 September 2024
 #
 # -----------------------------------
 #
@@ -127,11 +127,7 @@
    - this must be set in a shell script, or at the command line, before building
    - default = 0
 #
-"FOX_USE_RESETPROP_BINARY" [NEW]
-   - set this to 1 if you want the prebuilt resetprop binary to be added (/sbin/resetprop)
-   - if this is not used, then the resetprop built from source will be used
-   - this must be set in a shell script, or at the command line, before building
-   - default = 0
+"FOX_USE_RESETPROP_BINARY" [OBSOLETE]
 #
 "FOX_USE_BASH_SHELL"
    - set this to 1 if you want bash to be the default shell, instead of "sh"

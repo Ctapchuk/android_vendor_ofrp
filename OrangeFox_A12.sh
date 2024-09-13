@@ -19,7 +19,7 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # ******************************************************************************
-# 10 September 2024
+# 13 September 2024
 #
 # *** This script is for the OrangeFox Android 12.1 manifest ***
 #
@@ -1146,18 +1146,9 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   mkdir -p $FOX_RAMDISK/$RAMDISK_ETC/
   mkdir -p $FOX_RAMDISK/$RAMDISK_SBIN/
 
-  # copy resetprop (armeabi)
-  if [ "$FOX_USE_RESETPROP_BINARY" = "1" ]; then
-      echo -e "${GREEN}-- Copying the \"resetprop\" binary ...${NC}"
-      $CP -p $FOX_VENDOR_PATH/prebuilt/$TARGET_ARCH/resetprop $FOX_RAMDISK/$RAMDISK_SBIN/
-      chmod 0755 $FOX_RAMDISK/$RAMDISK_SBIN/resetprop
-      if [ "$TARGET_ARCH" = "arm64" ]; then
-	ln -sf /system/bin/linker64 "$FOX_RAMDISK/$RAMDISK_SBIN/linker64"
-      fi
-  else
-      echo -e "${GREEN}-- Symlinking \"resetprop\" ...${NC}"
-      ln -sf /system/bin/resetprop "$FOX_RAMDISK/$RAMDISK_SBIN/resetprop"
-  fi
+  # resetprop (symlink the inline built version)
+  echo -e "${GREEN}-- Symlinking \"resetprop\" ...${NC}"
+  ln -sf /system/bin/resetprop "$FOX_RAMDISK/$RAMDISK_SBIN/resetprop"
 
   # deal with magiskboot
   echo -e "${GREEN}-- This build will use magiskboot for patching boot images ...${NC}"
@@ -1181,13 +1172,6 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
      rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
      ln -sf grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/egrep
      ln -sf grep $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/fgrep
-  fi
-
-  # Replace the toolbox "getprop" with "resetprop" ?
-  if [ "$FOX_REPLACE_TOOLBOX_GETPROP" = "1" -a -f $FOX_RAMDISK/$RAMDISK_SBIN/resetprop ]; then
-     echo -e "${GREEN}-- Replacing the toolbox \"getprop\" command with a fuller version ...${NC}"
-     rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/getprop
-     ln -s $RAMDISK_SBIN/resetprop $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/getprop
   fi
 
   # replace any built-in lzma (and "xz") with our own
@@ -1407,6 +1391,13 @@ if [ "$FOX_VENDOR_CMD" = "Fox_Before_Recovery_Image" ]; then
   # if zip is built from source (in /system/bin/) create a symlink to it if necessary
   if [ -x "$FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/zip" ]; then
      [ ! -e "$FOX_RAMDISK/$RAMDISK_SBIN/zip" ] && ln -sf /system/bin/zip $FOX_RAMDISK/$RAMDISK_SBIN/zip
+  fi
+
+  # Replace the toolbox "getprop" with "resetprop" ?
+  if [ "$FOX_REPLACE_TOOLBOX_GETPROP" = "1" ]; then
+     echo -e "${GREEN}-- Replacing the toolbox \"getprop\" command with a fuller version ...${NC}"
+     rm -f $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/getprop
+     ln -sf /system/bin/resetprop $FOX_RAMDISK/$RAMDISK_SYSTEM_BIN/getprop
   fi
 
   # embed the system partition (in foxstart.sh)
