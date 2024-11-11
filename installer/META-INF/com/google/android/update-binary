@@ -9,7 +9,7 @@
 # ******************************************************
 
 # last_modified
-MOD_DATE="20240912"
+MOD_DATE="20241111"
 
 # whether to print extra debug messages
 FOX_INSTALLER_DEBUG_MODE=0
@@ -769,11 +769,11 @@ local F_RAM
 
 # install the recovery
 Install_Recovery() {
-local PART=$(readlink -e $RECOVERY_PARTITION)
 local ttmp=$PART
 local Is_ABD="0"
+local PART=$(readlink $RECOVERY_PARTITION)
 
-    [ -z "$PART" ] && PART=$RECOVERY_PARTITION
+    [ "$?" != "0" ] && PART=$RECOVERY_PARTITION
 
     # either we've been told that it is A/B, or, it really is A/B
     [ "$FOX_AB_DEVICE" = "1" -o "$(Is_AB_Device)" = "1" ] && Is_ABD="1"
