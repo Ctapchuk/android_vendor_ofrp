@@ -615,17 +615,18 @@
 - default = 0
 #
 "FOX_VENDOR_BOOT_RECOVERY" (renamed from "OF_VENDOR_BOOT_RECOVERY") [NEW - Experimental]
-- Do *NOT* use this variable unless you know what you are doing! Bootloops and bricks are *very* possible!
 - Set to 1 to build a recovery for a vendor_boot-as-recovery (hdr4) device (normally, hdr4 devices are also Virtual A/B devices)
-- There are currently *many* problems with vendor_boot-as-recovery, and custom recoveries are at a very early stage of development
-- If this is enabled, the following features will automatically be removed
+- Do *NOT* make a vendor_boot-as-recovery build, unless you know what you are doing! Bootloops and bricks are *very* possible!
+- There are currently issues with vendor_boot-as-recovery, and custom recoveries are at an early stage of development
+- If this variable is enabled, the following features will automatically be removed
    	* Changing the OrangeFox splash image/logo
    	* "Flash Current OrangeFox"
    	* "Reflash OrangeFox after flashing a ROM"
-- the zip installer that is created will also include the recovery ramdisk image ("vendor_ramdisk_recovery.cpio")
-- if this is enabled, the proper way to flash the built recovery is to reboot an installed working recovery to "fastbootd" mode,
-- and extract and flash the recovery ramdisk image by running the command: "fastboot flash vendor_boot:recovery vendor_ramdisk_recovery.cpio"
-- Do NOT flash the zip installer itself, unless you have both of your ROM's original boot.img and vendor_boot.img, *and* know how to recover the device from bootloops or bricks
+- The zip installer that is created will also include the recovery ramdisk image ("vendor_ramdisk_recovery.cpio")
+- If this is enabled, the proper way to flash the built recovery is to reboot an installed working recovery to "fastbootd" mode,
+- and extract the zip, and flash the recovery ramdisk image by running the command: "fastboot flash vendor_boot:recovery vendor_ramdisk_recovery.cpio"
+- (or by by running the "flash-ramdisk" script bundled with the zip)
+- Do not flash the zip installer itself, unless you have both of your ROM's original boot.img and vendor_boot.img, *and* know how to recover the device from bootloops or bricks
 - This is because the outcome of flashing the recovery.img is *unpredictable* - it might be fine, or brick the device, or make the ROM unbootable; any of these is equally possible
 - You really SHOULD stay away from using this variable unless you are a *highly technical risk-taker*, and you can fix any problem *on your own*. You have been warned!
 - default = 0
