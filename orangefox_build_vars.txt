@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 21 September 2024
+# Date: 18 December 2024
 #
 # -----------------------------------
 #
@@ -77,7 +77,7 @@
    - default = "/dev/block/by-name/vendor"
 #
 "FOX_RECOVERY_VENDOR_BOOT_PARTITION" [NEW]
-   - this is for vendor_boot builds only; it shoul normally BE LEFT WELL ALONE !!!
+   - this is for vendor_boot builds only; it should normally BE LEFT WELL ALONE !!!
    - set this ONLY if your device's vendor_boot partition is in a location that is
      different from the default "/dev/block/by-name/vendor_boot"
    - default = "/dev/block/by-name/vendor_boot"
@@ -625,7 +625,7 @@
 - the zip installer that is created will also include the recovery ramdisk image ("vendor_ramdisk_recovery.cpio")
 - if this is enabled, the proper way to flash the built recovery is to reboot an installed working recovery to "fastbootd" mode,
 - and extract and flash the recovery ramdisk image by running the command: "fastboot flash vendor_boot:recovery vendor_ramdisk_recovery.cpio"
-- Do NOT flash the zip installer itself, unless you have both of you ROM's original boot.img and vendor_boot.img, *and* know how to recover the device from bootloops or bricks
+- Do NOT flash the zip installer itself, unless you have both of your ROM's original boot.img and vendor_boot.img, *and* know how to recover the device from bootloops or bricks
 - This is because the outcome of flashing the recovery.img is *unpredictable* - it might be fine, or brick the device, or make the ROM unbootable; any of these is equally possible
 - You really SHOULD stay away from using this variable unless you are a *highly technical risk-taker*, and you can fix any problem *on your own*. You have been warned!
 - default = 0
