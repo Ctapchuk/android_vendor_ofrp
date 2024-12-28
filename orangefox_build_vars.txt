@@ -5,7 +5,7 @@
 # These build vars should be declared - in a shell script (eg, in "vendorsetup.sh"), or at the command line - before building
 #
 # Copyright (C) 2019-2024 OrangeFox Recovery Project
-# Date: 18 December 2024
+# Date: 28 December 2024
 #
 # -----------------------------------
 #
@@ -278,7 +278,7 @@
   - default = 0
 # 
 "OF_CLOCK_POS"
-  - var to control clock position option for devices that has cutout
+  - var to control the clock position option for devices that have a cutout
   - 0 => left, center and right clock positions available
   - 1 => left and right clock positions available
   - 2 => only left clock position available
