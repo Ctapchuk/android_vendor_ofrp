@@ -31,12 +31,12 @@ else
    if [ -n "$TERM" ]; then
 	term=$TERM;
    else
-	term=pcansi;
+	term=bg1.25;
    fi
 fi
 
 # *************************************
-DEFAULT_ARGS="-A -l -u -y -w -c";
+DEFAULT_ARGS="-A -I -l -u -y -w -c";
 # *************************************
 
 clear;
